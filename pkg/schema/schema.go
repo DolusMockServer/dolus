@@ -39,6 +39,7 @@ func (rs *ResponseSchema) GetSchema() any {
 	return reflect.New(reflect.ValueOf(schemaValue).Type()).Interface()
 }
 
+// func
 func (schema *ResponseSchema) MarshalSchema() (string, error) {
 	bytes, err := json.Marshal(schema.schema)
 	if err != nil {
@@ -141,39 +142,64 @@ func structFromSchema(schema openapi3.Schema) any {
 }
 
 func structFromExample(example openapi3.Examples) any {
+	// TODO make this not use a loop
 	for _, v := range example {
 		m := (v.Value.Value).(map[string]interface{})
-		g, _ := buildExample(m, "", "")
+		g, _ := BuildExample(m, "", "")
 		return reflect.New(reflect.ValueOf(g).Type()).Interface()
 	}
 	fmt.Println()
 	return nil
 }
 
-func buildStructFromMap(_map any) (any, string) {
-	dsb := dynamicstruct.NewStruct()
-	for k, v := range _map.(map[string]interface{}) {
-		exportName := getExportName(k)
-		i, _type := buildExample(v, k, "")
-		switch _type {
-		case "string":
-			dsb.AddField(exportName, i.(string), fmt.Sprintf(`json:"%s" type:"%s"`, k, _type))
-		case "number":
-			dsb.AddField(exportName, i.(float64), fmt.Sprintf(`json:"%s" type:"%s"`, k, _type))
-		case "integer":
-			dsb.AddField(exportName, int64(i.(float64)), fmt.Sprintf(`json:"%s" type:"%s"`, k, _type))
-		case "boolean":
-			dsb.AddField(exportName, i.(bool), fmt.Sprintf(`json:"%s" type:"%s"`, k, _type))
-		case "slice":
-			dsb.AddField(exportName, i, fmt.Sprintf(`json:"%s" type:"%s"`, k, _type))
-		case "struct":
-			dsb.AddField(exportName, i, fmt.Sprintf(`json:"%s" type:"%s"`, k, _type))
-		}
+func getTagsFromDolusTask(task string, _map map[string]interface{}) (any, Tag) {
+	switch task {
+	case "GenInt32":
+		return float64(0), Tag{Type: "integer",
+			Tags:   fmt.Sprintf(`gen_task:"%s" gen_param_1:%d gen_param_2:%d`, task, int32(_map["min"].(float64)), int32(_map["max"].(float64))),
+			Format: "int32"}
 	}
-	return reflect.ValueOf(dsb.Build().New()).Elem().Interface(), "struct"
+	panic(fmt.Sprintf("Unrecognised dolus task: %s", task))
 }
 
-func buildSliceOfSliceElementType(config any, name string, root string) (any, string) {
+type Tag struct {
+	Type   string
+	Tags   string
+	Format string
+}
+
+// TODO return tags instead of just type within a struct
+func buildStructFromMap(_map any) (any, Tag) {
+	dsb := dynamicstruct.NewStruct()
+	m := _map.(map[string]interface{})
+	for k, v := range m {
+		if m["$dolus"] != nil {
+			task := m["$dolus"].(map[string]interface{})["task"].(string)
+			return getTagsFromDolusTask(task, m)
+		}
+		exportName := getExportName(k)
+		i, _type := BuildExample(v, k, "")
+		tags := fmt.Sprintf(`json:"%s" type:"%s" %s`, k, _type.Type, _type.Tags)
+		switch _type.Type {
+		case "string":
+			dsb.AddField(exportName, i.(string), tags)
+		case "number":
+			dsb.AddField(exportName, i.(float64), tags)
+		case "integer":
+			dsb.AddField(exportName, int64(i.(float64)), tags)
+		case "boolean":
+			dsb.AddField(exportName, i.(bool), tags)
+		case "slice":
+			dsb.AddField(exportName, i, tags)
+
+		case "struct":
+			dsb.AddField(exportName, i, tags)
+		}
+	}
+	return reflect.ValueOf(dsb.Build().New()).Elem().Interface(), Tag{Type: "struct"}
+}
+
+func buildSliceOfSliceElementType(config any, name string, root string) (any, Tag) {
 	fullFieldName := name
 	if root != "" {
 		fullFieldName = fmt.Sprintf("%s.%s", root, name)
@@ -184,12 +210,12 @@ func buildSliceOfSliceElementType(config any, name string, root string) (any, st
 	if len(slice) == 0 {
 		firstElement = "" //emtpy slice assume array of strings
 	} else {
-		firstElement, _ = buildExample(slice[0], name, "")
+		firstElement, _ = BuildExample(slice[0], name, "")
 	}
 
 	currentElement := firstElement
 	for i := 1; i < len(slice); i++ {
-		nextElement, _ := buildExample(slice[i], name, "")
+		nextElement, _ := BuildExample(slice[i], name, "")
 		if reflect.ValueOf(nextElement).Kind() == reflect.Struct {
 			var err error
 			var mergedStruct *dstruct.DynamicStructModifier
@@ -207,7 +233,7 @@ func buildSliceOfSliceElementType(config any, name string, root string) (any, st
 		}
 	}
 	sliceOfElementType := reflect.SliceOf(reflect.ValueOf(currentElement).Type())
-	return reflect.MakeSlice(sliceOfElementType, 0, 1024).Interface(), "slice"
+	return reflect.MakeSlice(sliceOfElementType, 0, 1024).Interface(), Tag{Type: "slice"}
 }
 
 func getType(element any, kind reflect.Kind) string {
@@ -228,10 +254,10 @@ func getType(element any, kind reflect.Kind) string {
 	return "unknown"
 }
 
-func buildExample(config interface{}, name string, root string) (interface{}, string) {
+func BuildExample(config interface{}, name string, root string) (interface{}, Tag) {
 
 	if config == nil {
-		return nil, "nil"
+		return nil, Tag{Type: "nil"}
 	}
 	configKind := reflect.ValueOf(config).Kind()
 	switch configKind {
@@ -240,7 +266,7 @@ func buildExample(config interface{}, name string, root string) (interface{}, st
 	case reflect.Slice:
 		return buildSliceOfSliceElementType(config, name, root)
 	default:
-		return config, getType(config, configKind)
+		return config, Tag{Type: getType(config, configKind)}
 	}
 
 }

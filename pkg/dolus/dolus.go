@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/MartinSimango/dolus/pkg/example"
+	"github.com/MartinSimango/dolus/pkg/expectation"
 	"github.com/MartinSimango/dolus/pkg/generator"
 	"github.com/MartinSimango/dolus/pkg/schema"
 	"github.com/fatih/color"
@@ -44,6 +45,7 @@ type Dolus struct {
 	HidePort           bool
 	EchoServer         *echo.Echo
 	ResponseRepository *ResponseRepository
+	ExpectationEngine  *expectation.ExpectationEngine
 }
 
 type OperationResponse struct {
@@ -59,6 +61,7 @@ func New() *Dolus {
 		HidePort:           false,
 		OpenAPIspec:        "openapi.yaml",
 		ResponseRepository: NewResponseRepository(),
+		ExpectationEngine:  &expectation.ExpectationEngine{},
 	}
 }
 

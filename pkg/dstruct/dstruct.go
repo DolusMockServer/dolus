@@ -139,6 +139,12 @@ func (ds *DynamicStructModifier) GetField(field string) *Field {
 	return ds.allFields[field]
 }
 
+func (ds *DynamicStructModifier) Print() {
+	for k, v := range ds.allFields {
+		fmt.Println("F: ", k, v.Tags, v.Value.Type())
+	}
+}
+
 // func setField[T any](f *Field, field string, value T) {
 // 	*(*T)(unsafe.Pointer(f.Address)) = value
 // }
