@@ -11,8 +11,8 @@ dolus.#Expectations & {
         priority: 1
         response:  dolus.#Response & {
             body: {
-				test:  2
-				age: dolus.#GenInt32 
+				test: 5.0 
+				age: dolus.#GenInt32 & { min: 20 , max: 40}
 			}
             status: 2
             }

@@ -57,7 +57,7 @@ var (
 		_func: func(parameters ...any) any {
 			min := parameters[0].(*float64)
 			max := parameters[1].(*float64)
-			return generateNumber(*min, *max)
+			return generateNumber(*min, *max-1)
 		},
 	}
 
@@ -162,6 +162,7 @@ func GenerateFixedValueFunc[T any](n T) GenerationFunction {
 }
 
 func GenerateFloatFunc(min, max *float64) GenerationFunction {
+
 	f := generateFloat
 	f.args = []any{min, max}
 	return f
@@ -262,6 +263,19 @@ func generationFunctionFromTags(kind reflect.Kind,
 	if ok {
 		numEnums, _ := strconv.Atoi(enum)
 		return GenerateFixedValueFunc(tags.Get(fmt.Sprintf("enum_%d", generateNumber(0, numEnums-1)+1)))
+	}
+
+	gen_task, ok := tags.Lookup("gen_task")
+	if ok {
+		switch gen_task {
+		case "GenInt32":
+			param_1, _ := strconv.Atoi(tags.Get("gen_param_1"))
+			param_2, _ := strconv.Atoi(tags.Get("gen_param_2"))
+			p1 := int32(param_1)
+			p2 := int32(param_2)
+			return GenerateInt32Func(&p1, &p2)
+
+		}
 	}
 
 	return generationConfig.DefaultGenerationFunctions[kind]

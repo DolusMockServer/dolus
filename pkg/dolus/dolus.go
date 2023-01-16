@@ -96,9 +96,16 @@ func (d *Dolus) startHttpServer(address string) error {
 			p := getRealPath(path)
 			m := method
 			for code, ref := range operation.Responses {
-				// if p != "/store/order/:orderId" || code != "200" {
-				// 	continue
-				// }
+				if p == "/store/order/:orderId" && code == "200" {
+					d.EchoServer.Router().Add(m, p, func(ctx echo.Context) error {
+						return d.ResponseRepository.GetEchoResponse(p, m, ctx)
+					})
+					continue
+
+				} else {
+					continue
+
+				}
 				fmt.Println(p, code)
 
 				s := schema.New(path, method, code, ref, "application/json")

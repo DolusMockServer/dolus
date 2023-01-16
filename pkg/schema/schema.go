@@ -6,6 +6,7 @@ import (
 	"reflect"
 	"strings"
 
+	"cuelang.org/go/cue"
 	"github.com/MartinSimango/dolus/pkg/dstruct"
 	"github.com/MartinSimango/dolus/pkg/helper"
 	"github.com/getkin/kin-openapi/openapi3"
@@ -29,7 +30,14 @@ func New(path, method, statusCode string, ref *openapi3.ResponseRef, mediaType s
 	}
 
 }
-
+func NewSchemaFromCueValue(path, method, statusCode string, s any) *ResponseSchema {
+	return &ResponseSchema{
+		Path:       path,
+		Method:     method,
+		StatusCode: statusCode,
+		schema:     s,
+	}
+}
 func (rs *ResponseSchema) GetSchema() any {
 	// Make copy of schema to use as struct that is being modified to not modify original schema
 	if rs.schema == nil {
@@ -145,7 +153,7 @@ func structFromExample(example openapi3.Examples) any {
 	// TODO make this not use a loop
 	for _, v := range example {
 		m := (v.Value.Value).(map[string]interface{})
-		g, _ := BuildExample(m, "", "")
+		g, _ := BuildExample(m, "", "", nil)
 		return reflect.New(reflect.ValueOf(g).Type()).Interface()
 	}
 	fmt.Println()
@@ -156,7 +164,7 @@ func getTagsFromDolusTask(task string, _map map[string]interface{}) (any, Tag) {
 	switch task {
 	case "GenInt32":
 		return float64(0), Tag{Type: "integer",
-			Tags:   fmt.Sprintf(`gen_task:"%s" gen_param_1:%d gen_param_2:%d`, task, int32(_map["min"].(float64)), int32(_map["max"].(float64))),
+			Tags:   fmt.Sprintf(`gen_task:"%s" gen_param_1:"%d" gen_param_2:"%d"`, task, int32(_map["min"].(float64)), int32(_map["max"].(float64))),
 			Format: "int32"}
 	}
 	panic(fmt.Sprintf("Unrecognised dolus task: %s", task))
@@ -169,24 +177,43 @@ type Tag struct {
 }
 
 // TODO return tags instead of just type within a struct
-func buildStructFromMap(_map any) (any, Tag) {
+func buildStructFromMap(_map any, cueValue *cue.Value) (any, Tag) {
 	dsb := dynamicstruct.NewStruct()
 	m := _map.(map[string]interface{})
 	for k, v := range m {
+		var nextCueValue *cue.Value
+		if cueValue != nil {
+			c := cueValue.Lookup(k)
+			nextCueValue = &c
+		}
 		if m["$dolus"] != nil {
 			task := m["$dolus"].(map[string]interface{})["task"].(string)
 			return getTagsFromDolusTask(task, m)
 		}
+
 		exportName := getExportName(k)
-		i, _type := BuildExample(v, k, "")
+
+		i, _type := BuildExample(v, k, "", nextCueValue)
+		if cueValue != nil {
+			switch cueValue.Lookup(k).Kind() {
+			case cue.FloatKind:
+				_type.Type = "number"
+			}
+		}
 		tags := fmt.Sprintf(`json:"%s" type:"%s" %s`, k, _type.Type, _type.Tags)
+
 		switch _type.Type {
 		case "string":
 			dsb.AddField(exportName, i.(string), tags)
 		case "number":
 			dsb.AddField(exportName, i.(float64), tags)
 		case "integer":
-			dsb.AddField(exportName, int64(i.(float64)), tags)
+			if _type.Format == "int32" {
+				dsb.AddField(exportName, int32(i.(float64)), tags)
+			} else {
+				dsb.AddField(exportName, int64(i.(float64)), tags)
+			}
+
 		case "boolean":
 			dsb.AddField(exportName, i.(bool), tags)
 		case "slice":
@@ -199,7 +226,7 @@ func buildStructFromMap(_map any) (any, Tag) {
 	return reflect.ValueOf(dsb.Build().New()).Elem().Interface(), Tag{Type: "struct"}
 }
 
-func buildSliceOfSliceElementType(config any, name string, root string) (any, Tag) {
+func buildSliceOfSliceElementType(config any, name string, root string, cueValue *cue.Value) (any, Tag) {
 	fullFieldName := name
 	if root != "" {
 		fullFieldName = fmt.Sprintf("%s.%s", root, name)
@@ -210,12 +237,12 @@ func buildSliceOfSliceElementType(config any, name string, root string) (any, Ta
 	if len(slice) == 0 {
 		firstElement = "" //emtpy slice assume array of strings
 	} else {
-		firstElement, _ = BuildExample(slice[0], name, "")
+		firstElement, _ = BuildExample(slice[0], name, "", cueValue)
 	}
 
 	currentElement := firstElement
 	for i := 1; i < len(slice); i++ {
-		nextElement, _ := BuildExample(slice[i], name, "")
+		nextElement, _ := BuildExample(slice[i], name, "", cueValue)
 		if reflect.ValueOf(nextElement).Kind() == reflect.Struct {
 			var err error
 			var mergedStruct *dstruct.DynamicStructModifier
@@ -254,7 +281,7 @@ func getType(element any, kind reflect.Kind) string {
 	return "unknown"
 }
 
-func BuildExample(config interface{}, name string, root string) (interface{}, Tag) {
+func BuildExample(config interface{}, name string, root string, cueValue *cue.Value) (interface{}, Tag) {
 
 	if config == nil {
 		return nil, Tag{Type: "nil"}
@@ -262,9 +289,9 @@ func BuildExample(config interface{}, name string, root string) (interface{}, Ta
 	configKind := reflect.ValueOf(config).Kind()
 	switch configKind {
 	case reflect.Map:
-		return buildStructFromMap(config)
+		return buildStructFromMap(config, cueValue)
 	case reflect.Slice:
-		return buildSliceOfSliceElementType(config, name, root)
+		return buildSliceOfSliceElementType(config, name, root, cueValue)
 	default:
 		return config, Tag{Type: getType(config, configKind)}
 	}

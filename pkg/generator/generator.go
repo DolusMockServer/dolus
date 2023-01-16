@@ -55,7 +55,7 @@ func (gc *GenerationConfig) initGenerationFunctionDefaults() {
 	gc.DefaultGenerationFunctions[reflect.Ptr] = GenerateNilValue()
 	gc.DefaultGenerationFunctions[reflect.Int64] = GenerateInt64Func(&gc.Int64Min, &gc.Int64Max)
 	gc.DefaultGenerationFunctions[reflect.Int32] = GenerateInt32Func(&gc.Int32Min, &gc.Int32Max)
-	gc.DefaultGenerationFunctions[reflect.Float64] = GenerateFloatFunc(&gc.Float64Min, &gc.Float64Min)
+	gc.DefaultGenerationFunctions[reflect.Float64] = GenerateFloatFunc(&gc.Float64Min, &gc.Float64Max)
 	gc.DefaultGenerationFunctions[reflect.Bool] = GenerateBoolFunc()
 
 }
