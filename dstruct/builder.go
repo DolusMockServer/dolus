@@ -84,9 +84,6 @@ func (dsb *builderImpl) RemoveField(name string) Builder {
 		node = node.GetNode(fields[i])
 	}
 	node.DeleteNode(fields[len(fields)-1])
-	if len(fields) == 1 {
-		return dsb
-	}
 
 	// newNodeName, newNode := fields[0], dsb.root.GetNode(fields[0])
 	// dsb.addFieldToTree(newNodeName, helper.GetUnderlyingPointerValue(dsb.buildStruct(newNode)), newNode.data.Tag, dsb.root)
