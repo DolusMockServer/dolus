@@ -9,9 +9,9 @@ func setValue(val reflect.Value, tags reflect.StructTag, generationConfig Genera
 	case reflect.Struct:
 		setStructValues(val, generationConfig)
 	case reflect.Slice:
-		panic("Unhanled setValue case")
+		panic("Unhandled setValue case")
 	case reflect.Pointer:
-		panic("Unhanled setValue case")
+		panic("Unhandled setValue case")
 	default:
 		val.Set(reflect.ValueOf(generationFunctionFromTags(val.Kind(), tags, generationConfig).Generate()))
 

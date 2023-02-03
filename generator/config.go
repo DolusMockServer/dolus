@@ -7,6 +7,8 @@ type IntConfig struct {
 	Int64Max int64
 	Int32Min int32
 	Int32Max int32
+	IntMin   int
+	IntMax   int
 }
 
 type FloatConfig struct {

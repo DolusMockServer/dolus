@@ -2,6 +2,8 @@ module github.com/MartinSimango/dolus
 
 go 1.19
 
+// replace
+
 require (
 	cuelang.org/go v0.4.3 // indirect
 	github.com/cockroachdb/apd/v2 v2.0.1 // indirect
@@ -25,6 +27,7 @@ require (
 	github.com/pkg/errors v0.8.1 // indirect
 	github.com/protocolbuffers/txtpbfmt v0.0.0-20201118171849-f6a6b3f636fc // indirect
 	github.com/takahiromiyamoto/go-xeger v0.0.0-20190630230347-fd0b7a1d9283 // indirect
+	github.com/ucarion/urlpath v0.0.0-20200424170820-7ccc79b76bbb // indirect
 	github.com/valyala/bytebufferpool v1.0.0 // indirect
 	github.com/valyala/fasttemplate v1.2.1 // indirect
 	golang.org/x/crypto v0.0.0-20210817164053-32db794688a5 // indirect

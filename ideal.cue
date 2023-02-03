@@ -6,15 +6,21 @@ import (
 dolus.#Expectations & {
     expectations: [
         dolus.#Expectation & {
-        path:  "/store/order/1"
+        path:  "/store/order/2"
         method: "GET" 
-        priority: 1
+        priority: -1
         response:  dolus.#Response & {
             body: {
-				test: 5.0 
-				age: dolus.#GenInt32 & { min: 20 , max: 40}
+				test: 5.2
+				age: dolus.#GenInt32 
+                shipDate: "a" 
+                pair: 
+                    g: {
+                        hello: 20
+                    }
+                
 			}
-            status: 2
+            status: 200
             }
         }
     ]
