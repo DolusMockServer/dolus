@@ -1,6 +1,8 @@
 package expectation
 
-import "github.com/MartinSimango/dolus/core"
+import (
+	"github.com/MartinSimango/dstruct"
+)
 
 type PathMethod struct {
 	Path   string
@@ -13,7 +15,7 @@ type PathMethodStatus struct {
 }
 
 type Response struct {
-	Body   core.Example
+	Body   dstruct.GeneratedStruct
 	Status int
 	//headers
 }

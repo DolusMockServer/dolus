@@ -6,6 +6,7 @@ go 1.19
 
 require (
 	cuelang.org/go v0.4.3 // indirect
+	github.com/MartinSimango/dstruct v0.0.1 // indirect
 	github.com/cockroachdb/apd/v2 v2.0.1 // indirect
 	github.com/emicklei/proto v1.6.15 // indirect
 	github.com/fatih/color v1.13.0 // indirect

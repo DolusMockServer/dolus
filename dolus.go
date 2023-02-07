@@ -10,7 +10,8 @@ import (
 	"github.com/MartinSimango/dolus/core"
 	"github.com/MartinSimango/dolus/engine"
 	"github.com/MartinSimango/dolus/expectation"
-	"github.com/MartinSimango/dolus/generator"
+	"github.com/MartinSimango/dstruct"
+	"github.com/MartinSimango/dstruct/generator"
 	"github.com/fatih/color"
 	"github.com/getkin/kin-openapi/openapi3"
 	"github.com/labstack/echo/v4"
@@ -89,19 +90,19 @@ func (d *Dolus) startHttpServer(address string) error {
 			p := getRealPath(path)
 			m := method
 			for code, ref := range operation.Responses {
-				// if p != "/store/order/:orderId" || code != "200" {
-				// 	continue
-				// }
-				if p != "/" || code != "200" {
+				if p != "/store/order/:orderId" || code != "200" {
 					continue
 				}
+				// if p != "/" || code != "200" {
+				// 	continue
+				// }
 
 				fmt.Println(p, code)
 				responseSchema := core.NewResponseSchemaFromOpenApi3Ref(p, method, code, ref, "application/json")
 
 				// engine must store for each path method code then check that
 				d.expectationEngine.AddResponseSchemaForPathMethod(responseSchema)
-				e := core.NewExample(responseSchema, d.GenerationConfig)
+				e := dstruct.NewGeneratedStructWithConfig(responseSchema.Schema.GetSchema(), &d.GenerationConfig)
 				if e == nil {
 					fmt.Println("NOTHING")
 					continue
@@ -114,7 +115,7 @@ func (d *Dolus) startHttpServer(address string) error {
 				}, expectation.Expectation{
 					Pririoty: 0,
 					Response: expectation.Response{
-						Body:   *e,
+						Body:   e,
 						Status: status,
 					},
 					Request: expectation.Request{
@@ -133,7 +134,8 @@ func (d *Dolus) startHttpServer(address string) error {
 						ErrorMsg: err.Error(),
 					})
 				}
-				return ctx.JSON(response.Status, response.Body.Get())
+				response.Body.Generate()
+				return ctx.JSON(response.Status, response.Body.Instance())
 			})
 		}
 
@@ -153,7 +155,7 @@ func (d *Dolus) Start(address string) error {
 
 	if d.expectationEngine == nil {
 		generationConfig := d.GenerationConfig
-		generationConfig.SetNonRequiredFields = true
+		generationConfig.SetNonRequiredFields(true)
 		d.expectationEngine = engine.NewDolusExpectationEngine(generationConfig)
 	}
 

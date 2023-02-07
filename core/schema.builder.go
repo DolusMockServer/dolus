@@ -5,8 +5,9 @@ import (
 	"reflect"
 	"strings"
 
-	"github.com/MartinSimango/dolus/dstruct"
 	"github.com/MartinSimango/dolus/internal/helper"
+	"github.com/MartinSimango/dstruct"
+	"github.com/MartinSimango/dstruct/generator"
 	"github.com/getkin/kin-openapi/openapi3"
 )
 
@@ -77,7 +78,7 @@ func getStructFromOpenApi3Schema(schema openapi3.Schema) any {
 		switch p.Value.Type {
 		case "object":
 			internalStruct := getStructFromOpenApi3Schema(*p.Value)
-			dsb.AddField(exportName, reflect.ValueOf(internalStruct).Elem().Interface(), tags)
+			dsb.AddField(exportName, reflect.ValueOf(internalStruct).Interface(), tags)
 		case "string":
 			addField[string](exportName, tags, nullable, dsb)
 		case "number":
@@ -119,9 +120,9 @@ func getStructFromAny(config any) any {
 
 func getTagsFromDolusTask(task string, _map map[string]interface{}) (any, SchemaInfo) {
 	switch task {
-	case "GenInt32":
+	case string(generator.GenInt32):
 		return int32(0), SchemaInfo{Kind: reflect.Int32,
-			Tags:   fmt.Sprintf(`gen_task:"%s" gen_param_1:"%d" gen_param_2:"%d"`, task, int32(_map["min"].(int)), int32(_map["max"].(int))),
+			Tags:   fmt.Sprintf(`gen_task:"%s(%d,%d)"`, task, int32(_map["min"].(int)), int32(_map["max"].(int))),
 			Format: "int32"}
 	}
 	panic(fmt.Sprintf("Unrecognised dolus task: %s", task))

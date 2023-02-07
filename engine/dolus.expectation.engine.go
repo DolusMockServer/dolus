@@ -9,7 +9,8 @@ import (
 	"cuelang.org/go/cue/load"
 	"github.com/MartinSimango/dolus/core"
 	"github.com/MartinSimango/dolus/expectation"
-	"github.com/MartinSimango/dolus/generator"
+	"github.com/MartinSimango/dstruct"
+	"github.com/MartinSimango/dstruct/generator"
 	"github.com/ucarion/urlpath"
 )
 
@@ -148,7 +149,7 @@ func (e *DolusExpectationEngine) addExpectationFromCueValue(instance cue.Value) 
 		}
 		if doesResponseSchemaMatch(responseSchema, sc) {
 
-			responseExample := core.NewExample(responseSchema, e.GenerationConfig)
+			responseExample := dstruct.NewGeneratedStructWithConfig(responseSchema.Schema.GetSchema(), &e.GenerationConfig)
 			matchingPathMethod := expectation.PathMethod{
 				Path:   sc.Path,
 				Method: sc.Method,
@@ -157,7 +158,7 @@ func (e *DolusExpectationEngine) addExpectationFromCueValue(instance cue.Value) 
 			e.expectations[matchingPathMethod] = append(e.expectations[matchingPathMethod], expectation.Expectation{
 				Pririoty: cueExpectation.Pririoty,
 				Response: expectation.Response{
-					Body:   *responseExample,
+					Body:   responseExample,
 					Status: cueExpectation.Response.Status,
 				},
 				Request: expectation.Request{
