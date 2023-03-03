@@ -108,8 +108,12 @@ func (e *DolusExpectationEngine) GetExpectationForPathMethod(pathMethod expectat
 }
 
 func (e *DolusExpectationEngine) addExpectationFromCueValue(instance cue.Value) {
+	expectations, err := instance.Value().LookupPath(cue.ParsePath("expectations")).List()
 
-	expectations, _ := instance.Value().LookupPath(cue.ParsePath("expectations")).List()
+	if err != nil {
+		fmt.Printf("error with expectaion in file %s: %s \n", instance.Pos().Filename(), err)
+		return
+	}
 	for expectations.Next() {
 
 		var cueExpectation expectation.CueExpectation
@@ -142,17 +146,18 @@ func (e *DolusExpectationEngine) addExpectationFromCueValue(instance cue.Value) 
 		// /store/order/1
 		// /store/order/:orderId
 		// /store/order
-		sc, err := e.getMatchingPathSchema(responseSchema.Path, responseSchema.Method, responseSchema.StatusCode)
+		matchingPathSchema, err := e.getMatchingPathSchema(responseSchema.Path, responseSchema.Method, responseSchema.StatusCode)
 		if err != nil {
 			fmt.Println("Error with expectation! ", err)
 			continue
 		}
-		if doesResponseSchemaMatch(responseSchema, sc) {
+
+		if doesResponseSchemaMatch(responseSchema, matchingPathSchema) {
 
 			responseExample := dstruct.NewGeneratedStructWithConfig(responseSchema.Schema.GetSchema(), &e.GenerationConfig)
 			matchingPathMethod := expectation.PathMethod{
-				Path:   sc.Path,
-				Method: sc.Method,
+				Path:   matchingPathSchema.Path,
+				Method: matchingPathSchema.Method,
 			}
 
 			e.expectations[matchingPathMethod] = append(e.expectations[matchingPathMethod], expectation.Expectation{
@@ -200,6 +205,7 @@ func (e *DolusExpectationEngine) getMatchingPathSchema(path string, method strin
 
 func doesResponseSchemaMatch(expectation *core.ResponseSchema, schema *core.ResponseSchema) bool {
 	// e := dstruct.New(expectation.GetSchema())
+	dstruct.ExtendStruct(expectation.Schema.GetSchema()).Build()
 
 	// err := dstruct.DoSchemasMatch(e, dstruct.New(schema.GetSchema()))
 	// e.Print()
