@@ -1,6 +1,8 @@
 package expectation
 
 import (
+	"fmt"
+
 	"github.com/MartinSimango/dstruct"
 )
 
@@ -12,6 +14,20 @@ type PathMethod struct {
 type PathMethodStatus struct {
 	PathMethod
 	Status string
+}
+
+func PathMethodFromExpectation(expectation Expectation) PathMethod {
+	return PathMethod{
+		Path:   expectation.Request.Path,
+		Method: expectation.Request.Method,
+	}
+}
+
+func PathMethodStatusExpectation(expectation Expectation) PathMethodStatus {
+	return PathMethodStatus{
+		PathMethod: PathMethodFromExpectation(expectation),
+		Status:     fmt.Sprintf("%d", expectation.Response.Status),
+	}
 }
 
 type Response struct {
@@ -29,7 +45,7 @@ type Request struct {
 }
 
 type Expectation struct {
-	Pririoty int
+	Priority int
 	Response Response
 	Request  Request
 	// RequestMatcher

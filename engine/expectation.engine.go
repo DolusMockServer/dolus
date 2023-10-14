@@ -3,18 +3,17 @@ package engine
 import (
 	"net/http"
 
-	"github.com/MartinSimango/dolus/core"
 	"github.com/MartinSimango/dolus/expectation"
+	"github.com/MartinSimango/dstruct"
 )
 
 type ExpectationEngine interface {
-	AddResponseSchemaForPathMethod(responseSchema *core.ResponseSchema) error
-	AddExpectationsFromFiles(files ...string)
-	AddExpectation(pathMethod expectation.PathMethod, expectation expectation.Expectation) error
+	AddExpectation(expectation expectation.Expectation, validateExpectationSchema bool) error
+	AddResponseSchemaForPathMethodStatus(pathMethodStatus expectation.PathMethodStatus, schema dstruct.DynamicStructModifier) error
 	GetExpectations() map[expectation.PathMethod][]expectation.Expectation
 	GetExpectationForPathMethod(pathMethod expectation.PathMethod) []expectation.Expectation
 	GetResponseForRequest(path, method string, request *http.Request) (*expectation.Response, error)
-	Load() error
+	// Load() error
 }
 
 // GetEchoResponse(path, method string, ctx echo.Context) error

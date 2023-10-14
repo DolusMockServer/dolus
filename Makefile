@@ -8,13 +8,13 @@ install: build
 	@go install ./...
 
 run: install
-	@dolus
+	@go run cmd/dolus-test/main.go
 
 run-optimized: build-optimized
 	@dolus-optimized
 
 debug: $(GOPATH)/bin/dlv
-	@dlv debug cmd/dolus/main.go
+	@dlv debug cmd/dolus-test/main.go
 
 size:
 	@du -h $(GOPATH)/bin/dolus

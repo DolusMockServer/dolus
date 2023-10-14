@@ -5,8 +5,8 @@ import (
 	"reflect"
 	"strings"
 
-	"github.com/MartinSimango/dolus/internal/helper"
 	"github.com/MartinSimango/dstruct"
+	"github.com/MartinSimango/dstruct/dreflect"
 	"github.com/MartinSimango/dstruct/generator"
 	"github.com/getkin/kin-openapi/openapi3"
 )
@@ -73,7 +73,7 @@ func getStructFromOpenApi3Schema(schema openapi3.Schema) any {
 	dsb := dstruct.NewBuilder()
 
 	for name, p := range schema.Properties {
-		exportName := helper.GetExportName(name)
+		exportName := getExportName(name)
 		tags, nullable := getTags(name, inList(name, schema.Required), *p.Value)
 		switch p.Value.Type {
 		case "object":
@@ -107,7 +107,6 @@ func getStructFromOpenApi3Schema(schema openapi3.Schema) any {
 func getStructFromOpenApi3Example(example openapi3.Examples) any {
 	for _, v := range example {
 		s, _ := buildSchemaFromMap((v.Value.Value).(map[string]interface{}))
-		// fmt.Println("X: ", reflect.TypeOf(s))
 		return s
 	}
 	return nil
@@ -118,14 +117,25 @@ func getStructFromAny(config any) any {
 	return schema
 }
 
-func getTagsFromDolusTask(task string, _map map[string]interface{}) (any, SchemaInfo) {
+// DolusTask super set of Task
+
+func buildSchemaFromDolusTask(task generator.TaskName, _map map[string]interface{}) (any, SchemaInfo) {
+	// t :=  generator.GetTask(task)
+
+	// t.ReturnType()
+	// t.DefaultInstance()
+	// t.TagsFromMap
 	switch task {
-	case string(generator.GenInt32):
+	case generator.GenInt32:
+
 		return int32(0), SchemaInfo{Kind: reflect.Int32,
+			// TODO should change to something like:
+			// Tags: generator.GetTagsForGenInt32Task(int32(_map["min"].(int)), int32(_map["max"].(int)))
+			// CreateTagsForTaskFromMap(task, _map)
 			Tags:   fmt.Sprintf(`gen_task:"%s(%d,%d)"`, task, int32(_map["min"].(int)), int32(_map["max"].(int))),
 			Format: "int32"}
 	}
-	panic(fmt.Sprintf("Unrecognised dolus task: %s", task))
+	panic(fmt.Sprintf("Unrecognized dolus task: %s", task))
 }
 
 type SchemaInfo struct {
@@ -141,7 +151,7 @@ func buildSchemaFromMap(_map any) (any, SchemaInfo) {
 	for k, v := range m {
 		if m["$dolus"] != nil {
 			task := m["$dolus"].(map[string]interface{})["task"].(string)
-			return getTagsFromDolusTask(task, m)
+			return buildSchemaFromDolusTask(generator.TaskName(task), m)
 		}
 
 		exportName := getExportName(k)
@@ -224,7 +234,7 @@ func buildSchemaFromStruct(config any, root string) (any, SchemaInfo) {
 			fieldName = fmt.Sprintf("%s.%s", root, fieldName)
 		}
 
-		exportName := helper.GetExportName(fieldName)
+		exportName := getExportName(fieldName)
 
 		schema, schemaInfo := buildSchemaFromAny(field.Interface(), "", "")
 		dsb.AddField(exportName, schema, createFieldTags(fieldName, schemaInfo))
@@ -249,7 +259,7 @@ func buildSchemaFromAny(config interface{}, name string, root string) (interface
 	case reflect.Struct:
 		return buildSchemaFromStruct(config, root)
 	case reflect.Ptr:
-		return buildSchemaFromAny(helper.GetUnderlyingPointerValue(config), name, root)
+		return buildSchemaFromAny(dreflect.GetUnderlyingPointerValue(config), name, root)
 	default:
 		return config, SchemaInfo{Kind: configKind, Tags: fmt.Sprintf(`default:"%v"`, config)}
 	}

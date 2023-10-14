@@ -1,19 +1,12 @@
 package dolus
 
 import (
-	"context"
 	"fmt"
-	"strconv"
-	"strings"
-	"time"
 
-	"github.com/MartinSimango/dolus/core"
 	"github.com/MartinSimango/dolus/engine"
 	"github.com/MartinSimango/dolus/expectation"
-	"github.com/MartinSimango/dstruct"
 	"github.com/MartinSimango/dstruct/generator"
 	"github.com/fatih/color"
-	"github.com/getkin/kin-openapi/openapi3"
 	"github.com/labstack/echo/v4"
 )
 
@@ -41,21 +34,27 @@ func printBanner() {
 }
 
 type Dolus struct {
-	OpenAPIspec       string
-	HideBanner        bool
-	HidePort          bool
-	EchoServer        *echo.Echo
-	GenerationConfig  generator.GenerationConfig
-	expectationEngine engine.ExpectationEngine
-	expectationFiles  []string
+	OpenAPIspec        string
+	HideBanner         bool
+	HidePort           bool
+	EchoServer         *echo.Echo
+	GenerationConfig   generator.GenerationConfig
+	expectationEngine  engine.ExpectationEngine
+	expectationFiles   []string
+	openAPISpecLoader  expectation.Loader[expectation.OpenAPISpecLoadType]
+	cueLoader          expectation.Loader[expectation.CueExpectationLoadType]
+	expectationBuilder expectation.ExpectationBuilder
+	fieldGenerator     *generator.Generator
 }
 
 func New() *Dolus {
+	generationConfig := generator.NewGenerationConfig()
+
 	return &Dolus{
 		HideBanner:       false,
 		HidePort:         false,
 		OpenAPIspec:      "openapi.yaml",
-		GenerationConfig: *generator.NewGenerationConfig(),
+		GenerationConfig: *generationConfig,
 	}
 
 }
@@ -64,86 +63,82 @@ func (d *Dolus) initHttpServer() {
 	d.EchoServer = echo.New()
 	d.EchoServer.HideBanner = true
 	d.EchoServer.HidePort = d.HidePort
+	d.openAPISpecLoader = expectation.NewOpenOPISpecLoader(d.OpenAPIspec)
+	d.cueLoader = expectation.NewCueExpectationLoader(d.expectationFiles)
+	d.fieldGenerator = generator.NewGenerator(&d.GenerationConfig)
+	d.expectationBuilder = expectation.NewExpectationBuilderImpl(*d.fieldGenerator)
+
 }
 
-func getRealPath(path string) string {
-	p := strings.ReplaceAll(path, "{", ":")
-	return strings.ReplaceAll(p, "}", "")
+func (d *Dolus) addRoutes(method, path string) {
+	d.EchoServer.Router().Add(method, path, func(ctx echo.Context) error {
+		response, err := d.expectationEngine.GetResponseForRequest(path, method, ctx.Request())
+		if err != nil {
+			return ctx.JSON(500, GeneralError{
+				Path:     ctx.Request().URL.Path,
+				Method:   method,
+				ErrorMsg: err.Error(),
+			})
+		}
+		// response.Body.GetFieldGenerationConfig("Id").SetNonRequiredFields(false)
+
+		response.Body.Generate()
+		response.Body.Update()
+		return ctx.JSON(response.Status, response.Body.Instance())
+	})
 }
 
-func (d *Dolus) startHttpServer(address string) error {
-	start := time.Now()
-	d.initHttpServer()
+func (d *Dolus) loadOpenAPISpecExpectations() error {
 
-	ctx := context.Background()
-	loader := &openapi3.Loader{Context: ctx, IsExternalRefsAllowed: true}
-	doc, err := loader.LoadFromFile(d.OpenAPIspec)
+	expectations, err := d.expectationBuilder.BuildExpectationsFromOpenApiSpecLoader(d.openAPISpecLoader)
 	if err != nil {
 		return err
 	}
 
-	if err := doc.Validate(ctx); err != nil {
+	for _, e := range expectations {
+
+		method := e.Request.Method
+		path := e.Request.Path
+		d.addRoutes(method, path)
+		d.expectationEngine.AddResponseSchemaForPathMethodStatus(expectation.PathMethodStatusExpectation(e),
+			e.Response.Body)
+		d.expectationEngine.AddExpectation(e, false)
+
+	}
+
+	return nil
+}
+
+func (d *Dolus) loadCueExpectations() error {
+
+	expectations, err := d.expectationBuilder.BuildExpectationsFromCueLoader(d.cueLoader)
+	if err != nil {
 		return err
 	}
-	for path := range doc.Paths {
-		for method, operation := range doc.Paths[path].Operations() {
-			p := getRealPath(path)
-			m := method
-			for code, ref := range operation.Responses {
-				if p != "/store/order/:orderId" || code != "200" {
-					continue
-				}
-				// if p != "/" || code != "200" {
-				// 	continue
-				// }
-
-				fmt.Println(p, code)
-				responseSchema := core.NewResponseSchemaFromOpenApi3Ref(p, method, code, ref, "application/json")
-
-				// engine must store for each path method code then check that
-				d.expectationEngine.AddResponseSchemaForPathMethod(responseSchema)
-				e := dstruct.NewGeneratedStructWithConfig(responseSchema.Schema.GetSchema(), &d.GenerationConfig)
-				if e == nil {
-					fmt.Println("NOTHING")
-					continue
-				}
-
-				status, _ := strconv.Atoi(code)
-				d.expectationEngine.AddExpectation(expectation.PathMethod{
-					Path:   p,
-					Method: m,
-				}, expectation.Expectation{
-					Pririoty: 0,
-					Response: expectation.Response{
-						Body:   e,
-						Status: status,
-					},
-					Request: expectation.Request{
-						Path:   p,
-						Method: m,
-					},
-				})
-			}
-			d.EchoServer.Router().Add(m, p, func(ctx echo.Context) error {
-				response, err := d.expectationEngine.GetResponseForRequest(p, m, ctx.Request())
-
-				if err != nil {
-					return ctx.JSON(500, GeneralError{
-						Path:     ctx.Request().URL.Path,
-						Method:   m,
-						ErrorMsg: err.Error(),
-					})
-				}
-				response.Body.Generate()
-				return ctx.JSON(response.Status, response.Body.Instance())
-			})
-		}
-
+	for _, e := range expectations {
+		d.expectationEngine.AddExpectation(e, true)
 	}
-	d.expectationEngine.Load()
 
-	end := time.Now()
-	fmt.Println("TIME: ", end.Sub(start).Seconds())
+	return nil
+}
+
+func (d *Dolus) loadExpectations() error {
+	if err := d.loadOpenAPISpecExpectations(); err != nil {
+		return err
+	}
+
+	if err := d.loadCueExpectations(); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (d *Dolus) startHttpServer(address string) error {
+	d.initHttpServer()
+	// d.expectationEngine.Load()
+	if err := d.loadExpectations(); err != nil {
+		return err
+	}
 
 	return d.EchoServer.Start(address)
 }
@@ -159,7 +154,6 @@ func (d *Dolus) Start(address string) error {
 		d.expectationEngine = engine.NewDolusExpectationEngine(generationConfig)
 	}
 
-	d.expectationEngine.AddExpectationsFromFiles(d.expectationFiles...)
 	return d.startHttpServer(address)
 }
 
