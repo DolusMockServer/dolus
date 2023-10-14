@@ -3,9 +3,12 @@ package engine
 import (
 	"fmt"
 	"net/http"
+	"reflect"
+	"strings"
 
 	"github.com/MartinSimango/dolus/expectation"
 	"github.com/MartinSimango/dstruct"
+	"github.com/MartinSimango/dstruct/dreflect"
 	"github.com/MartinSimango/dstruct/generator"
 	"github.com/ucarion/urlpath"
 )
@@ -48,11 +51,15 @@ func (e *DolusExpectationEngine) AddExpectation(expect expectation.Expectation, 
 func (e *DolusExpectationEngine) validateExpectationSchema(exp expectation.Expectation) error {
 	matchingResponseSchema, err := e.getMatchingResponseSchemaForPathMethodStatus(expectation.PathMethodStatusExpectation(exp))
 	if err != nil {
-		return fmt.Errorf("error with expectation: %s", err)
+		return err
 	}
+	expectationFieldErrors := validateExpectationResponseSchema(exp.Response.Body, matchingResponseSchema)
 
-	if !doesResponseSchemaMatch(exp.Response.Body, matchingResponseSchema) {
-		return fmt.Errorf("schema does not match")
+	if len(expectationFieldErrors) > 0 {
+		return expectation.ExpectationError{
+			Expectation:            exp,
+			ExpectationFieldErrors: expectationFieldErrors,
+		}
 	}
 	return nil
 
@@ -101,38 +108,76 @@ func (e *DolusExpectationEngine) getMatchingResponseSchemaForPathMethodStatus(pm
 
 }
 
-func doesResponseSchemaMatch(expectation dstruct.DynamicStructModifier, schema dstruct.DynamicStructModifier) bool {
+func addFieldDoesNotExistError(fieldName string, expectationFieldErrors []expectation.ExpectationFieldError) []expectation.ExpectationFieldError {
+	fieldName = strings.ToLower(fieldName[0:1]) + fieldName[1:]
+	return append(expectationFieldErrors, expectation.ExpectationFieldError{
+		FieldName: fieldName,
+		Err:       fmt.Errorf("field does not exist in the schema"),
+	})
+}
+
+func addIncompatibleTypesError(fieldName string, expectationFieldErrors []expectation.ExpectationFieldError, schemaType reflect.Type, expectationType reflect.Type) []expectation.ExpectationFieldError {
+	fieldName = strings.ToLower(fieldName[0:1]) + fieldName[1:]
+	return append(expectationFieldErrors, expectation.ExpectationFieldError{
+		FieldName: fieldName,
+		Err:       fmt.Errorf("incompatible types. '%s' field is defined as type '%s' in schema but in expectation is defined as type '%s' ", fieldName, schemaType, expectationType),
+	})
+}
+
+func validateExpectationResponseSchema(expect dstruct.DynamicStructModifier, schema dstruct.DynamicStructModifier) (expectationFieldErrors []expectation.ExpectationFieldError) {
 	// e := dstruct.New(expectation.GetSchema())
+	expectationFields := expect.GetFields()
+	for field, value := range schema.GetFields() {
+		if expectationFields[field].GetFieldName() == "" && value.GetTag("required") == "true" {
+			expectationFieldErrors = addFieldDoesNotExistError(field, expectationFieldErrors)
+		} else if expectationFields[field].GetFieldName() != "" {
+			schemaFieldType := value.GetType()
+			expectationFieldType := expectationFields[field].GetType()
+			if schemaFieldType.Kind() == reflect.Ptr {
+				schemaFieldType = reflect.TypeOf(dreflect.GetUnderlyingPointerValue(value.GetValue()))
+			}
+			if schemaFieldType.Kind() != reflect.Struct {
+				if !expectationFieldType.ConvertibleTo(schemaFieldType) {
+					expectationFieldErrors = addIncompatibleTypesError(field, expectationFieldErrors, schemaFieldType, expectationFieldType)
+				}
 
-	// err := dstruct.DoSchemasMatch(e, dstruct.New(schema.GetSchema()))
-	// e.Print()
+			}
+		}
+	}
 
-	// if err != nil {
-	// 	fmt.Println(err)
-	// 	return false
-	// }
+	schemaFields := schema.GetFields()
+	for field := range expect.GetFields() {
+		if schemaFields[field].GetFieldName() == "" {
+			// dstruct.ExtendStruct(expectation).RemoveField(field)
+			expectationFieldErrors = addFieldDoesNotExistError(field, expectationFieldErrors)
+		}
+	}
+	return
+}
 
-	// fmt.Println(reflect.responseSchema1.GetSchema(), responseSchema2.GetSchema())
-	return true
+func (e *DolusExpectationEngine) getExpectations(path, method string, request *http.Request) []expectation.Expectation {
+	// check for exact matches
+	if expectations := e.expectations[expectation.PathMethod{
+		Path:   request.URL.Path,
+		Method: method,
+	}]; len(expectations) > 0 {
+		return expectations
+	}
+
+	return e.expectations[expectation.PathMethod{
+		Path:   path,
+		Method: method,
+	}]
+
 }
 
 func (e *DolusExpectationEngine) GetResponseForRequest(path, method string, request *http.Request) (*expectation.Response, error) {
-	expectations := e.expectations[expectation.PathMethod{
-		Path:   request.URL.Path,
-		Method: method,
-	}]
+
 	// fmt.Println(path, method, request.URL.Path)
 	// fmt.Println(len(expectations))
+	expectations := e.getExpectations(path, method, request)
 	if len(expectations) == 0 {
-
-		expectations = e.expectations[expectation.PathMethod{
-			Path:   path,
-			Method: method,
-		}]
-
-		if len(expectations) == 0 {
-			return nil, fmt.Errorf("no expectation found for path and HTTP method")
-		}
+		return nil, fmt.Errorf("no expectation found for path and HTTP method")
 	}
 	// TODO find the right expectation depending on request matchers and priority
 	currentExpectation := expectations[0]

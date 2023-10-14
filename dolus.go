@@ -80,7 +80,6 @@ func (d *Dolus) addRoutes(method, path string) {
 				ErrorMsg: err.Error(),
 			})
 		}
-		// response.Body.GetFieldGenerationConfig("Id").SetNonRequiredFields(false)
 
 		response.Body.Generate()
 		response.Body.Update()
@@ -102,7 +101,10 @@ func (d *Dolus) loadOpenAPISpecExpectations() error {
 		d.addRoutes(method, path)
 		d.expectationEngine.AddResponseSchemaForPathMethodStatus(expectation.PathMethodStatusExpectation(e),
 			e.Response.Body)
-		d.expectationEngine.AddExpectation(e, false)
+
+		if err := d.expectationEngine.AddExpectation(e, false); err != nil {
+			fmt.Printf("Error adding expectation:\n%s\n", err)
+		}
 
 	}
 
@@ -117,6 +119,10 @@ func (d *Dolus) loadCueExpectations() error {
 	}
 	for _, e := range expectations {
 		d.expectationEngine.AddExpectation(e, true)
+
+		if err := d.expectationEngine.AddExpectation(e, true); err != nil {
+			fmt.Printf("Error adding expectation:\n%s\n", err)
+		}
 	}
 
 	return nil
