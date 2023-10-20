@@ -107,7 +107,7 @@ func (eb *ExpectationBuilderImpl) buildExpectationFromCueInstance(instance cue.V
 		}
 		status := strconv.Itoa(cueExpectation.Response.Status)
 		// TODO schema
-		r := core.NewResponseSchemaFromAny(cueExpectation.Request.Path, cueExpectation.Request.Method, status, cueExpectation.Response.Body)
+		r := core.NewResponseSchemaFromAny(cueExpectation.Request.Path, string(cueExpectation.Request.Method), status, cueExpectation.Response.Body)
 
 		expectations = append(expectations, Expectation{
 			RawCueExpectation: &cueExpectation,
@@ -118,7 +118,7 @@ func (eb *ExpectationBuilderImpl) buildExpectationFromCueInstance(instance cue.V
 			},
 			Request: Request{
 				Path:   cueExpectation.Request.Path,
-				Method: cueExpectation.Request.Method,
+				Method: string(cueExpectation.Request.Method),
 			},
 		})
 

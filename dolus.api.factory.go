@@ -38,7 +38,7 @@ func callbackToApiCallback(callback *dolus.Callback) (*server.Callback, error) {
 			return nil, err
 		}
 		return &server.Callback{
-			HttpMethod:  "TODO", // # todo fix this field
+			HttpMethod:  string(callback.Method),
 			RequestBody: callbackRequestBody,
 			Timeout:     callback.Timeout,
 			Url:         string(callback.Url),
@@ -60,7 +60,7 @@ func rawCueExpectationToApiExpectation(e dolus.Expectation) (*server.Expectation
 	return &server.Expectation{
 		Priority: e.Priority,
 		Request: server.Request{
-			Method: e.Request.Method,
+			Method: string(e.Request.Method),
 			Path:   e.Request.Path,
 			Body:   requestBody,
 		},

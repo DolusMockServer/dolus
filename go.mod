@@ -2,11 +2,18 @@ module github.com/MartinSimango/dolus
 
 go 1.19
 
+
+retract v1.1.1
+retract v1.1.0
+retract v1.0.0
+retract v0.1.2
+retract v0.1.1
+
 // replace
 
 require (
 	cuelang.org/go v0.6.0
-	github.com/MartinSimango/dolus-expectations v0.0.1-alpha
+	github.com/MartinSimango/dolus-expectations v0.0.2-alpha
 	github.com/MartinSimango/dstruct v0.2.0-beta
 	github.com/fatih/color v1.15.0
 	github.com/getkin/kin-openapi v0.115.0
