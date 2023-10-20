@@ -5,6 +5,7 @@ import (
 	"reflect"
 	"strings"
 
+	"github.com/MartinSimango/dolus/task"
 	"github.com/MartinSimango/dstruct"
 	"github.com/MartinSimango/dstruct/dreflect"
 	"github.com/MartinSimango/dstruct/generator"
@@ -117,25 +118,14 @@ func getStructFromAny(config any) any {
 	return schema
 }
 
-// DolusTask super set of Task
-
-func buildSchemaFromDolusTask(task generator.TaskName, _map map[string]interface{}) (any, SchemaInfo) {
-	// t :=  generator.GetTask(task)
-
-	// t.ReturnType()
-	// t.DefaultInstance()
-	// t.TagsFromMap
-	switch task {
-	case generator.GenInt32:
-
+func buildSchemaFromDolusTask(t generator.TaskName, _map map[string]interface{}) (any, SchemaInfo) {
+	switch t {
+	case task.GenInt32:
 		return int32(0), SchemaInfo{Kind: reflect.Int32,
-			// TODO should change to something like:
-			// Tags: generator.GetTagsForGenInt32Task(int32(_map["min"].(int)), int32(_map["max"].(int)))
-			// CreateTagsForTaskFromMap(task, _map)
-			Tags:   fmt.Sprintf(`gen_task:"%s(%d,%d)"`, task, int32(_map["min"].(int)), int32(_map["max"].(int))),
+			Tags:   string(generator.GetTagForTask(t, _map["min"], _map["max"])),
 			Format: "int32"}
 	}
-	panic(fmt.Sprintf("Unrecognized dolus task: %s", task))
+	panic(fmt.Sprintf("Unrecognized dolus task: %s", t))
 }
 
 type SchemaInfo struct {

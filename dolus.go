@@ -6,6 +6,7 @@ import (
 	"github.com/MartinSimango/dolus/engine"
 	"github.com/MartinSimango/dolus/expectation"
 	"github.com/MartinSimango/dolus/server"
+	"github.com/MartinSimango/dolus/task"
 	"github.com/MartinSimango/dstruct/generator"
 	"github.com/fatih/color"
 	"github.com/labstack/echo/v4"
@@ -153,7 +154,7 @@ func (d *Dolus) loadExpectations() error {
 
 func (d *Dolus) startHttpServer(address string) error {
 	d.initHttpServer()
-	// d.expectationEngine.Load()
+	task.RegisterDolusTasks()
 	if err := d.loadExpectations(); err != nil {
 		return err
 	}
