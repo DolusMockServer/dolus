@@ -4,8 +4,10 @@ import (
 	"fmt"
 	"net/http"
 	"reflect"
+	"strconv"
 	"strings"
 
+	"github.com/MartinSimango/dolus-expectations/pkg/dolus"
 	"github.com/MartinSimango/dolus/expectation"
 	"github.com/MartinSimango/dstruct"
 	"github.com/MartinSimango/dstruct/dreflect"
@@ -16,6 +18,7 @@ import (
 type DolusExpectationEngine struct {
 	cueExpectationsFiles []string
 	expectations         map[expectation.PathMethod][]expectation.Expectation
+	rawCueExpectations   []dolus.Expectation
 	ResponseSchemas      map[expectation.PathMethodStatus]dstruct.DynamicStructModifier
 	GenerationConfig     generator.GenerationConfig
 }
@@ -44,6 +47,11 @@ func (e *DolusExpectationEngine) AddExpectation(expect expectation.Expectation, 
 	}
 
 	e.expectations[pathMethod] = append(e.expectations[pathMethod], expect)
+
+	fmt.Println("ADDING", pathMethod)
+	if expect.RawCueExpectation != nil {
+		e.rawCueExpectations = append(e.rawCueExpectations, *expect.RawCueExpectation)
+	}
 
 	return nil
 }
@@ -128,23 +136,49 @@ func validateExpectationResponseSchema(expect dstruct.DynamicStructModifier, sch
 	// e := dstruct.New(expectation.GetSchema())
 	expectationFields := expect.GetFields()
 	for field, value := range schema.GetFields() {
+		schemaFieldType := value.GetType()
+		expectationFieldType := expectationFields[field].GetType()
+
 		if expectationFields[field].GetFieldName() == "" && value.GetTag("required") == "true" {
 			expectationFieldErrors = addFieldDoesNotExistError(field, expectationFieldErrors)
 		} else if expectationFields[field].GetFieldName() != "" {
-			schemaFieldType := value.GetType()
-			expectationFieldType := expectationFields[field].GetType()
 			if schemaFieldType.Kind() == reflect.Ptr {
 				schemaFieldType = reflect.TypeOf(dreflect.GetUnderlyingPointerValue(value.GetValue()))
 			}
 			if schemaFieldType.Kind() != reflect.Struct {
-				if !expectationFieldType.ConvertibleTo(schemaFieldType) {
+				if !schemaFieldType.ConvertibleTo(expectationFieldType) || !expectationFieldType.ConvertibleTo(schemaFieldType) {
 					expectationFieldErrors = addIncompatibleTypesError(field, expectationFieldErrors, schemaFieldType, expectationFieldType)
 				}
+			}
+			if schemaFieldType.Kind() == reflect.String {
+				//validate enum type
+				if value.GetTag("enum") != "" {
+					enumCount, _ := strconv.Atoi(value.GetTag("enum"))
+					found := false
+					var enumValues string
+					for i := 1; i <= enumCount; i++ {
+						enumValue := value.GetTag(fmt.Sprintf("enum_%d", i))
+						enumValues += fmt.Sprintf("%d.'%s' ", i, enumValue)
+						if !found {
+							if enumValue == expectationFields[field].GetValue() {
+								found = true
+							}
+						}
+					}
 
+					if !found {
+						expectationFieldErrors = append(expectationFieldErrors, expectation.ExpectationFieldError{
+							FieldName: field,
+							Err:       fmt.Errorf("invalid value '%s' for enum field: valid types are: \n%s", expectationFields[field].GetValue(), enumValues),
+						})
+					}
+				}
 			}
 		}
+
 	}
 
+	// check for extra fields
 	schemaFields := schema.GetFields()
 	for field := range expect.GetFields() {
 		if schemaFields[field].GetFieldName() == "" {
@@ -192,4 +226,10 @@ func (e *DolusExpectationEngine) GetResponseForRequest(path, method string, requ
 	}
 
 	return &currentExpectation.Response, nil
+}
+
+func (e *DolusExpectationEngine) GetRawCueExpectations() dolus.Expectations {
+	return dolus.Expectations{
+		Expectations: e.rawCueExpectations,
+	}
 }

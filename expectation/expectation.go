@@ -3,6 +3,7 @@ package expectation
 import (
 	"fmt"
 
+	"github.com/MartinSimango/dolus-expectations/pkg/dolus"
 	"github.com/MartinSimango/dstruct"
 )
 
@@ -45,9 +46,10 @@ type Request struct {
 }
 
 type Expectation struct {
-	Priority int
-	Response Response
-	Request  Request
+	Priority          int
+	Response          Response
+	Request           Request
+	RawCueExpectation *dolus.Expectation
 	// RequestMatcher
 }
 

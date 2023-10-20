@@ -1,0 +1,204 @@
+openapi: 3.1.0
+x-stoplight:
+  id: dzxa4gk9e0u03
+info:
+  title: dolus
+  version: '1.0'
+servers:
+  - url: 'http://localhost:1080'
+paths:
+  /v1/dolus/expectations:
+    get:
+      summary: Fetch expectations
+      tags: []
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Expectations'
+      operationId: get-v1-dolus-expectations
+      x-stoplight:
+        id: y1uvlms8igq6e
+      description: Endpoint is for fetching expectations
+    post:
+      summary: ''
+      operationId: post-v1-dolus-expectations
+      responses:
+        '201':
+          description: Created
+      x-stoplight:
+        id: whv6ahxzodemc
+      description: ''
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              x-examples:
+                Example 1:
+                  priority: 0
+                  request:
+                    path: /store/order/2
+                    method: GET
+                    body: null
+                  response:
+                    body:
+                      complete: true
+                      petId:
+                        id:
+                          $dolus:
+                            task: GenInt32
+                          max: 10
+                          min: 0
+                      status: good day
+                    status: 200
+                  callback: null
+              properties:
+                priority:
+                  type: integer
+                request:
+                  type: object
+                  required:
+                    - path
+                    - method
+                  properties:
+                    path:
+                      type: string
+                    method:
+                      type: string
+                response:
+                  type: object
+                  properties:
+                    status:
+                      type: integer
+                callback:
+                  $ref: '#/components/schemas/Callback'
+              required:
+                - priority
+                - request
+                - response
+  /v1/dolus/routes:
+    get:
+      summary: Your GET endpoint
+      tags: []
+      responses: {}
+      operationId: get-v1-dolus-routes
+      x-stoplight:
+        id: 3694eed8o2kp8
+components:
+  schemas:
+    Expectation:
+      type: object
+      x-examples:
+        Example 1:
+          priority: 0
+          request:
+            path: /store/order/2
+            method: GET
+            body: null
+          response:
+            body:
+              complete: true
+              petId:
+                id:
+                  $dolus:
+                    task: GenInt32
+                  max: 10
+                  min: 0
+              status: good day
+            status: 200
+          callback: null
+      properties:
+        priority:
+          type: integer
+        request:
+          $ref: '#/components/schemas/Request'
+        response:
+          $ref: '#/components/schemas/Response'
+        callback:
+          $ref: '#/components/schemas/Callback'
+      required:
+        - priority
+        - request
+        - response
+    Callback:
+      title: Callback
+      x-stoplight:
+        id: rjxf577mq19r4
+      type: object
+      properties:
+        httpMethod:
+          type: string
+          x-stoplight:
+            id: 1pt45t0acdpmd
+        requestBody:
+          type: object
+          x-stoplight:
+            id: knwmvv2v3pmno
+        url:
+          type: string
+          x-stoplight:
+            id: epe5pnr73tq5x
+        timeout:
+          type: integer
+          x-stoplight:
+            id: fgno2ugdodph6
+      required:
+        - httpMethod
+        - url
+        - timeout
+    Request:
+      title: Request
+      x-stoplight:
+        id: jeyod7vvmt3g2
+      type: object
+      properties:
+        path:
+          type: string
+          x-stoplight:
+            id: ztk89hfaw12fc
+        method:
+          type: string
+          x-stoplight:
+            id: 1gq2g4p5dinj2
+        body:
+          type: object
+          x-stoplight:
+            id: 4m6dyn4iy78pr
+      required:
+        - path
+        - method
+    Response:
+      title: Response
+      x-stoplight:
+        id: dmid12cm7ut6y
+      type: object
+      properties:
+        status:
+          type: integer
+          x-stoplight:
+            id: 6jioalmtsm49v
+        body:
+          type: object
+          x-stoplight:
+            id: vv2x0fyzeqtwv
+      required:
+        - status
+    Expectations:
+      title: Expectations
+      x-stoplight:
+        id: fdv6bpm1aq23l
+      type: object
+      properties:
+        expectations:
+          type: array
+          x-stoplight:
+            id: t2dvyf3ytje79
+          items:
+            $ref: '#/components/schemas/Expectation'
+            x-stoplight:
+              id: d7i0m4l8c62pr
+      required:
+        - expectations

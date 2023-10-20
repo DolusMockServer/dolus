@@ -13,11 +13,12 @@ dolus.#Expectations & {
             response:  dolus.#Response & {
                 body: {
                     petId: {
-                        id: "pete"
+                        id: dolus.#GenInt32 
                     }
-                    age: dolus.#GenInt32 
-                    name: "John Doe"    
-                    complete: "apple"    
+                    // age: dolus.#GenInt32 
+                    // name: "John Doe"    
+                    complete: true   
+                    status: "good day"
                 }
                 status: 200
             }

@@ -3,6 +3,7 @@ package engine
 import (
 	"net/http"
 
+	"github.com/MartinSimango/dolus-expectations/pkg/dolus"
 	"github.com/MartinSimango/dolus/expectation"
 	"github.com/MartinSimango/dstruct"
 )
@@ -13,7 +14,5 @@ type ExpectationEngine interface {
 	GetExpectations() map[expectation.PathMethod][]expectation.Expectation
 	GetExpectationForPathMethod(pathMethod expectation.PathMethod) []expectation.Expectation
 	GetResponseForRequest(path, method string, request *http.Request) (*expectation.Response, error)
-	// Load() error
+	GetRawCueExpectations() dolus.Expectations
 }
-
-// GetEchoResponse(path, method string, ctx echo.Context) error

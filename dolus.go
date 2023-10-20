@@ -5,9 +5,11 @@ import (
 
 	"github.com/MartinSimango/dolus/engine"
 	"github.com/MartinSimango/dolus/expectation"
+	"github.com/MartinSimango/dolus/server"
 	"github.com/MartinSimango/dstruct/generator"
 	"github.com/fatih/color"
 	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v4/middleware"
 )
 
 const (
@@ -45,6 +47,7 @@ type Dolus struct {
 	cueLoader          expectation.Loader[expectation.CueExpectationLoadType]
 	expectationBuilder expectation.ExpectationBuilder
 	fieldGenerator     *generator.Generator
+	dolusApiRoutes     server.ServerInterface
 }
 
 func New() *Dolus {
@@ -59,6 +62,13 @@ func New() *Dolus {
 
 }
 
+func (d *Dolus) initMiddleware() error {
+	d.EchoServer.Use(middleware.CORSWithConfig(middleware.CORSConfig{
+		AllowOrigins: []string{"*"},
+	}))
+	return nil
+}
+
 func (d *Dolus) initHttpServer() {
 	d.EchoServer = echo.New()
 	d.EchoServer.HideBanner = true
@@ -67,6 +77,10 @@ func (d *Dolus) initHttpServer() {
 	d.cueLoader = expectation.NewCueExpectationLoader(d.expectationFiles)
 	d.fieldGenerator = generator.NewGenerator(&d.GenerationConfig)
 	d.expectationBuilder = expectation.NewExpectationBuilderImpl(*d.fieldGenerator)
+	d.dolusApiRoutes = NewDolusApiRoutes(d.expectationEngine, NewDolusApiFactoryImpl())
+
+	d.initMiddleware()
+	server.RegisterHandlers(d.EchoServer, d.dolusApiRoutes)
 
 }
 
@@ -118,8 +132,6 @@ func (d *Dolus) loadCueExpectations() error {
 		return err
 	}
 	for _, e := range expectations {
-		d.expectationEngine.AddExpectation(e, true)
-
 		if err := d.expectationEngine.AddExpectation(e, true); err != nil {
 			fmt.Printf("Error adding expectation:\n%s\n", err)
 		}

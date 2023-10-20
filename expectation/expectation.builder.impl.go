@@ -106,9 +106,12 @@ func (eb *ExpectationBuilderImpl) buildExpectationFromCueInstance(instance cue.V
 			continue
 		}
 		status := strconv.Itoa(cueExpectation.Response.Status)
+		// TODO schema
 		r := core.NewResponseSchemaFromAny(cueExpectation.Request.Path, cueExpectation.Request.Method, status, cueExpectation.Response.Body)
+
 		expectations = append(expectations, Expectation{
-			Priority: cueExpectation.Priority,
+			RawCueExpectation: &cueExpectation,
+			Priority:          cueExpectation.Priority,
 			Response: Response{
 				Body:   dstruct.NewGeneratedStructWithConfig(r.GetSchema(), &eb.fieldGenerator),
 				Status: cueExpectation.Response.Status,
