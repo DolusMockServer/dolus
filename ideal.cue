@@ -6,6 +6,7 @@ import (
 dolus.#Expectations & {
     expectations: [
         dolus.#Expectation & {
+            // add an expectation ID that will be generated
             request: dolus.#Request & {
                 path:  "/store/order/2"
                 method: "GET" 
@@ -13,7 +14,7 @@ dolus.#Expectations & {
             response:  dolus.#Response & {
                 body: {
                     petId: {
-                        id: dolus.#GenInt32 
+                        id: 2
                     }
                     // age: dolus.#GenInt32 
                     // name: "John Doe"    

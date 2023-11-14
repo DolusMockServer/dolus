@@ -15,4 +15,5 @@ type ExpectationEngine interface {
 	GetExpectationForPathMethod(pathMethod expectation.PathMethod) []expectation.Expectation
 	GetResponseForRequest(path, method string, request *http.Request) (*expectation.Response, error)
 	GetRawCueExpectations() dolus.Expectations
+	GetExpectationRoutes() []string
 }

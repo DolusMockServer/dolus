@@ -21,6 +21,7 @@ type DolusExpectationEngine struct {
 	rawCueExpectations   []dolus.Expectation
 	ResponseSchemas      map[expectation.PathMethodStatus]dstruct.DynamicStructModifier
 	GenerationConfig     generator.GenerationConfig
+	expectationRoutes    []string
 }
 
 var _ ExpectationEngine = &DolusExpectationEngine{}
@@ -36,6 +37,7 @@ func NewDolusExpectationEngine(generationConfig generator.GenerationConfig) (dol
 
 func (e *DolusExpectationEngine) AddExpectation(expect expectation.Expectation, validateExpectationSchema bool) error {
 	// TODO check if exception overrides another one i.e has same request matcher
+
 	pathMethod := expectation.PathMethod{
 		Path:   expect.Request.Path,
 		Method: expect.Request.Method,
@@ -48,7 +50,6 @@ func (e *DolusExpectationEngine) AddExpectation(expect expectation.Expectation, 
 
 	e.expectations[pathMethod] = append(e.expectations[pathMethod], expect)
 
-	fmt.Println("ADDING", pathMethod)
 	if expect.RawCueExpectation != nil {
 		e.rawCueExpectations = append(e.rawCueExpectations, *expect.RawCueExpectation)
 	}
@@ -85,6 +86,10 @@ func (e *DolusExpectationEngine) AddResponseSchemaForPathMethodStatus(pathMethod
 
 func (e *DolusExpectationEngine) GetExpectations() map[expectation.PathMethod][]expectation.Expectation {
 	return e.expectations
+}
+
+func (e *DolusExpectationEngine) GetExpectationRoutes() []string {
+	return e.expectationRoutes
 }
 
 func (e *DolusExpectationEngine) GetExpectationForPathMethod(pathMethod expectation.PathMethod) []expectation.Expectation {

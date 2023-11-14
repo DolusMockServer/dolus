@@ -8,6 +8,7 @@ import (
 	"cuelang.org/go/cue"
 	"github.com/MartinSimango/dolus-expectations/pkg/dolus"
 	"github.com/MartinSimango/dolus/core"
+	"github.com/MartinSimango/dolus/logger"
 	"github.com/MartinSimango/dstruct"
 	"github.com/MartinSimango/dstruct/generator"
 )
@@ -58,7 +59,7 @@ func (eb *ExpectationBuilderImpl) buildExpectationsFromOpenApiSpec(spec *OpenAPI
 				// if p != "/" || code != "200" {
 				// 	continue
 				// }
-				fmt.Println(p, code)
+				logger.Log.Info(p, " ", code)
 				responseSchema := core.NewResponseSchemaFromOpenApi3Ref(p, method, code, ref, "application/json")
 
 				// engine must store for each path method code then check that
@@ -102,7 +103,7 @@ func (eb *ExpectationBuilderImpl) buildExpectationFromCueInstance(instance cue.V
 		var cueExpectation dolus.Expectation
 		err := e.Value().Decode(&cueExpectation)
 		if err != nil {
-			fmt.Println("Error decoding expectation: ", err)
+			logger.Log.Error("Error decoding expectation: ", err)
 			continue
 		}
 		status := strconv.Itoa(cueExpectation.Response.Status)

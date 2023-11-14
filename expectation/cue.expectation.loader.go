@@ -7,6 +7,7 @@ import (
 	"cuelang.org/go/cue"
 	"cuelang.org/go/cue/cuecontext"
 	"cuelang.org/go/cue/load"
+	"github.com/MartinSimango/dolus/logger"
 )
 
 type (
@@ -25,7 +26,7 @@ var _ Loader[CueExpectationLoadType] = &CueExpectationLoader{}
 func NewCueExpectationLoader(cueExpectationsFiles []string) *CueExpectationLoader {
 	homeDir, err := os.UserHomeDir()
 	if err != nil {
-		panic(fmt.Sprintf("failed to user home dir: %s", err))
+		logger.Log.Fatalf("failed to user home dir: %s", err.Error())
 	}
 	return &CueExpectationLoader{
 		cueDolusExpectationsRootModule: fmt.Sprintf("%s/%s", homeDir, dolusExpectationsHomeFolder),
@@ -36,7 +37,7 @@ func NewCueExpectationLoader(cueExpectationsFiles []string) *CueExpectationLoade
 func (cel *CueExpectationLoader) load() (*CueExpectationLoadType, error) {
 	ctx := cuecontext.New()
 	var cueValues []cue.Value
-	fmt.Printf("Loading expectations from cue root module: %s\n", cel.cueDolusExpectationsRootModule)
+	logger.Log.Debugf("Loading expectations from cue root module: %s", cel.cueDolusExpectationsRootModule)
 	bis := load.Instances(cel.cueExpectationsFiles, &load.Config{
 		ModuleRoot: cel.cueDolusExpectationsRootModule,
 	})
@@ -45,20 +46,20 @@ func (cel *CueExpectationLoader) load() (*CueExpectationLoadType, error) {
 		// check for errors on the  instance
 		// these are typically parsing errors
 		if bi.Err != nil {
-			fmt.Println("Error during load:", bi.Err)
+			logger.Log.Error(false, "Error during load:", bi.Err)
 			continue
 		}
 		value := ctx.BuildInstance(bi)
 
 		if value.Err() != nil {
-			fmt.Println("Error during build:", value.Err())
+			logger.Log.Error("Error during load:", value.Err())
 			continue
 		}
 
 		// Validate the value
 		err := value.Validate()
 		if err != nil {
-			fmt.Println("Error during validation:", err)
+			logger.Log.Error("Error during validation:", err)
 			continue
 		}
 

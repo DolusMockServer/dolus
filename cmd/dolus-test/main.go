@@ -56,6 +56,7 @@ func Print(strct any) string {
 }
 
 func main() {
+
 	d := dolus.New()
 	d.AddExpectations("ideal.cue")
 	d.GenerationConfig.

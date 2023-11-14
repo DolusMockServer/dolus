@@ -18,6 +18,7 @@ import (
 
 	"github.com/getkin/kin-openapi/openapi3"
 	"github.com/labstack/echo/v4"
+	"github.com/oapi-codegen/runtime"
 )
 
 // Callback defines model for Callback.
@@ -54,6 +55,12 @@ type Response struct {
 	Status int                     `json:"status"`
 }
 
+// Route defines model for Route.
+type Route struct {
+	Operation string `json:"operation"`
+	Path      string `json:"path"`
+}
+
 // PostV1DolusExpectationsJSONBody defines parameters for PostV1DolusExpectations.
 type PostV1DolusExpectationsJSONBody struct {
 	Callback *Callback `json:"callback,omitempty"`
@@ -65,6 +72,18 @@ type PostV1DolusExpectationsJSONBody struct {
 	Response struct {
 		Status *int `json:"status,omitempty"`
 	} `json:"response"`
+}
+
+// GetV1DolusLogsParams defines parameters for GetV1DolusLogs.
+type GetV1DolusLogsParams struct {
+	// Lines number of log lines to return
+	Lines *int `form:"lines,omitempty" json:"lines,omitempty"`
+}
+
+// GetV1DolusLogsWsParams defines parameters for GetV1DolusLogsWs.
+type GetV1DolusLogsWsParams struct {
+	// Lines number of log lines to return
+	Lines *string `form:"lines,omitempty" json:"lines,omitempty"`
 }
 
 // PostV1DolusExpectationsJSONRequestBody defines body for PostV1DolusExpectations for application/json ContentType.
@@ -151,6 +170,12 @@ type ClientInterface interface {
 
 	PostV1DolusExpectations(ctx context.Context, body PostV1DolusExpectationsJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
 
+	// GetV1DolusLogs request
+	GetV1DolusLogs(ctx context.Context, params *GetV1DolusLogsParams, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// GetV1DolusLogsWs request
+	GetV1DolusLogsWs(ctx context.Context, params *GetV1DolusLogsWsParams, reqEditors ...RequestEditorFn) (*http.Response, error)
+
 	// GetV1DolusRoutes request
 	GetV1DolusRoutes(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error)
 }
@@ -181,6 +206,30 @@ func (c *Client) PostV1DolusExpectationsWithBody(ctx context.Context, contentTyp
 
 func (c *Client) PostV1DolusExpectations(ctx context.Context, body PostV1DolusExpectationsJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewPostV1DolusExpectationsRequest(c.Server, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) GetV1DolusLogs(ctx context.Context, params *GetV1DolusLogsParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewGetV1DolusLogsRequest(c.Server, params)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) GetV1DolusLogsWs(ctx context.Context, params *GetV1DolusLogsWsParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewGetV1DolusLogsWsRequest(c.Server, params)
 	if err != nil {
 		return nil, err
 	}
@@ -270,6 +319,104 @@ func NewPostV1DolusExpectationsRequestWithBody(server string, contentType string
 	return req, nil
 }
 
+// NewGetV1DolusLogsRequest generates requests for GetV1DolusLogs
+func NewGetV1DolusLogsRequest(server string, params *GetV1DolusLogsParams) (*http.Request, error) {
+	var err error
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/v1/dolus/logs")
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	if params != nil {
+		queryValues := queryURL.Query()
+
+		if params.Lines != nil {
+
+			if queryFrag, err := runtime.StyleParamWithLocation("form", true, "lines", runtime.ParamLocationQuery, *params.Lines); err != nil {
+				return nil, err
+			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
+				return nil, err
+			} else {
+				for k, v := range parsed {
+					for _, v2 := range v {
+						queryValues.Add(k, v2)
+					}
+				}
+			}
+
+		}
+
+		queryURL.RawQuery = queryValues.Encode()
+	}
+
+	req, err := http.NewRequest("GET", queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
+// NewGetV1DolusLogsWsRequest generates requests for GetV1DolusLogsWs
+func NewGetV1DolusLogsWsRequest(server string, params *GetV1DolusLogsWsParams) (*http.Request, error) {
+	var err error
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/v1/dolus/logs/ws")
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	if params != nil {
+		queryValues := queryURL.Query()
+
+		if params.Lines != nil {
+
+			if queryFrag, err := runtime.StyleParamWithLocation("form", true, "lines", runtime.ParamLocationQuery, *params.Lines); err != nil {
+				return nil, err
+			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
+				return nil, err
+			} else {
+				for k, v := range parsed {
+					for _, v2 := range v {
+						queryValues.Add(k, v2)
+					}
+				}
+			}
+
+		}
+
+		queryURL.RawQuery = queryValues.Encode()
+	}
+
+	req, err := http.NewRequest("GET", queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
 // NewGetV1DolusRoutesRequest generates requests for GetV1DolusRoutes
 func NewGetV1DolusRoutesRequest(server string) (*http.Request, error) {
 	var err error
@@ -348,6 +495,12 @@ type ClientWithResponsesInterface interface {
 
 	PostV1DolusExpectationsWithResponse(ctx context.Context, body PostV1DolusExpectationsJSONRequestBody, reqEditors ...RequestEditorFn) (*PostV1DolusExpectationsResponse, error)
 
+	// GetV1DolusLogsWithResponse request
+	GetV1DolusLogsWithResponse(ctx context.Context, params *GetV1DolusLogsParams, reqEditors ...RequestEditorFn) (*GetV1DolusLogsResponse, error)
+
+	// GetV1DolusLogsWsWithResponse request
+	GetV1DolusLogsWsWithResponse(ctx context.Context, params *GetV1DolusLogsWsParams, reqEditors ...RequestEditorFn) (*GetV1DolusLogsWsResponse, error)
+
 	// GetV1DolusRoutesWithResponse request
 	GetV1DolusRoutesWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*GetV1DolusRoutesResponse, error)
 }
@@ -395,9 +548,52 @@ func (r PostV1DolusExpectationsResponse) StatusCode() int {
 	return 0
 }
 
+type GetV1DolusLogsResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+}
+
+// Status returns HTTPResponse.Status
+func (r GetV1DolusLogsResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r GetV1DolusLogsResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type GetV1DolusLogsWsResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+}
+
+// Status returns HTTPResponse.Status
+func (r GetV1DolusLogsWsResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r GetV1DolusLogsWsResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
 type GetV1DolusRoutesResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
+	JSON200      *[]Route
 }
 
 // Status returns HTTPResponse.Status
@@ -440,6 +636,24 @@ func (c *ClientWithResponses) PostV1DolusExpectationsWithResponse(ctx context.Co
 		return nil, err
 	}
 	return ParsePostV1DolusExpectationsResponse(rsp)
+}
+
+// GetV1DolusLogsWithResponse request returning *GetV1DolusLogsResponse
+func (c *ClientWithResponses) GetV1DolusLogsWithResponse(ctx context.Context, params *GetV1DolusLogsParams, reqEditors ...RequestEditorFn) (*GetV1DolusLogsResponse, error) {
+	rsp, err := c.GetV1DolusLogs(ctx, params, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseGetV1DolusLogsResponse(rsp)
+}
+
+// GetV1DolusLogsWsWithResponse request returning *GetV1DolusLogsWsResponse
+func (c *ClientWithResponses) GetV1DolusLogsWsWithResponse(ctx context.Context, params *GetV1DolusLogsWsParams, reqEditors ...RequestEditorFn) (*GetV1DolusLogsWsResponse, error) {
+	rsp, err := c.GetV1DolusLogsWs(ctx, params, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseGetV1DolusLogsWsResponse(rsp)
 }
 
 // GetV1DolusRoutesWithResponse request returning *GetV1DolusRoutesResponse
@@ -493,6 +707,38 @@ func ParsePostV1DolusExpectationsResponse(rsp *http.Response) (*PostV1DolusExpec
 	return response, nil
 }
 
+// ParseGetV1DolusLogsResponse parses an HTTP response from a GetV1DolusLogsWithResponse call
+func ParseGetV1DolusLogsResponse(rsp *http.Response) (*GetV1DolusLogsResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &GetV1DolusLogsResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	return response, nil
+}
+
+// ParseGetV1DolusLogsWsResponse parses an HTTP response from a GetV1DolusLogsWsWithResponse call
+func ParseGetV1DolusLogsWsResponse(rsp *http.Response) (*GetV1DolusLogsWsResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &GetV1DolusLogsWsResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	return response, nil
+}
+
 // ParseGetV1DolusRoutesResponse parses an HTTP response from a GetV1DolusRoutesWithResponse call
 func ParseGetV1DolusRoutesResponse(rsp *http.Response) (*GetV1DolusRoutesResponse, error) {
 	bodyBytes, err := io.ReadAll(rsp.Body)
@@ -506,6 +752,16 @@ func ParseGetV1DolusRoutesResponse(rsp *http.Response) (*GetV1DolusRoutesRespons
 		HTTPResponse: rsp,
 	}
 
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest []Route
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	}
+
 	return response, nil
 }
 
@@ -517,6 +773,12 @@ type ServerInterface interface {
 
 	// (POST /v1/dolus/expectations)
 	PostV1DolusExpectations(ctx echo.Context) error
+	// Your GET endpoint
+	// (GET /v1/dolus/logs)
+	GetV1DolusLogs(ctx echo.Context, params GetV1DolusLogsParams) error
+	// Your GET endpoint
+	// (GET /v1/dolus/logs/ws)
+	GetV1DolusLogsWs(ctx echo.Context, params GetV1DolusLogsWsParams) error
 	// Your GET endpoint
 	// (GET /v1/dolus/routes)
 	GetV1DolusRoutes(ctx echo.Context) error
@@ -542,6 +804,42 @@ func (w *ServerInterfaceWrapper) PostV1DolusExpectations(ctx echo.Context) error
 
 	// Invoke the callback with all the unmarshaled arguments
 	err = w.Handler.PostV1DolusExpectations(ctx)
+	return err
+}
+
+// GetV1DolusLogs converts echo context to params.
+func (w *ServerInterfaceWrapper) GetV1DolusLogs(ctx echo.Context) error {
+	var err error
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params GetV1DolusLogsParams
+	// ------------- Optional query parameter "lines" -------------
+
+	err = runtime.BindQueryParameter("form", true, false, "lines", ctx.QueryParams(), &params.Lines)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter lines: %s", err))
+	}
+
+	// Invoke the callback with all the unmarshaled arguments
+	err = w.Handler.GetV1DolusLogs(ctx, params)
+	return err
+}
+
+// GetV1DolusLogsWs converts echo context to params.
+func (w *ServerInterfaceWrapper) GetV1DolusLogsWs(ctx echo.Context) error {
+	var err error
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params GetV1DolusLogsWsParams
+	// ------------- Optional query parameter "lines" -------------
+
+	err = runtime.BindQueryParameter("form", true, false, "lines", ctx.QueryParams(), &params.Lines)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter lines: %s", err))
+	}
+
+	// Invoke the callback with all the unmarshaled arguments
+	err = w.Handler.GetV1DolusLogsWs(ctx, params)
 	return err
 }
 
@@ -584,6 +882,8 @@ func RegisterHandlersWithBaseURL(router EchoRouter, si ServerInterface, baseURL 
 
 	router.GET(baseURL+"/v1/dolus/expectations", wrapper.GetV1DolusExpectations)
 	router.POST(baseURL+"/v1/dolus/expectations", wrapper.PostV1DolusExpectations)
+	router.GET(baseURL+"/v1/dolus/logs", wrapper.GetV1DolusLogs)
+	router.GET(baseURL+"/v1/dolus/logs/ws", wrapper.GetV1DolusLogsWs)
 	router.GET(baseURL+"/v1/dolus/routes", wrapper.GetV1DolusRoutes)
 
 }
@@ -591,22 +891,25 @@ func RegisterHandlersWithBaseURL(router EchoRouter, si ServerInterface, baseURL 
 // Base64 encoded, gzipped, json marshaled Swagger object
 var swaggerSpec = []string{
 
-	"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",
+	"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",
+	"5OrN6GlPp/l2CUEZNDT/HQAA//8VOpL2ERAAAA==",
 }
 
 // GetSwagger returns the content of the embedded swagger specification file

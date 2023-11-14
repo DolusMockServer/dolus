@@ -83,10 +83,49 @@ paths:
     get:
       summary: Your GET endpoint
       tags: []
-      responses: {}
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Route'
+                  x-stoplight:
+                    id: pl8iwqrnpj6oc
       operationId: get-v1-dolus-routes
       x-stoplight:
         id: 3694eed8o2kp8
+  /v1/dolus/logs:
+    get:
+      summary: Your GET endpoint
+      tags: []
+      responses: {}
+      operationId: get-v1-dolus-logs
+      x-stoplight:
+        id: sz1mrfdiyawqz
+      parameters:
+        - schema:
+            type: integer
+          in: query
+          name: lines
+          description: number of log lines to return
+    parameters: []
+  /v1/dolus/logs/ws:
+    get:
+      summary: Your GET endpoint
+      tags: []
+      responses: {}
+      operationId: get-v1-dolus-logs-ws
+      x-stoplight:
+        id: 0oosegi3apif3
+      parameters:
+        - schema:
+            type: string
+          in: query
+          name: lines
+          description: number of log lines to return
 components:
   schemas:
     Expectation:
@@ -202,3 +241,20 @@ components:
               id: d7i0m4l8c62pr
       required:
         - expectations
+    Route:
+      title: Route
+      x-stoplight:
+        id: 8fiydx14b0lgo
+      type: object
+      properties:
+        path:
+          type: string
+          x-stoplight:
+            id: wrajojsud3inv
+        operation:
+          type: string
+          x-stoplight:
+            id: rfsk93q64pc45
+      required:
+        - path
+        - operation
