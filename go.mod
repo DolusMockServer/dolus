@@ -1,4 +1,4 @@
-module github.com/MartinSimango/dolus
+module github.com/DolusMockServer/dolus
 
 go 1.21.3
 

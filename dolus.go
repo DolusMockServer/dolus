@@ -4,11 +4,11 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/MartinSimango/dolus/engine"
-	"github.com/MartinSimango/dolus/expectation"
-	"github.com/MartinSimango/dolus/logger"
-	"github.com/MartinSimango/dolus/server"
-	"github.com/MartinSimango/dolus/task"
+	"github.com/DolusMockServer/dolus/engine"
+	"github.com/DolusMockServer/dolus/expectation"
+	"github.com/DolusMockServer/dolus/logger"
+	"github.com/DolusMockServer/dolus/server"
+	"github.com/DolusMockServer/dolus/task"
 	"github.com/MartinSimango/dstruct/generator"
 	"github.com/fatih/color"
 	"github.com/gorilla/websocket"
@@ -31,7 +31,7 @@ Go framework for creating customizable and extendable mock servers
 
 `
 	Version = "0.0.1"
-	website = "https://github.com/MartinSimango/dolus"
+	website = "https://github.com/DolusMockServer/dolus"
 )
 
 func printBanner() {

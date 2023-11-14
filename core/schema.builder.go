@@ -5,7 +5,7 @@ import (
 	"reflect"
 	"strings"
 
-	"github.com/MartinSimango/dolus/task"
+	"github.com/DolusMockServer/dolus/task"
 	"github.com/MartinSimango/dstruct"
 	"github.com/MartinSimango/dstruct/dreflect"
 	"github.com/MartinSimango/dstruct/generator"

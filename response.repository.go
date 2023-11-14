@@ -7,8 +7,8 @@ type GeneralError struct {
 }
 
 // import (
-// 	"github.com/MartinSimango/dolus/pkg/example"
-// 	"github.com/MartinSimango/dolus/pkg/expectation"
+// 	"github.com/DolusMockServer/dolus/pkg/example"
+// 	"github.com/DolusMockServer/dolus/pkg/expectation"
 // 	"github.com/labstack/echo/v4"
 // )
 

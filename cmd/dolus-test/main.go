@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 
-	"github.com/MartinSimango/dolus"
+	"github.com/DolusMockServer/dolus"
 	"github.com/MartinSimango/dstruct/generator"
 )
 

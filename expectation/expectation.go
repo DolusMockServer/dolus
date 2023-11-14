@@ -76,7 +76,7 @@ func (e ExpectationError) Error() string {
 // import (
 // 	"net/http"
 
-// 	"github.com/MartinSimango/dolus/pkg/example"
+// 	"github.com/DolusMockServer/dolus/pkg/example"
 // )
 
 // // type NoExpectationType

@@ -6,9 +6,9 @@ import (
 	"strings"
 
 	"cuelang.org/go/cue"
+	"github.com/DolusMockServer/dolus/core"
+	"github.com/DolusMockServer/dolus/logger"
 	"github.com/MartinSimango/dolus-expectations/pkg/dolus"
-	"github.com/MartinSimango/dolus/core"
-	"github.com/MartinSimango/dolus/logger"
 	"github.com/MartinSimango/dstruct"
 	"github.com/MartinSimango/dstruct/generator"
 )

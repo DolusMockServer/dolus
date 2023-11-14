@@ -7,8 +7,8 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/DolusMockServer/dolus/expectation"
 	"github.com/MartinSimango/dolus-expectations/pkg/dolus"
-	"github.com/MartinSimango/dolus/expectation"
 	"github.com/MartinSimango/dstruct"
 	"github.com/MartinSimango/dstruct/dreflect"
 	"github.com/MartinSimango/dstruct/generator"

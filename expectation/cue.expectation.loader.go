@@ -7,7 +7,7 @@ import (
 	"cuelang.org/go/cue"
 	"cuelang.org/go/cue/cuecontext"
 	"cuelang.org/go/cue/load"
-	"github.com/MartinSimango/dolus/logger"
+	"github.com/DolusMockServer/dolus/logger"
 )
 
 type (
@@ -46,7 +46,7 @@ func (cel *CueExpectationLoader) load() (*CueExpectationLoadType, error) {
 		// check for errors on the  instance
 		// these are typically parsing errors
 		if bi.Err != nil {
-			logger.Log.Error(false, "Error during load:", bi.Err)
+			logger.Log.Error("Error during load:", bi.Err)
 			continue
 		}
 		value := ctx.BuildInstance(bi)

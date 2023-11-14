@@ -4,10 +4,10 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/MartinSimango/dolus/engine"
-	"github.com/MartinSimango/dolus/expectation"
-	"github.com/MartinSimango/dolus/logger"
-	"github.com/MartinSimango/dolus/server"
+	"github.com/DolusMockServer/dolus/engine"
+	"github.com/DolusMockServer/dolus/expectation"
+	"github.com/DolusMockServer/dolus/logger"
+	"github.com/DolusMockServer/dolus/server"
 	echo "github.com/labstack/echo/v4"
 )
 
