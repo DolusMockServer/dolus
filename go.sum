@@ -1,7 +1,7 @@
 cuelang.org/go v0.6.0 h1:dJhgKCog+FEZt7OwAYV1R+o/RZPmE8aqFoptmxSWyr8=
 cuelang.org/go v0.6.0/go.mod h1:9CxOX8aawrr3BgSdqPj7V0RYoXo7XIb+yDFC6uESrOQ=
-github.com/MartinSimango/dolus-expectations v0.0.2-alpha h1:bI5//UJq3LO2zohgEGAJiM+m+KHc43WAnQJquSxSJN0=
-github.com/MartinSimango/dolus-expectations v0.0.2-alpha/go.mod h1:BCelqHxFHu9qjjHTwb7bQ3MnV0BCURB9DWlta/LGjp0=
+github.com/DolusMockServer/dolus-expectations v0.0.3-alpha h1:Ags3frRNtycRuV+bmg+C0uauZ93OLmdYi4v2KjA/VLc=
+github.com/DolusMockServer/dolus-expectations v0.0.3-alpha/go.mod h1:peKJ+x0qPgU8CD4vXaKkuImKEAHHLsdZ/mbk4oXtxBc=
 github.com/MartinSimango/dstruct v0.3.0-beta h1:KZGou/7PZZRqXApC0uqKKHD4rXI1bjlmsiiRC/x0tPs=
 github.com/MartinSimango/dstruct v0.3.0-beta/go.mod h1:ibRv8phiwi7ELgFdjNxrYh4I6p4cVdn4qBqYP8Ztqzk=
 github.com/RaveNoX/go-jsoncommentstrip v1.0.0/go.mod h1:78ihd09MekBnJnxpICcwzCMzGrKSKYe4AqU6PDYYpjk=

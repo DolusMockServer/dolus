@@ -1,6 +1,6 @@
 package main
 import (
-    "github.com/MartinSimango/dolus-expectations/dolus"
+    "github.com/DolusMockServer/dolus-expectations/dolus"
 )
 
 dolus.#Expectations & {

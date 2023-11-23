@@ -3,8 +3,8 @@ package dolus
 import (
 	"fmt"
 
+	"github.com/DolusMockServer/dolus-expectations/pkg/dolus"
 	"github.com/DolusMockServer/dolus/server"
-	"github.com/MartinSimango/dolus-expectations/pkg/dolus"
 )
 
 type DolusApiFactory interface {

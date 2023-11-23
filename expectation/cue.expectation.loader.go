@@ -19,7 +19,8 @@ type CueExpectationLoader struct {
 	cueDolusExpectationsRootModule string
 }
 
-const dolusExpectationsHomeFolder = "cue/github.com/MartinSimango/dolus-expectations"
+// TODO move this location dolus-expectations
+const dolusExpectationsHomeFolder = "cue/github.com/DolusMockServer/dolus-expectations"
 
 var _ Loader[CueExpectationLoadType] = &CueExpectationLoader{}
 
