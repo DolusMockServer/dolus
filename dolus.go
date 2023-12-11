@@ -113,8 +113,7 @@ func (d *Dolus) addRoutes(method, path string) {
 			})
 		}
 
-		response.Body.Generate()
-		response.Body.Update()
+		response.Body.GenerateAndUpdate()
 		return ctx.JSON(response.Status, response.Body.Instance())
 	})
 }

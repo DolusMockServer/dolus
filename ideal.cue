@@ -14,7 +14,7 @@ dolus.#Expectations & {
             response:  dolus.#Response & {
                 body: {
                     petId: {
-                        id: dolus.#GenInt32 
+                        id: dolus.#GenInt32 &{min: 80, max:100}
                     }
                     // age: dolus.#GenInt32 
                     // name: "John Doe"    
