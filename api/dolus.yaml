@@ -19,8 +19,6 @@ paths:
               schema:
                 $ref: '#/components/schemas/Expectations'
       operationId: get-v1-dolus-expectations
-      x-stoplight:
-        id: y1uvlms8igq6e
       description: Endpoint is for fetching expectations
     post:
       summary: ''
@@ -28,8 +26,6 @@ paths:
       responses:
         '201':
           description: Created
-      x-stoplight:
-        id: whv6ahxzodemc
       description: ''
       requestBody:
         content:

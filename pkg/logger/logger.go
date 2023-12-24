@@ -18,7 +18,7 @@ type Logger struct {
 	logFile string
 }
 
-var Log *Logger
+var Log *Logger 
 
 type LoggerWebSocketClient struct {
 	logger *Logger
@@ -31,8 +31,7 @@ func (l *Logger) RegisterWebSocketClient(conn *websocket.Conn, lines int) {
 		l.sendLogs(client, int(lines))
 	}
 	l.Debugf("New client with address %s connected.", conn.RemoteAddr().String())
-	if l.GetLevel() >= logrus.DebugLevel {
-		// give time for logrus to write to stream before adding the client as a writer
+	if l.GetLevel() >= logrus.DebugLevel {	// give time for logrus to write to stream before adding the client as a writer
 		time.Sleep(time.Millisecond * 250)
 	}
 	l.addWriter(client)
