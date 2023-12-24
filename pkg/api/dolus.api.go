@@ -7,5 +7,5 @@ import (
 
 type DolusApi interface {
 	server.ServerInterface
-	AddRoute(pathMethod expectation.PathMethod) error
+	AddRoute(pathMethod expectation.Route) error
 }

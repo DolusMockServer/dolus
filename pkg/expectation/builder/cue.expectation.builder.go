@@ -70,9 +70,11 @@ func (ceb *CueExpectationBuilder) buildExpectationFromCueInstance(
 			RawCueExpectation: &cueExpectation,
 			Priority:          cueExpectation.Priority,
 			Request: expectation.DolusRequest{
-				Body:        cueExpectation.Request.Body,
-				OpenApiPath: cueExpectation.Request.Path,
-				Method:      string(cueExpectation.Request.Method),
+				Route: expectation.Route{
+					Path:   pathFromOpenApiPath(cueExpectation.Request.Path),
+					Method: string(cueExpectation.Request.Method),
+				},
+				Body: cueExpectation.Request.Body,
 			},
 			Response: expectation.DolusResponse{
 				Body: dstruct.NewGeneratedStructWithConfig(

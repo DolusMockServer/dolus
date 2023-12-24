@@ -2,6 +2,7 @@ package builder
 
 import (
 	"strconv"
+	"strings"
 
 	"github.com/MartinSimango/dstruct"
 	"github.com/MartinSimango/dstruct/generator"
@@ -37,6 +38,10 @@ func (oeb *OpenApiExpectationBuilder) BuildExpectations() ([]expectation.DolusEx
 	}
 }
 
+func pathFromOpenApiPath(path string) string {
+	return strings.ReplaceAll(strings.ReplaceAll(path, "{", ":"), "}", "")
+}
+
 func (oeb *OpenApiExpectationBuilder) buildExpectationsFromOpenApiSpec(
 	spec *loader.OpenAPISpecLoadType,
 ) (expectations []expectation.DolusExpectation) {
@@ -61,9 +66,11 @@ func (oeb *OpenApiExpectationBuilder) buildExpectationsFromOpenApiSpec(
 				expectations = append(expectations, expectation.DolusExpectation{
 					Priority: 0,
 					Request: expectation.DolusRequest{
-						Body:        nil, // TODO: what should this be?
-						OpenApiPath: path,
-						Method:      method,
+						Body: nil, // TODO: what should this be for openApi expectations: nil = any?
+						Route: expectation.Route{
+							Path:   pathFromOpenApiPath(path),
+							Method: method,
+						},
 					},
 					Response: expectation.DolusResponse{
 						Body: dstruct.NewGeneratedStructWithConfig(

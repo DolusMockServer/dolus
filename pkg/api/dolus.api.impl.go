@@ -15,7 +15,7 @@ import (
 type DolusApiImpl struct {
 	ExpectationEngine engine.ExpectationEngine
 	Mapper            Mapper
-	routes            map[expectation.PathMethod]bool
+	routes            map[expectation.Route]bool
 }
 
 var _ DolusApi = &DolusApiImpl{}
@@ -26,11 +26,11 @@ func NewDolusApi(expectationEngine engine.ExpectationEngine,
 	return &DolusApiImpl{
 		ExpectationEngine: expectationEngine,
 		Mapper:            mapper,
-		routes:            make(map[expectation.PathMethod]bool),
+		routes:            make(map[expectation.Route]bool),
 	}
 }
 
-func (d *DolusApiImpl) AddRoute(pathMethod expectation.PathMethod) error {
+func (d *DolusApiImpl) AddRoute(pathMethod expectation.Route) error {
 	if d.routes[pathMethod] {
 		return fmt.Errorf(
 			"route %s with operation %s already exists",

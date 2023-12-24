@@ -3,7 +3,6 @@ package dolus
 import (
 	"fmt"
 	"net/http"
-	"strings"
 
 	"github.com/MartinSimango/dstruct/generator"
 	"github.com/fatih/color"
@@ -104,31 +103,28 @@ func (d *Dolus) initHttpServer() {
 	server.RegisterHandlers(d.EchoServer, d.dolusApi)
 }
 
-func getUcarionUrlPath(path string) string {
-	return strings.ReplaceAll(strings.ReplaceAll(path, "{", ":"), "}", "")
-}
-
+// TODO: move this to somewhere more appropriate
 type GeneralError struct {
 	Path     string
 	Method   string
 	ErrorMsg string
 }
 
-func (d *Dolus) addRoutes(method, path string) {
-	if err := d.dolusApi.AddRoute(expectation.PathMethod{Path: path, Method: method}); err != nil {
+func (d *Dolus) addRoutes(route expectation.Route) {
+	if err := d.dolusApi.AddRoute(route); err != nil {
 		fmt.Printf("error adding route: %s\n", err.Error())
 	}
-	d.EchoServer.Router().Add(method, path, func(ctx echo.Context) error {
+	d.EchoServer.Router().Add(route.Method, route.Path, func(ctx echo.Context) error {
 		logger.Log.Infof(
 			"Received request for path %s and method %s",
 			ctx.Request().URL.Path,
-			method,
+			route.Method,
 		)
-		response, err := d.expectationEngine.GetResponseForRequest(path, method, ctx.Request())
+		response, err := d.expectationEngine.GetResponseForRequest(route.Path, ctx.Request())
 		if err != nil {
 			return ctx.JSON(500, GeneralError{
 				Path:     ctx.Request().URL.Path,
-				Method:   method,
+				Method:   route.Method,
 				ErrorMsg: err.Error(),
 			})
 		}
@@ -144,11 +140,9 @@ func (d *Dolus) loadOpenAPISpecExpectations() error {
 		return err
 	}
 	for _, e := range expectations {
-		method := e.Request.Method
-		path := getUcarionUrlPath(e.Request.OpenApiPath)
-		d.addRoutes(method, path)
-		d.expectationEngine.AddResponseSchemaForPathMethodStatus(
-			expectation.PathMethodStatusExpectation(e),
+		d.addRoutes(e.Request.Route)
+		d.expectationEngine.AddResponseSchemaForRoute(
+			e.Request.Route,
 			e.Response.Body,
 		)
 

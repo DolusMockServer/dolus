@@ -19,9 +19,9 @@ import (
 
 type DolusExpectationEngine struct {
 	cueExpectationsFiles []string
-	expectations         map[string][]expectation.DolusExpectation
+	expectations         map[expectation.Route][]expectation.DolusExpectation
 	rawCueExpectations   []dolus.Expectation
-	ResponseSchemas      map[expectation.PathMethodStatus]dstruct.DynamicStructModifier
+	ResponseSchemas      map[expectation.Route]dstruct.DynamicStructModifier
 	GenerationConfig     generator.GenerationConfig
 	expectationRoutes    []string
 }
@@ -32,9 +32,9 @@ func NewDolusExpectationEngine(
 	generationConfig generator.GenerationConfig,
 ) (dolusExpectationEngine *DolusExpectationEngine) {
 	dolusExpectationEngine = &DolusExpectationEngine{}
-	dolusExpectationEngine.expectations = make(map[string][]expectation.DolusExpectation)
+	dolusExpectationEngine.expectations = make(map[expectation.Route][]expectation.DolusExpectation)
 	dolusExpectationEngine.ResponseSchemas = make(
-		map[expectation.PathMethodStatus]dstruct.DynamicStructModifier,
+		map[expectation.Route]dstruct.DynamicStructModifier,
 	)
 	dolusExpectationEngine.GenerationConfig = generationConfig
 
@@ -46,16 +46,14 @@ func (e *DolusExpectationEngine) AddExpectation(
 	validateExpectationSchema bool,
 ) error {
 	// TODO check if exception overrides another one i.e has same request matcher
-	pathMethod := expectation.PathMethodFromExpectation(expect)
 
 	if validateExpectationSchema {
 		if err := e.validateExpectationSchema(expect); err != nil {
 			return err
 		}
 	}
-
-	key := getUcarionUrlPath(pathMethod.OpenApiPath) + "_" + pathMethod.Method
-	e.expectations[key] = append(e.expectations[key], expect)
+	route := expect.Request.Route
+	e.expectations[route] = append(e.expectations[route], expect)
 
 	if expect.RawCueExpectation != nil {
 		e.rawCueExpectations = append(e.rawCueExpectations, *expect.RawCueExpectation)
@@ -65,9 +63,7 @@ func (e *DolusExpectationEngine) AddExpectation(
 }
 
 func (e *DolusExpectationEngine) validateExpectationSchema(exp expectation.DolusExpectation) error {
-	matchingResponseSchema, err := e.getMatchingResponseSchemaForPathMethodStatus(
-		expectation.PathMethodStatusExpectation(exp),
-	)
+	matchingResponseSchema, err := e.getMatchingResponseSchemaForRoute(exp.Request.Route)
 	if err != nil {
 		return err
 	}
@@ -85,30 +81,31 @@ func (e *DolusExpectationEngine) validateExpectationSchema(exp expectation.Dolus
 	return nil
 }
 
-func (e *DolusExpectationEngine) AddResponseSchemaForPathMethodStatus(
-	pathMethodStatus expectation.PathMethodStatus,
-	schema dstruct.DynamicStructModifier,
+func (e *DolusExpectationEngine) AddResponseSchemaForRoute(
+	route expectation.Route,
+	responseSchema dstruct.DynamicStructModifier,
 ) error {
-	if e.ResponseSchemas[pathMethodStatus] != nil {
+	if e.ResponseSchemas[route] != nil {
 		return fmt.Errorf("response schema already exists for... ")
 	}
 
-	e.ResponseSchemas[pathMethodStatus] = schema
+	e.ResponseSchemas[route] = responseSchema
 	return nil
 }
 
-func (e *DolusExpectationEngine) GetExpectations() map[string][]expectation.DolusExpectation {
+func (e *DolusExpectationEngine) GetAllExpectations() map[expectation.Route][]expectation.DolusExpectation {
 	return e.expectations
 }
 
+// TODO: either return []Route or change name to GetExpectationRoutePaths()
 func (e *DolusExpectationEngine) GetExpectationRoutes() []string {
 	return e.expectationRoutes
 }
 
-func (e *DolusExpectationEngine) GetExpectationForPathMethod(
-	pathMethod expectation.PathMethod,
+func (e *DolusExpectationEngine) GetExpectation(
+	route expectation.Route,
 ) []expectation.DolusExpectation {
-	return e.expectations[pathMethod.Method+"_"+pathMethod.OpenApiPath]
+	return e.expectations[route]
 }
 
 func getParsedUrl(urlString string) (*url.URL, error) {
@@ -119,29 +116,31 @@ func getParsedUrl(urlString string) (*url.URL, error) {
 	return parsedURL, nil
 }
 
-func (e *DolusExpectationEngine) getMatchingResponseSchemaForPathMethodStatus(
-	pms expectation.PathMethodStatus,
+func (e *DolusExpectationEngine) getMatchingResponseSchemaForRoute(
+	route expectation.Route,
 ) (dstruct.DynamicStructModifier, error) {
 	var matchingSchemas []dstruct.DynamicStructModifier
 
-	ucarionUrlPath := getUcarionUrlPath(pms.OpenApiPath)
-	parsedURL, err := getParsedUrl(ucarionUrlPath)
+	parsedURL, err := getParsedUrl(route.Path)
 	if err != nil {
 		return nil, err
 	}
 
 	// expectationQueryParameters := parsedURL.Query()
 	expectationPath := parsedURL.Path
-	for k, v := range e.ResponseSchemas {
-		if pms.Method != k.Method || pms.Status != k.Status {
-			continue
+	for schemaRoute, responseSchema := range e.ResponseSchemas {
+		if schemaRoute.Match(route) {
+			matchingSchemas = append(matchingSchemas, responseSchema)
 		}
+		// if pms.Method != k.Method || pms.Status != k.Status {
 
-		schemaPath := urlpath.New(ucarionUrlPath)
+		// continue
+		// }
 
+		schemaPath := urlpath.New(schemaRoute.Path)
 		_, ok := schemaPath.Match(expectationPath)
 		if ok {
-			matchingSchemas = append(matchingSchemas, v)
+			matchingSchemas = append(matchingSchemas, responseSchema)
 		}
 	}
 
@@ -255,25 +254,30 @@ func validateExpectationResponseSchema(
 	return
 }
 
-func (e *DolusExpectationEngine) getExpectations(
-	path, method string,
+func (e *DolusExpectationEngine) getExpectaionsForRequest(
+	path string,
 	request *http.Request,
 ) []expectation.DolusExpectation {
 	fmt.Println("COOL: ", path, request.URL.Path, request.RequestURI)
-	// key := path + "_" + method
 	// check for exact matches (with query parameters)
-	if expectations := e.expectations[request.RequestURI+"_"+method]; len(expectations) > 0 {
+	if expectations := e.GetExpectation(expectation.Route{
+		Path:   request.RequestURI,
+		Method: request.Method,
+	}); len(expectations) > 0 {
 		return expectations
 	}
-
 	// get partial match if no exact match (with no query parameters)
-	if expectations := e.expectations[request.URL.Path+"_"+method]; len(expectations) > 0 {
+	if expectations := e.GetExpectation(expectation.Route{
+		Path:   request.URL.Path,
+		Method: request.Method,
+	}); len(expectations) > 0 {
 		return expectations
 	}
 
-	p := e.expectations[path+"_"+method]
-
-	return p
+	return e.GetExpectation(expectation.Route{
+		Path:   path,
+		Method: request.Method,
+	})
 }
 
 func getUcarionUrlPath(path string) string {
@@ -282,12 +286,12 @@ func getUcarionUrlPath(path string) string {
 }
 
 func (e *DolusExpectationEngine) GetResponseForRequest(
-	path, method string,
+	path string,
 	request *http.Request,
 ) (*expectation.DolusResponse, error) {
 	// fmt.Println(path, method, request.URL.Path)
 	// fmt.Println(len(expectations))
-	expectations := e.getExpectations(path, method, request)
+	expectations := e.getExpectaionsForRequest(path, request)
 
 	if len(expectations) == 0 {
 		return nil, fmt.Errorf("no expectation found for path and HTTP method")
