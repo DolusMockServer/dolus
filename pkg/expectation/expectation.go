@@ -34,8 +34,8 @@ type DolusRequest struct {
 }
 
 type DolusExpectation struct {
-	Priority          int
-	Response          DolusResponse
-	Request           DolusRequest
-	RawCueExpectation *dolus.Expectation
+	Priority       int
+	Response       DolusResponse
+	Request        DolusRequest
+	CueExpectation *dolus.Expectation
 }

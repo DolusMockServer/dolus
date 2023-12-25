@@ -46,7 +46,7 @@ func (d *DolusApiImpl) AddRoute(route expectation.Route) error {
 func (d *DolusApiImpl) GetV1DolusExpectations(ctx echo.Context) error {
 	apiExpectations, err := d.Mapper.MapCueExpectations(
 		d.ExpectationEngine.
-			GetRawCueExpectations().
+			GetCueExpectations().
 			Expectations)
 	if err != nil {
 		return ctx.JSON(http.StatusInternalServerError, "Internal Server Error")
@@ -54,6 +54,8 @@ func (d *DolusApiImpl) GetV1DolusExpectations(ctx echo.Context) error {
 	return ctx.JSON(http.StatusOK,
 		apiExpectations)
 }
+
+// TODO: make GetV1DolusRoutes get expectations from the expectation engine
 
 // GetV1DolusRoutes implements server.ServerInterface.
 func (d *DolusApiImpl) GetV1DolusRoutes(ctx echo.Context) error {

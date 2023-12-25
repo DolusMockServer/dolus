@@ -19,7 +19,7 @@ import (
 type DolusExpectationEngine struct {
 	cueExpectationsFiles []string
 	expectations         map[expectation.Route][]expectation.DolusExpectation
-	rawCueExpectations   []dolus.Expectation
+	cueExpectations      []dolus.Expectation
 	ResponseSchemas      map[expectation.Route]dstruct.DynamicStructModifier
 	GenerationConfig     generator.GenerationConfig
 	expectationRoutes    []string
@@ -54,8 +54,8 @@ func (e *DolusExpectationEngine) AddExpectation(
 	route := expect.Request.Route
 	e.expectations[route] = append(e.expectations[route], expect)
 
-	if expect.RawCueExpectation != nil {
-		e.rawCueExpectations = append(e.rawCueExpectations, *expect.RawCueExpectation)
+	if expect.CueExpectation != nil {
+		e.cueExpectations = append(e.cueExpectations, *expect.CueExpectation)
 	}
 
 	return nil
@@ -304,8 +304,8 @@ func (e *DolusExpectationEngine) GetResponseForRequest(
 	return &currentExpectation.Response, nil
 }
 
-func (e *DolusExpectationEngine) GetRawCueExpectations() dolus.Expectations {
+func (e *DolusExpectationEngine) GetCueExpectations() dolus.Expectations {
 	return dolus.Expectations{
-		Expectations: e.rawCueExpectations,
+		Expectations: e.cueExpectations,
 	}
 }

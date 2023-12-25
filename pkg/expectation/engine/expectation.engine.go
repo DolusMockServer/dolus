@@ -18,6 +18,7 @@ type ExpectationEngine interface {
 	GetAllExpectations() map[expectation.Route][]expectation.DolusExpectation
 	GetExpectation(route expectation.Route) []expectation.DolusExpectation
 	GetResponseForRequest(path string, request *http.Request) (*expectation.DolusResponse, error)
-	GetRawCueExpectations() dolus.Expectations
+	// TODO: rename in dolus-expecation package to CueExpectation
+	GetCueExpectations() dolus.Expectations
 	GetExpectationRoutes() []string
 }

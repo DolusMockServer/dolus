@@ -2,7 +2,6 @@ package builder
 
 import (
 	"strconv"
-	"strings"
 
 	"github.com/MartinSimango/dstruct"
 	"github.com/MartinSimango/dstruct/generator"
@@ -38,10 +37,6 @@ func (oeb *OpenApiExpectationBuilder) BuildExpectations() ([]expectation.DolusEx
 	}
 }
 
-func pathFromOpenApiPath(path string) string {
-	return strings.ReplaceAll(strings.ReplaceAll(path, "{", ":"), "}", "")
-}
-
 func (oeb *OpenApiExpectationBuilder) buildExpectationsFromOpenApiSpec(
 	spec *loader.OpenAPISpecLoadType,
 ) (expectations []expectation.DolusExpectation) {
@@ -56,7 +51,6 @@ func (oeb *OpenApiExpectationBuilder) buildExpectationsFromOpenApiSpec(
 				// }
 
 				logger.Log.Info(path, " ", code)
-				//  TODO check if uricionPath is needed here
 
 				// requestSchema := schema.RequestSchemaFromOpenApi3RequestRef(ref)
 				// engine must store for each path method code then check that

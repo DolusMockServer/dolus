@@ -20,7 +20,7 @@ func (daf *MapperImpl) MapCueExpectations(
 ) ([]server.Expectation, error) {
 	var apiServerExpectations []server.Expectation
 	for _, e := range expectations {
-		apiServerExpectation, err := rawCueExpectationToApiExpectation(e)
+		apiServerExpectation, err := cueExpectationToApiExpectation(e)
 		if err != nil {
 			return nil, err
 		}
@@ -56,7 +56,7 @@ func callbackToApiCallback(callback *dolus.Callback) (*server.Callback, error) {
 	return nil, nil
 }
 
-func rawCueExpectationToApiExpectation(e dolus.Expectation) (*server.Expectation, error) {
+func cueExpectationToApiExpectation(e dolus.Expectation) (*server.Expectation, error) {
 	requestBody, responseBody, err := getRequestAndResponseBody(e)
 	if err != nil {
 		return nil, err

@@ -67,8 +67,8 @@ func (ceb *CueExpectationBuilder) buildExpectationFromCueInstance(
 		}
 
 		expectations = append(expectations, expectation.DolusExpectation{
-			RawCueExpectation: &cueExpectation,
-			Priority:          cueExpectation.Priority,
+			CueExpectation: &cueExpectation,
+			Priority:       cueExpectation.Priority,
 			Request: expectation.DolusRequest{
 				Route: expectation.Route{
 					Path:   pathFromOpenApiPath(cueExpectation.Request.Path),
