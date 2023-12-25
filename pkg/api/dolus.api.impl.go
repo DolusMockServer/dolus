@@ -7,8 +7,8 @@ import (
 	"github.com/labstack/echo/v4"
 
 	"github.com/DolusMockServer/dolus/internal/server"
-	"github.com/DolusMockServer/dolus/pkg/engine"
 	"github.com/DolusMockServer/dolus/pkg/expectation"
+	"github.com/DolusMockServer/dolus/pkg/expectation/engine"
 	"github.com/DolusMockServer/dolus/pkg/logger"
 )
 
@@ -30,15 +30,15 @@ func NewDolusApi(expectationEngine engine.ExpectationEngine,
 	}
 }
 
-func (d *DolusApiImpl) AddRoute(pathMethod expectation.Route) error {
-	if d.routes[pathMethod] {
+func (d *DolusApiImpl) AddRoute(route expectation.Route) error {
+	if d.routes[route] {
 		return fmt.Errorf(
 			"route %s with operation %s already exists",
-			pathMethod.OpenApiPath,
-			pathMethod.Method,
+			route.Path,
+			route.Method,
 		)
 	}
-	d.routes[pathMethod] = true
+	d.routes[route] = true
 	return nil
 }
 
@@ -60,7 +60,7 @@ func (d *DolusApiImpl) GetV1DolusRoutes(ctx echo.Context) error {
 	var serverRoutes []server.Route
 	for r := range d.routes {
 		serverRoutes = append(serverRoutes, server.Route{
-			Path:      r.OpenApiPath,
+			Path:      r.Path,
 			Operation: r.Method,
 		})
 	}

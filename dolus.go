@@ -13,9 +13,9 @@ import (
 
 	"github.com/DolusMockServer/dolus/internal/server"
 	"github.com/DolusMockServer/dolus/pkg/api"
-	"github.com/DolusMockServer/dolus/pkg/engine"
 	"github.com/DolusMockServer/dolus/pkg/expectation"
 	"github.com/DolusMockServer/dolus/pkg/expectation/builder"
+	"github.com/DolusMockServer/dolus/pkg/expectation/engine"
 	"github.com/DolusMockServer/dolus/pkg/logger"
 	"github.com/DolusMockServer/dolus/pkg/task"
 )
@@ -117,7 +117,7 @@ func (d *Dolus) addRoutes(route expectation.Route) {
 	d.EchoServer.Router().Add(route.Method, route.Path, func(ctx echo.Context) error {
 		logger.Log.Infof(
 			"Received request for path %s and method %s",
-			ctx.Request().URL.Path,
+			ctx.Request().URL.RequestURI(),
 			route.Method,
 		)
 		response, err := d.expectationEngine.GetResponseForRequest(route.Path, ctx.Request())

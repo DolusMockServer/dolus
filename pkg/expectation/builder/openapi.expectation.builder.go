@@ -48,7 +48,7 @@ func (oeb *OpenApiExpectationBuilder) buildExpectationsFromOpenApiSpec(
 	for path := range spec.Paths {
 		for method, operation := range spec.Paths[path].Operations() {
 			for code, ref := range operation.Responses {
-				if path != "/store/order/{orderId}" || code != "200" {
+				if path != "/store/order/{orderId}/p" || code != "200" {
 					continue
 				}
 				// if p != "/" || code != "200" {
@@ -66,7 +66,7 @@ func (oeb *OpenApiExpectationBuilder) buildExpectationsFromOpenApiSpec(
 				expectations = append(expectations, expectation.DolusExpectation{
 					Priority: 0,
 					Request: expectation.DolusRequest{
-						Body: nil, // TODO: what should this be for openApi expectations: nil = any?
+						Body: nil,
 						Route: expectation.Route{
 							Path:   pathFromOpenApiPath(path),
 							Method: method,

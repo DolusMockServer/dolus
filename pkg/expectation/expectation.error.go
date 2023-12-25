@@ -1,6 +1,8 @@
 package expectation
 
-import "fmt"
+import (
+	"fmt"
+)
 
 type ExpectationFieldError struct {
 	FieldName string
@@ -15,7 +17,7 @@ type ExpectationError struct {
 func (e ExpectationError) Error() string {
 	retString := fmt.Sprintf(
 		"Expectation Error:\nPath: %s\nMethod: %s\nPriority: %d\nErrors:\n",
-		e.DolusExpectation.Request.OpenApiPath,
+		e.DolusExpectation.Request.Path,
 		e.DolusExpectation.Request.Method,
 		e.DolusExpectation.Priority,
 	)

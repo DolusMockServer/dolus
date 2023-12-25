@@ -4,6 +4,7 @@ import (
 	"net/http"
 
 	"github.com/MartinSimango/dstruct"
+	"github.com/ucarion/urlpath"
 
 	"github.com/DolusMockServer/dolus-expectations/pkg/dolus"
 )
@@ -13,8 +14,10 @@ type Route struct {
 	Method string
 }
 
-func (r Route) Match(route Route) bool {
-	panic("Not implemented")
+func (r Route) Match(path string) bool {
+	schemaPath := urlpath.New(r.Path)
+	_, ok := schemaPath.Match(path)
+	return ok
 }
 
 type DolusResponse struct {

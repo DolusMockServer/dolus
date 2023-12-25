@@ -366,7 +366,7 @@ paths:
                 $ref: '#/components/schemas/Order'
         '405':
           description: Invalid input
-  '/store/order/{orderId}':
+  '/store/order/{orderId}/p':
     get:
       tags:
         - store
