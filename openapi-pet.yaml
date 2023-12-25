@@ -366,7 +366,7 @@ paths:
                 $ref: '#/components/schemas/Order'
         '405':
           description: Invalid input
-  '/store/order/{orderId}':
+  '/store/order/{orderId}/p':
     get:
       tags:
         - store
@@ -381,6 +381,14 @@ paths:
           schema:
             type: integer
             format: int64
+        - schema:
+            type: string
+          in: query
+          name: value
+        - schema:
+            type: string
+          in: query
+          name: age
       responses:
         '200':
           description: successful operation
@@ -395,6 +403,8 @@ paths:
           description: Invalid ID supplied
         '404':
           description: Order not found
+      x-stoplight:
+        id: 3zokr15n8oe27
     delete:
       tags:
         - store
@@ -414,6 +424,14 @@ paths:
           description: Invalid ID supplied
         '404':
           description: Order not found
+      x-stoplight:
+        id: r16e15449hvgt
+    parameters:
+      - schema:
+          type: string
+        name: orderId
+        in: path
+        required: true
   /user:
     post:
       tags:
@@ -625,7 +643,7 @@ components:
         petId:
           type: object
           format: int64
-          example: 
+          example:
             id: 12
           properties:
             id:

@@ -1,4 +1,4 @@
-package expectation
+package loader
 
 import (
 	"fmt"
@@ -7,7 +7,8 @@ import (
 	"cuelang.org/go/cue"
 	"cuelang.org/go/cue/cuecontext"
 	"cuelang.org/go/cue/load"
-	"github.com/DolusMockServer/dolus/logger"
+
+	"github.com/DolusMockServer/dolus/pkg/logger"
 )
 
 type (
@@ -19,10 +20,10 @@ type CueExpectationLoader struct {
 	cueDolusExpectationsRootModule string
 }
 
-// TODO move this location dolus-expectations
-const dolusExpectationsHomeFolder = "cue/github.com/DolusMockServer/dolus-expectations"
-
 var _ Loader[CueExpectationLoadType] = &CueExpectationLoader{}
+
+// TODO: move this location dolus-expectations repository
+const dolusExpectationsHomeFolder = "cue/github.com/DolusMockServer/dolus-expectations"
 
 func NewCueExpectationLoader(cueExpectationsFiles []string) *CueExpectationLoader {
 	homeDir, err := os.UserHomeDir()
@@ -35,10 +36,13 @@ func NewCueExpectationLoader(cueExpectationsFiles []string) *CueExpectationLoade
 	}
 }
 
-func (cel *CueExpectationLoader) load() (*CueExpectationLoadType, error) {
+func (cel *CueExpectationLoader) Load() (*CueExpectationLoadType, error) {
 	ctx := cuecontext.New()
 	var cueValues []cue.Value
-	logger.Log.Debugf("Loading expectations from cue root module: %s", cel.cueDolusExpectationsRootModule)
+	logger.Log.Debugf(
+		"Loading expectations from cue root module: %s",
+		cel.cueDolusExpectationsRootModule,
+	)
 	bis := load.Instances(cel.cueExpectationsFiles, &load.Config{
 		ModuleRoot: cel.cueDolusExpectationsRootModule,
 	})

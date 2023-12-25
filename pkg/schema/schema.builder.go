@@ -1,15 +1,16 @@
-package core
+package schema
 
 import (
 	"fmt"
 	"reflect"
 	"strings"
 
-	"github.com/DolusMockServer/dolus/task"
 	"github.com/MartinSimango/dstruct"
 	"github.com/MartinSimango/dstruct/dreflect"
 	"github.com/MartinSimango/dstruct/generator"
 	"github.com/getkin/kin-openapi/openapi3"
+
+	"github.com/DolusMockServer/dolus/pkg/task"
 )
 
 func inList(key string, list []string) bool {
@@ -34,17 +35,19 @@ func getTags(name string, requiredField bool, schema openapi3.Schema) (string, b
 	}
 	pointer := nullable == "true" || required == "false"
 
-	tags := fmt.Sprintf(`json:"%s" type:"%s" pattern:"%s" required:"%s" nullable:"%s" format:"%s"`, name,
+	tags := fmt.Sprintf(
+		`json:"%s" type:"%s" pattern:"%s" required:"%s" nullable:"%s" format:"%s"`,
+		name,
 		schema.Type,
 		schema.Pattern,
 		required,
 		nullable,
-		schema.Format)
+		schema.Format,
+	)
 
 	if schema.Type != "object" {
 		if schema.Example != nil {
 			tags = fmt.Sprintf(`%s example:"%v"`, tags, schema.Example)
-
 		}
 		if schema.Default != nil {
 			tags = fmt.Sprintf(`%s default:"%v"`, tags, schema.Default)
@@ -88,7 +91,6 @@ func getStructFromOpenApi3Schema(schema openapi3.Schema) any {
 		case "integer":
 			if p.Value.Format == "int32" {
 				addField[int32](exportName, tags, nullable, dsb)
-
 			} else {
 				addField[int64](exportName, tags, nullable, dsb)
 			}
@@ -121,17 +123,13 @@ func getStructFromAny(config any) any {
 func buildSchemaFromDolusTask(t generator.TaskName, _map map[string]interface{}) (any, SchemaInfo) {
 	switch t {
 	case task.GenInt32:
-		return int32(0), SchemaInfo{Kind: reflect.Int32,
+		return int32(0), SchemaInfo{
+			Kind:   reflect.Int32,
 			Tags:   string(generator.GetTagForTask(t, _map["min"], _map["max"])),
-			Format: "int32"}
+			Format: "int32",
+		}
 	}
 	panic(fmt.Sprintf("Unrecognized dolus task: %s", t))
-}
-
-type SchemaInfo struct {
-	Kind   reflect.Kind
-	Tags   string
-	Format string
 }
 
 // TODO return tags instead of just type within a struct
@@ -169,7 +167,7 @@ func buildSchemaFromMap(_map any) (any, SchemaInfo) {
 	return dsb.Build().Instance(), SchemaInfo{Kind: reflect.Struct}
 }
 
-func buildSchemaFromSlice(config any, name string, root string) (any, SchemaInfo) {
+func buildSchemaFromSlice(config any, name string) (any, SchemaInfo) {
 	// fullFieldName := name
 	// if root != "" {
 	// 	fullFieldName = fmt.Sprintf("%s.%s", root, name)
@@ -178,7 +176,7 @@ func buildSchemaFromSlice(config any, name string, root string) (any, SchemaInfo
 
 	var firstElement any
 	if len(slice) == 0 {
-		firstElement = "" //emtpy slice assume array of strings
+		firstElement = "" // emtpy slice assume array of strings
 	} else {
 		firstElement, _ = buildSchemaFromAny(slice[0], name, "")
 	}
@@ -205,7 +203,11 @@ func buildSchemaFromSlice(config any, name string, root string) (any, SchemaInfo
 		}
 	}
 	sliceOfElementType := reflect.SliceOf(reflect.ValueOf(currentElement).Type())
-	return reflect.MakeSlice(sliceOfElementType, 0, 1024).Interface(), SchemaInfo{Kind: reflect.Slice}
+	return reflect.MakeSlice(sliceOfElementType, 0, 1024).
+			Interface(),
+		SchemaInfo{
+			Kind: reflect.Slice,
+		}
 }
 
 func buildSchemaFromStruct(config any, root string) (any, SchemaInfo) {
@@ -231,11 +233,9 @@ func buildSchemaFromStruct(config any, root string) (any, SchemaInfo) {
 
 	}
 	return dsb.Build().Instance(), SchemaInfo{Kind: reflect.Struct}
-
 }
 
 func buildSchemaFromAny(config interface{}, name string, root string) (interface{}, SchemaInfo) {
-
 	if config == nil {
 		return nil, SchemaInfo{Kind: reflect.Invalid}
 	}
@@ -245,7 +245,7 @@ func buildSchemaFromAny(config interface{}, name string, root string) (interface
 	case reflect.Map:
 		return buildSchemaFromMap(config)
 	case reflect.Slice:
-		return buildSchemaFromSlice(config, name, root)
+		return buildSchemaFromSlice(config, name)
 	case reflect.Struct:
 		return buildSchemaFromStruct(config, root)
 	case reflect.Ptr:
@@ -253,7 +253,6 @@ func buildSchemaFromAny(config interface{}, name string, root string) (interface
 	default:
 		return config, SchemaInfo{Kind: configKind, Tags: fmt.Sprintf(`default:"%v"`, config)}
 	}
-
 }
 
 func getSchemaFromOpenApi3Spec(ref *openapi3.ResponseRef, mediaType string) any {
@@ -265,7 +264,6 @@ func getSchemaFromOpenApi3Spec(ref *openapi3.ResponseRef, mediaType string) any 
 		} else {
 			return getStructFromOpenApi3Example(content.Examples)
 		}
-
 	}
 
 	fmt.Println("NO SCHEMA!")

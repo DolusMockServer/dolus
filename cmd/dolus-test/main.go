@@ -4,8 +4,9 @@ import (
 	"encoding/json"
 	"fmt"
 
-	"github.com/DolusMockServer/dolus"
 	"github.com/MartinSimango/dstruct/generator"
+
+	"github.com/DolusMockServer/dolus"
 )
 
 type B struct {
@@ -56,7 +57,6 @@ func Print(strct any) string {
 }
 
 func main() {
-
 	d := dolus.New()
 	d.AddExpectations("ideal.cue")
 	d.GenerationConfig.
@@ -67,5 +67,4 @@ func main() {
 	if err := d.Start(fmt.Sprintf(":%d", 1080)); err != nil {
 		fmt.Println(err)
 	}
-
 }

@@ -18,3 +18,5 @@
 # vendor/
 # openapi.yaml
 *.log
+.VSCodeCounter
+.vscode

@@ -1,4 +1,4 @@
-package expectation
+package loader
 
 import (
 	"context"
@@ -12,15 +12,15 @@ type OpenAPISpecLoader struct {
 	filename string
 }
 
-func NewOpenOPISpecLoader(filename string) *OpenAPISpecLoader {
+var _ Loader[OpenAPISpecLoadType] = &OpenAPISpecLoader{}
+
+func NewOpenApiSpecLoader(filename string) *OpenAPISpecLoader {
 	return &OpenAPISpecLoader{
 		filename: filename,
 	}
 }
 
-var _ Loader[OpenAPISpecLoadType] = &OpenAPISpecLoader{}
-
-func (osl *OpenAPISpecLoader) load() (*OpenAPISpecLoadType, error) {
+func (osl *OpenAPISpecLoader) Load() (*OpenAPISpecLoadType, error) {
 	ctx := context.Background()
 	loader := &openapi3.Loader{Context: ctx, IsExternalRefsAllowed: true}
 	doc, err := loader.LoadFromFile(osl.filename)

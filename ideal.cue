@@ -6,9 +6,10 @@ import (
 dolus.#Expectations & {
     expectations: [
         dolus.#Expectation & {
+            priority: 1
             // add an expectation ID that will be generated
             request: dolus.#Request & {
-                path:  "/store/order/2"
+                path:  "/store/order/3/p"
                 method: "GET" 
             }
             response:  dolus.#Response & {
@@ -18,9 +19,10 @@ dolus.#Expectations & {
                     }
                     // age: dolus.#GenInt32 
                     // name: "John Doe"    
-                    complete: true   
+                    complete: true
                     status: "good day"
                 }
+                
                 status: 200
             }
       
