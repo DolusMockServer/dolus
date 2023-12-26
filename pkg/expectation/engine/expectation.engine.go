@@ -20,5 +20,5 @@ type ExpectationEngine interface {
 	GetResponseForRequest(path string, request *http.Request) (*expectation.DolusResponse, error)
 	// TODO: rename in dolus-expecation package to CueExpectation
 	GetCueExpectations() dolus.Expectations
-	GetExpectationRoutes() []string
+	GetExpectationRoutes() []expectation.Route
 }

@@ -35,7 +35,7 @@ func (d *DolusApiImpl) AddRoute(route expectation.Route) error {
 		return fmt.Errorf(
 			"route %s with operation %s already exists",
 			route.Path,
-			route.Method,
+			route.Operation,
 		)
 	}
 	d.routes[route] = true
@@ -55,15 +55,13 @@ func (d *DolusApiImpl) GetV1DolusExpectations(ctx echo.Context) error {
 		apiExpectations)
 }
 
-// TODO: make GetV1DolusRoutes get expectations from the expectation engine
-
 // GetV1DolusRoutes implements server.ServerInterface.
 func (d *DolusApiImpl) GetV1DolusRoutes(ctx echo.Context) error {
 	var serverRoutes []server.Route
 	for r := range d.routes {
 		serverRoutes = append(serverRoutes, server.Route{
 			Path:      r.Path,
-			Operation: r.Method,
+			Operation: r.Operation,
 		})
 	}
 

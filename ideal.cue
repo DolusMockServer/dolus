@@ -9,8 +9,8 @@ dolus.#Expectations & {
             priority: 1
             // add an expectation ID that will be generated
             request: dolus.#Request & {
-                path:  "/store/order/3/p"
-                method: "GET" 
+                path:  "/store/order/{orderId}/p"
+              method: "GET" 
             }
             response:  dolus.#Response & {
                 body: {

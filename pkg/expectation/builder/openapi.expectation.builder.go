@@ -62,8 +62,8 @@ func (oeb *OpenApiExpectationBuilder) buildExpectationsFromOpenApiSpec(
 					Request: expectation.DolusRequest{
 						Body: nil,
 						Route: expectation.Route{
-							Path:   pathFromOpenApiPath(path),
-							Method: method,
+							Path:      pathFromOpenApiPath(path),
+							Operation: method,
 						},
 					},
 					Response: expectation.DolusResponse{

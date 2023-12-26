@@ -114,17 +114,17 @@ func (d *Dolus) addRoutes(route expectation.Route) {
 	if err := d.dolusApi.AddRoute(route); err != nil {
 		fmt.Printf("error adding route: %s\n", err.Error())
 	}
-	d.EchoServer.Router().Add(route.Method, route.Path, func(ctx echo.Context) error {
+	d.EchoServer.Router().Add(route.Operation, route.Path, func(ctx echo.Context) error {
 		logger.Log.Infof(
 			"Received request for path %s and method %s",
 			ctx.Request().URL.RequestURI(),
-			route.Method,
+			route.Operation,
 		)
 		response, err := d.expectationEngine.GetResponseForRequest(route.Path, ctx.Request())
 		if err != nil {
 			return ctx.JSON(500, GeneralError{
 				Path:     ctx.Request().URL.Path,
-				Method:   route.Method,
+				Method:   route.Operation,
 				ErrorMsg: err.Error(),
 			})
 		}
@@ -210,5 +210,4 @@ func (d *Dolus) AddExpectations(files ...string) {
 }
 
 func (d *Dolus) AddCueExpectationsFromFolder() {
-	// TODO: implement
 }

@@ -12,7 +12,6 @@ type genNumberParam[N any] struct {
 	max N
 }
 
-// TODO: account for floats by checking type of N
 func getNumberParams[N any](fieldName string, params []string, taskName string) genNumberParam[N] {
 	param_1, err := strconv.Atoi(params[0])
 	if err != nil {
@@ -70,5 +69,4 @@ func getNumberParams[N any](fieldName string, params []string, taskName string) 
 		min: min.(N),
 		max: max.(N),
 	}
-
 }

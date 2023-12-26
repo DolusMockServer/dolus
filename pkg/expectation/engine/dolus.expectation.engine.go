@@ -19,7 +19,7 @@ import (
 type DolusExpectationEngine struct {
 	cueExpectationsFiles []string
 	expectations         map[expectation.Route][]expectation.DolusExpectation
-	cueExpectations      []dolus.Expectation
+	cueExpectations      dolus.Expectations
 	ResponseSchemas      map[expectation.Route]dstruct.DynamicStructModifier
 	GenerationConfig     generator.GenerationConfig
 	expectationRoutes    []string
@@ -44,7 +44,7 @@ func (e *DolusExpectationEngine) AddExpectation(
 	expect expectation.DolusExpectation,
 	validateExpectationSchema bool,
 ) error {
-	// TODO check if exception overrides another one i.e has same request matcher
+	// TODO: check if exception overrides another one i.e has same request matcher
 
 	if validateExpectationSchema {
 		if err := e.validateExpectationSchema(expect); err != nil {
@@ -55,7 +55,10 @@ func (e *DolusExpectationEngine) AddExpectation(
 	e.expectations[route] = append(e.expectations[route], expect)
 
 	if expect.CueExpectation != nil {
-		e.cueExpectations = append(e.cueExpectations, *expect.CueExpectation)
+		e.cueExpectations.Expectations = append(
+			e.cueExpectations.Expectations,
+			*expect.CueExpectation,
+		)
 	}
 
 	return nil
@@ -96,9 +99,11 @@ func (e *DolusExpectationEngine) GetAllExpectations() map[expectation.Route][]ex
 	return e.expectations
 }
 
-// TODO: either return []Route or change name to GetExpectationRoutePaths()
-func (e *DolusExpectationEngine) GetExpectationRoutes() []string {
-	return e.expectationRoutes
+func (e *DolusExpectationEngine) GetExpectationRoutes() []expectation.Route {
+	//	return e.expectationRoutes
+	//
+	// TODO: implement
+	return nil
 }
 
 func (e *DolusExpectationEngine) GetExpectation(
@@ -127,20 +132,21 @@ func (e *DolusExpectationEngine) getMatchingResponseSchemaForRoute(
 	}
 
 	for schemaRoute, responseSchema := range e.ResponseSchemas {
-		if schemaRoute.Method == expectationRoute.Method &&
+		if schemaRoute.Operation == expectationRoute.Operation &&
 			schemaRoute.Match(parsedURL.Path) {
 			matchingSchemas = append(matchingSchemas, responseSchema)
 		}
 	}
 
 	if len(matchingSchemas) > 1 {
-		return nil, fmt.Errorf("too many schemas match %+v", matchingSchemas)
+		return nil, fmt.Errorf("too many matching schemas: %+v", matchingSchemas)
 	}
+
 	if len(matchingSchemas) == 0 {
 		return nil, fmt.Errorf(
-			"no matching schema found for path=%s and method=%s",
+			"no matching schema found for path=%s and operation=%s",
 			expectationRoute.Path,
-			expectationRoute.Method,
+			expectationRoute.Operation,
 		)
 	}
 
@@ -253,30 +259,25 @@ func (e *DolusExpectationEngine) getExpectaionsForRequest(
 	request *http.Request,
 ) []expectation.DolusExpectation {
 	// check for exact matches (with query parameters)
-	if expectations := e.GetExpectation(expectation.Route{
-		Path:   request.RequestURI,
-		Method: request.Method,
-	}); len(expectations) > 0 {
+	if expectations := e.expectations[expectation.Route{
+		Path:      request.RequestURI,
+		Operation: request.Method,
+	}]; len(expectations) > 0 {
 		return expectations
 	}
 	// get partial match if no exact match (with no query parameters)
-	if expectations := e.GetExpectation(expectation.Route{
-		Path:   request.URL.Path,
-		Method: request.Method,
-	}); len(expectations) > 0 {
+	if expectations := e.expectations[expectation.Route{
+		Path:      request.URL.Path,
+		Operation: request.Method,
+	}]; len(expectations) > 0 {
 		return expectations
 	}
 
 	// get the most generic match
-	return e.GetExpectation(expectation.Route{
-		Path:   pathTemplate,
-		Method: request.Method,
-	})
-}
-
-func getUcarionUrlPath(path string) string {
-	p := strings.ReplaceAll(path, "{", ":")
-	return strings.ReplaceAll(p, "}", "")
+	return e.expectations[expectation.Route{
+		Path:      pathTemplate,
+		Operation: request.Method,
+	}]
 }
 
 func (e *DolusExpectationEngine) GetResponseForRequest(
@@ -305,7 +306,6 @@ func (e *DolusExpectationEngine) GetResponseForRequest(
 }
 
 func (e *DolusExpectationEngine) GetCueExpectations() dolus.Expectations {
-	return dolus.Expectations{
-		Expectations: e.cueExpectations,
-	}
+	// TODO: instead of building the struct here make the engine store an instane of
+	return e.cueExpectations
 }

@@ -15,12 +15,12 @@ func NewMapper() *MapperImpl {
 	return &MapperImpl{}
 }
 
-func (daf *MapperImpl) MapCueExpectations(
+func (mi *MapperImpl) MapCueExpectations(
 	expectations []dolus.Expectation,
 ) ([]server.Expectation, error) {
 	var apiServerExpectations []server.Expectation
-	for _, e := range expectations {
-		apiServerExpectation, err := cueExpectationToApiExpectation(e)
+	for _, cueExpectation := range expectations {
+		apiServerExpectation, err := cueExpectationToApiExpectation(cueExpectation)
 		if err != nil {
 			return nil, err
 		}
@@ -56,26 +56,26 @@ func callbackToApiCallback(callback *dolus.Callback) (*server.Callback, error) {
 	return nil, nil
 }
 
-func cueExpectationToApiExpectation(e dolus.Expectation) (*server.Expectation, error) {
-	requestBody, responseBody, err := getRequestAndResponseBody(e)
+func cueExpectationToApiExpectation(cueExpectation dolus.Expectation) (*server.Expectation, error) {
+	requestBody, responseBody, err := getRequestAndResponseBody(cueExpectation)
 	if err != nil {
 		return nil, err
 	}
-	callback, err := callbackToApiCallback(e.Callback)
+	callback, err := callbackToApiCallback(cueExpectation.Callback)
 	if err != nil {
 		return nil, err
 	}
 
 	return &server.Expectation{
-		Priority: e.Priority,
+		Priority: cueExpectation.Priority,
 		Request: server.Request{
-			Method: string(e.Request.Method),
-			Path:   e.Request.Path,
+			Method: string(cueExpectation.Request.Method),
+			Path:   cueExpectation.Request.Path,
 			Body:   requestBody,
 		},
 		Response: server.Response{
 			Body:   responseBody,
-			Status: e.Response.Status,
+			Status: cueExpectation.Response.Status,
 		},
 		Callback: callback,
 	}, nil

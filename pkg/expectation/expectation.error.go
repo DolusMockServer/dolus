@@ -18,7 +18,7 @@ func (e ExpectationError) Error() string {
 	retString := fmt.Sprintf(
 		"Expectation Error:\nPath: %s\nMethod: %s\nPriority: %d\nErrors:\n",
 		e.DolusExpectation.Request.Path,
-		e.DolusExpectation.Request.Method,
+		e.DolusExpectation.Request.Operation,
 		e.DolusExpectation.Priority,
 	)
 	for i, err := range e.ExpectationFieldErrors {
