@@ -1,7 +1,6 @@
 package expectation
 
 import (
-	"fmt"
 	"net/http"
 	"strings"
 
@@ -24,7 +23,6 @@ func (r Route) Match(path string) bool {
 		for k, v := range m.Params {
 			if strings.HasPrefix(v, ":") {
 				if strings.ToLower(k) != strings.ToLower(v[1:]) {
-					fmt.Println(k, strings.ToLower(v[1:]))
 					return false
 				}
 			}
