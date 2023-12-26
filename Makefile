@@ -24,14 +24,19 @@ size-optimized:
 
 
 gen: $(GOPATH)/bin/oapi-codegen
-	oapi-codegen --package=server -generate=server,types,spec,client api/dolus.yaml > server/server.gen.go
+	oapi-codegen --package=server -generate=server,types,spec api/dolus.yaml > internal/server/server.gen.go
 
+
+gen-go-sdk-client: $(GOPATH)/bin/oapi-codegen
+	oapi-codegen --package=client -generate=client,types api/dolus.yaml > internal/client/client.gen.go 
+	
 ### TOOLS ###
 $(GOPATH)/bin/dlv:
 	go install github.com/go-delve/delve/cmd/dlv  
 
 $(GOPATH)/bin/oapi-codegen:
 	go install github.com/deepmap/oapi-codegen/cmd/oapi-codegen@latest    
+
 
 
 update-dolus-expectations:
