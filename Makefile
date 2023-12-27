@@ -7,8 +7,11 @@ build-optimized:
 install: build
 	@go install ./...
 
-run: install
+run: 
 	@go run cmd/dolus-test/main.go
+
+run-cli:
+	@go run cmd/dolus/main.go
 
 run-optimized: build-optimized
 	@dolus-optimized
