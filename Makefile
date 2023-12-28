@@ -41,6 +41,7 @@ $(GOPATH)/bin/oapi-codegen:
 	go install github.com/deepmap/oapi-codegen/cmd/oapi-codegen@latest    
 
 
+
 update-dolus-expectations:
-	curl -s https://raw.githubusercontent.com/MartinSimango/dolus-expectations/main/install.sh | bash
+	./install-local.sh
 
