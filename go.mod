@@ -6,7 +6,6 @@ go 1.21.3
 
 require (
 	cuelang.org/go v0.6.0
-	github.com/DolusMockServer/dolus-expectations v0.0.3-alpha
 	github.com/MartinSimango/dstruct v0.3.0-beta
 	github.com/fatih/color v1.15.0
 	github.com/getkin/kin-openapi v0.115.0

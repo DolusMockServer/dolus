@@ -5,8 +5,8 @@ import (
 
 	"github.com/MartinSimango/dstruct"
 
-	"github.com/DolusMockServer/dolus-expectations/pkg/dolus"
 	"github.com/DolusMockServer/dolus/pkg/expectation"
+	"github.com/DolusMockServer/dolus/pkg/expectation/cue"
 )
 
 type ExpectationEngine interface {
@@ -19,6 +19,6 @@ type ExpectationEngine interface {
 	GetExpectation(route expectation.Route) []expectation.DolusExpectation
 	GetResponseForRequest(path string, request *http.Request) (*expectation.DolusResponse, error)
 	// TODO: rename in dolus-expecation package to CueExpectation
-	GetCueExpectations() dolus.Expectations
+	GetCueExpectations() cue.Expectations
 	GetExpectationRoutes() []expectation.Route
 }
