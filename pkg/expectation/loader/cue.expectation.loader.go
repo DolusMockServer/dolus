@@ -11,6 +11,9 @@ import (
 	"github.com/DolusMockServer/dolus/pkg/logger"
 )
 
+// TODO: (watch for cue package manager)
+const dolusExpectationsHomeFolder = "cue/github.com/DolusMockServer/dolus/cue-expectations"
+
 type (
 	CueExpectationLoadType []cue.Value
 )
@@ -22,15 +25,13 @@ type CueExpectationLoader struct {
 
 var _ Loader[CueExpectationLoadType] = &CueExpectationLoader{}
 
-// TODO: move this location dolus-expectations repository
-const dolusExpectationsHomeFolder = "cue/github.com/DolusMockServer/dolus-expectations"
-
 func NewCueExpectationLoader(cueExpectationsFiles []string) *CueExpectationLoader {
 	homeDir, err := os.UserHomeDir()
 	if err != nil {
 		logger.Log.Fatalf("failed to user home dir: %s", err.Error())
 	}
 	return &CueExpectationLoader{
+		// TODO: allow this to be passed as an argument
 		cueDolusExpectationsRootModule: fmt.Sprintf("%s/%s", homeDir, dolusExpectationsHomeFolder),
 		cueExpectationsFiles:           cueExpectationsFiles,
 	}
