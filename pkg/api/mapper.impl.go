@@ -3,8 +3,8 @@ package api
 import (
 	"fmt"
 
-	"github.com/DolusMockServer/dolus-expectations/pkg/dolus"
 	"github.com/DolusMockServer/dolus/internal/server"
+	"github.com/DolusMockServer/dolus/pkg/expectation/cue"
 )
 
 type MapperImpl struct{}
@@ -16,7 +16,7 @@ func NewMapper() *MapperImpl {
 }
 
 func (mi *MapperImpl) MapCueExpectations(
-	expectations []dolus.Expectation,
+	expectations []cue.Expectation,
 ) ([]server.Expectation, error) {
 	var apiServerExpectations []server.Expectation
 	for _, cueExpectation := range expectations {
@@ -40,7 +40,7 @@ func anyToMapOfKeyStringValueAny(a any) (*map[string]any, error) {
 	return nil, nil
 }
 
-func callbackToApiCallback(callback *dolus.Callback) (*server.Callback, error) {
+func callbackToApiCallback(callback *cue.Callback) (*server.Callback, error) {
 	if callback != nil {
 		callbackRequestBody, err := anyToMapOfKeyStringValueAny(callback.Request)
 		if err != nil {
@@ -56,7 +56,7 @@ func callbackToApiCallback(callback *dolus.Callback) (*server.Callback, error) {
 	return nil, nil
 }
 
-func cueExpectationToApiExpectation(cueExpectation dolus.Expectation) (*server.Expectation, error) {
+func cueExpectationToApiExpectation(cueExpectation cue.Expectation) (*server.Expectation, error) {
 	requestBody, responseBody, err := getRequestAndResponseBody(cueExpectation)
 	if err != nil {
 		return nil, err
@@ -83,7 +83,7 @@ func cueExpectationToApiExpectation(cueExpectation dolus.Expectation) (*server.E
 
 // ExpectationToApiExpectation implements DolusApiFactory.
 func getRequestAndResponseBody(
-	expectation dolus.Expectation,
+	expectation cue.Expectation,
 ) (*map[string]any, *map[string]any, error) {
 	requestBody, err := anyToMapOfKeyStringValueAny(expectation.Request.Body)
 	if err != nil {

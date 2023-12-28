@@ -7,8 +7,8 @@ import (
 	"github.com/MartinSimango/dstruct"
 	"github.com/MartinSimango/dstruct/generator"
 
-	"github.com/DolusMockServer/dolus-expectations/pkg/dolus"
 	"github.com/DolusMockServer/dolus/pkg/expectation"
+	cueE "github.com/DolusMockServer/dolus/pkg/expectation/cue"
 	"github.com/DolusMockServer/dolus/pkg/expectation/loader"
 	"github.com/DolusMockServer/dolus/pkg/logger"
 	"github.com/DolusMockServer/dolus/pkg/schema"
@@ -59,7 +59,7 @@ func (ceb *CueExpectationBuilder) buildExpectationFromCueInstance(
 		return
 	}
 	for e.Next() {
-		var cueExpectation dolus.Expectation
+		var cueExpectation cueE.Expectation
 		err := e.Value().Decode(&cueExpectation)
 		if err != nil {
 			logger.Log.Error("Error decoding expectation: ", err)

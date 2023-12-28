@@ -12,14 +12,14 @@ import (
 	"github.com/MartinSimango/dstruct/dreflect"
 	"github.com/MartinSimango/dstruct/generator"
 
-	"github.com/DolusMockServer/dolus-expectations/pkg/dolus"
 	"github.com/DolusMockServer/dolus/pkg/expectation"
+	"github.com/DolusMockServer/dolus/pkg/expectation/cue"
 )
 
 type DolusExpectationEngine struct {
 	cueExpectationsFiles []string
 	expectations         map[expectation.Route][]expectation.DolusExpectation
-	cueExpectations      dolus.Expectations
+	cueExpectations      cue.Expectations
 	ResponseSchemas      map[expectation.Route]dstruct.DynamicStructModifier
 	GenerationConfig     generator.GenerationConfig
 	expectationRoutes    []string
@@ -305,7 +305,7 @@ func (e *DolusExpectationEngine) GetResponseForRequest(
 	return &currentExpectation.Response, nil
 }
 
-func (e *DolusExpectationEngine) GetCueExpectations() dolus.Expectations {
+func (e *DolusExpectationEngine) GetCueExpectations() cue.Expectations {
 	// TODO: instead of building the struct here make the engine store an instane of
 	return e.cueExpectations
 }

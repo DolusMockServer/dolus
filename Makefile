@@ -26,6 +26,13 @@ size-optimized:
 gen: $(GOPATH)/bin/oapi-codegen
 	oapi-codegen --package=server -generate=server,types,spec,client api/dolus.yaml > server/server.gen.go
 
+
+gen-cue-expectations:
+	go run cmd/cue2gostruct/main.go cue-expectations/core/core.cue pkg/expectation/cue/expectation.gen.go \
+		cue
+	go fmt pkg/expectation/cue/expectation.gen.go
+
+
 ### TOOLS ###
 $(GOPATH)/bin/dlv:
 	go install github.com/go-delve/delve/cmd/dlv  
@@ -36,3 +43,4 @@ $(GOPATH)/bin/oapi-codegen:
 
 update-dolus-expectations:
 	curl -s https://raw.githubusercontent.com/MartinSimango/dolus-expectations/main/install.sh | bash
+
