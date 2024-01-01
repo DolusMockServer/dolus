@@ -10,7 +10,7 @@ core.#Expectations & {
             priority: 1
             // add an expectation ID that will be generated
             request: core.#Request & {
-                path:  "/store/order/{orderId}/p"
+                path:  "/store/order/2/p"
               method: "GET" 
             }
             response:  core.#Response & {
