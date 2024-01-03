@@ -7,8 +7,11 @@ build-optimized:
 install: build
 	@go install ./...
 
-run: install
+run: 
 	@go run cmd/dolus-test/main.go
+
+run-cli:
+	@go run cmd/dolus/main.go
 
 run-optimized: build-optimized
 	@dolus-optimized
@@ -30,6 +33,13 @@ gen: $(GOPATH)/bin/oapi-codegen
 gen-go-sdk-client: $(GOPATH)/bin/oapi-codegen
 	oapi-codegen --package=client -generate=client,types api/dolus.yaml > internal/client/client.gen.go 
 	
+
+gen-cue-expectations:
+	go run cmd/cue2gostruct/main.go cue-expectations/core/core.cue pkg/expectation/cue/expectation.gen.go \
+		cue
+	go fmt pkg/expectation/cue/expectation.gen.go
+
+
 ### TOOLS ###
 $(GOPATH)/bin/dlv:
 	go install github.com/go-delve/delve/cmd/dlv  
@@ -40,4 +50,4 @@ $(GOPATH)/bin/oapi-codegen:
 
 
 update-dolus-expectations:
-	curl -s https://raw.githubusercontent.com/MartinSimango/dolus-expectations/main/install.sh | bash
+	./install-local.sh

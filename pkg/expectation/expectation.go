@@ -4,10 +4,9 @@ import (
 	"net/http"
 	"strings"
 
+	"github.com/DolusMockServer/dolus/pkg/expectation/cue"
 	"github.com/MartinSimango/dstruct"
 	"github.com/ucarion/urlpath"
-
-	"github.com/DolusMockServer/dolus-expectations/pkg/dolus"
 )
 
 type Route struct {
@@ -49,5 +48,5 @@ type DolusExpectation struct {
 	Priority       int
 	Response       DolusResponse
 	Request        DolusRequest
-	CueExpectation *dolus.Expectation
+	CueExpectation *cue.Expectation
 }

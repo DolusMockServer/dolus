@@ -139,6 +139,7 @@ func (d *Dolus) loadOpenAPISpecExpectations() error {
 	if err != nil {
 		return err
 	}
+
 	for _, e := range expectations {
 		d.addRoutes(e.Request.Route)
 		d.expectationEngine.AddResponseSchemaForRoute(

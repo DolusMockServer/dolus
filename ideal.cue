@@ -1,21 +1,22 @@
 package main
 import (
-    "github.com/DolusMockServer/dolus-expectations/dolus"
+    "github.com/DolusMockServer/dolus/cue-expectations/core"
+    "github.com/DolusMockServer/dolus/cue-expectations/core/task"
 )
 
-dolus.#Expectations & {
+core.#Expectations & {
     expectations: [
-        dolus.#Expectation & {
+        core.#Expectation & {
             priority: 1
             // add an expectation ID that will be generated
-            request: dolus.#Request & {
-                path:  "/store/order/{orderId}/p"
+            request: core.#Request & {
+                path:  "/store/order/2/p"
               method: "GET" 
             }
-            response:  dolus.#Response & {
+            response:  core.#Response & {
                 body: {
                     petId: {
-                        id: dolus.#GenInt32 &{min: 80, max:100}
+                        id: task.#GenInt32 &{min: 80, max:100}
                     }
                     // age: dolus.#GenInt32 
                     // name: "John Doe"    

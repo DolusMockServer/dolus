@@ -11,6 +11,9 @@ import (
 	"github.com/DolusMockServer/dolus/pkg/logger"
 )
 
+// TODO: (watch for cue package manager)
+const dolusExpectationsHomeFolder = "cue/github.com/DolusMockServer/dolus/cue-expectations"
+
 type (
 	CueExpectationLoadType []cue.Value
 )
@@ -22,15 +25,13 @@ type CueExpectationLoader struct {
 
 var _ Loader[CueExpectationLoadType] = &CueExpectationLoader{}
 
-// TODO: move this location dolus-expectations repository
-const dolusExpectationsHomeFolder = "cue/github.com/DolusMockServer/dolus-expectations"
-
 func NewCueExpectationLoader(cueExpectationsFiles []string) *CueExpectationLoader {
 	homeDir, err := os.UserHomeDir()
 	if err != nil {
 		logger.Log.Fatalf("failed to user home dir: %s", err.Error())
 	}
 	return &CueExpectationLoader{
+		// TODO: allow this to be passed as an argument
 		cueDolusExpectationsRootModule: fmt.Sprintf("%s/%s", homeDir, dolusExpectationsHomeFolder),
 		cueExpectationsFiles:           cueExpectationsFiles,
 	}
@@ -43,6 +44,11 @@ func (cel *CueExpectationLoader) Load() (*CueExpectationLoadType, error) {
 		"Loading expectations from cue root module: %s",
 		cel.cueDolusExpectationsRootModule,
 	)
+
+	if len(cel.cueExpectationsFiles) == 0 {
+		return (*CueExpectationLoadType)(&cueValues), nil
+	}
+
 	bis := load.Instances(cel.cueExpectationsFiles, &load.Config{
 		ModuleRoot: cel.cueDolusExpectationsRootModule,
 	})
@@ -51,13 +57,13 @@ func (cel *CueExpectationLoader) Load() (*CueExpectationLoadType, error) {
 		// check for errors on the  instance
 		// these are typically parsing errors
 		if bi.Err != nil {
-			logger.Log.Error("Error during load:", bi.Err)
+			logger.Log.Error("Error during load: ", bi.Err)
 			continue
 		}
 		value := ctx.BuildInstance(bi)
 
 		if value.Err() != nil {
-			logger.Log.Error("Error during load:", value.Err())
+			logger.Log.Error("Error during load: ", value.Err())
 			continue
 		}
 
