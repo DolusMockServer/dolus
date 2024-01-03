@@ -90,7 +90,6 @@ func (e *DolusExpectationEngine) AddResponseSchemaForRoute(
 	if e.ResponseSchemas[route] != nil {
 		return fmt.Errorf("response schema already exists for... ")
 	}
-
 	e.ResponseSchemas[route] = responseSchema
 	return nil
 }
@@ -130,7 +129,6 @@ func (e *DolusExpectationEngine) getMatchingResponseSchemaForRoute(
 	if err != nil {
 		return nil, err
 	}
-
 	for schemaRoute, responseSchema := range e.ResponseSchemas {
 		if schemaRoute.Operation == expectationRoute.Operation &&
 			schemaRoute.Match(parsedURL.Path) {
