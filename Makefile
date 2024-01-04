@@ -26,13 +26,24 @@ size-optimized:
 	@du -h $(GOPATH)/bin/dolus-optimized
 
 
-gen: $(GOPATH)/bin/oapi-codegen
-	oapi-codegen --package=server -generate=server,types,spec,client api/dolus.yaml > server/server.gen.go
+# --- DOCKER ---
 
+docker-build:
+	docker build -t dolus -t dolusmockserver/dolus:latest -f build/package/Dockerfile .
+
+docker-push:
+	docker push dolusmockserver/dolus:latest
+
+
+gen: gen-go-server-client gen-cue-expectations
+
+gen-go-server-client: $(GOPATH)/bin/oapi-codegen
+	oapi-codegen --package=api -generate=server,types,spec,client api/dolus.yaml > internal/api/api.gen.go
+	
 
 gen-cue-expectations:
 	go run cmd/cue2gostruct/main.go cue-expectations/core/core.cue pkg/expectation/cue/expectation.gen.go \
-		cue
+	cue
 	go fmt pkg/expectation/cue/expectation.gen.go
 
 
@@ -42,6 +53,7 @@ $(GOPATH)/bin/dlv:
 
 $(GOPATH)/bin/oapi-codegen:
 	go install github.com/deepmap/oapi-codegen/cmd/oapi-codegen@latest    
+
 
 
 update-dolus-expectations:

@@ -3,7 +3,6 @@ package api
 import (
 	"fmt"
 
-	"github.com/DolusMockServer/dolus/internal/server"
 	"github.com/DolusMockServer/dolus/pkg/expectation/cue"
 )
 
@@ -17,8 +16,8 @@ func NewMapper() *MapperImpl {
 
 func (mi *MapperImpl) MapCueExpectations(
 	expectations []cue.Expectation,
-) ([]server.Expectation, error) {
-	var apiServerExpectations []server.Expectation
+) ([]Expectation, error) {
+	var apiServerExpectations []Expectation
 	for _, cueExpectation := range expectations {
 		apiServerExpectation, err := cueExpectationToApiExpectation(cueExpectation)
 		if err != nil {
@@ -27,6 +26,49 @@ func (mi *MapperImpl) MapCueExpectations(
 		apiServerExpectations = append(apiServerExpectations, *apiServerExpectation)
 	}
 	return apiServerExpectations, nil
+}
+
+func (mi *MapperImpl) MapCueExpectation(expectation cue.Expectation) (*Expectation, error) {
+	return cueExpectationToApiExpectation(expectation)
+}
+
+func cueExpectationToApiExpectation(cueExpectation cue.Expectation) (*Expectation, error) {
+	requestBody, responseBody, err := getRequestAndResponseBody(cueExpectation)
+	if err != nil {
+		return nil, err
+	}
+	callback, err := callbackToApiCallback(cueExpectation.Callback)
+	if err != nil {
+		return nil, err
+	}
+
+	return &Expectation{
+		Priority: cueExpectation.Priority,
+		Request: Request{
+			Method: string(cueExpectation.Request.Method),
+			Path:   cueExpectation.Request.Path,
+			Body:   requestBody,
+		},
+		Response: Response{
+			Body:   responseBody,
+			Status: cueExpectation.Response.Status,
+		},
+		Callback: callback,
+	}, nil
+}
+
+func getRequestAndResponseBody(
+	expectation cue.Expectation,
+) (*map[string]any, *map[string]any, error) {
+	requestBody, err := anyToMapOfKeyStringValueAny(expectation.Request.Body)
+	if err != nil {
+		return nil, nil, err
+	}
+	responseBody, err := anyToMapOfKeyStringValueAny(expectation.Response.Body)
+	if err != nil {
+		return nil, nil, err
+	}
+	return requestBody, responseBody, nil
 }
 
 func anyToMapOfKeyStringValueAny(a any) (*map[string]any, error) {
@@ -40,13 +82,13 @@ func anyToMapOfKeyStringValueAny(a any) (*map[string]any, error) {
 	return nil, nil
 }
 
-func callbackToApiCallback(callback *cue.Callback) (*server.Callback, error) {
+func callbackToApiCallback(callback *cue.Callback) (*Callback, error) {
 	if callback != nil {
 		callbackRequestBody, err := anyToMapOfKeyStringValueAny(callback.Request)
 		if err != nil {
 			return nil, err
 		}
-		return &server.Callback{
+		return &Callback{
 			HttpMethod:  string(callback.Method),
 			RequestBody: callbackRequestBody,
 			Timeout:     callback.Timeout,
@@ -54,44 +96,4 @@ func callbackToApiCallback(callback *cue.Callback) (*server.Callback, error) {
 		}, nil
 	}
 	return nil, nil
-}
-
-func cueExpectationToApiExpectation(cueExpectation cue.Expectation) (*server.Expectation, error) {
-	requestBody, responseBody, err := getRequestAndResponseBody(cueExpectation)
-	if err != nil {
-		return nil, err
-	}
-	callback, err := callbackToApiCallback(cueExpectation.Callback)
-	if err != nil {
-		return nil, err
-	}
-
-	return &server.Expectation{
-		Priority: cueExpectation.Priority,
-		Request: server.Request{
-			Method: string(cueExpectation.Request.Method),
-			Path:   cueExpectation.Request.Path,
-			Body:   requestBody,
-		},
-		Response: server.Response{
-			Body:   responseBody,
-			Status: cueExpectation.Response.Status,
-		},
-		Callback: callback,
-	}, nil
-}
-
-// ExpectationToApiExpectation implements DolusApiFactory.
-func getRequestAndResponseBody(
-	expectation cue.Expectation,
-) (*map[string]any, *map[string]any, error) {
-	requestBody, err := anyToMapOfKeyStringValueAny(expectation.Request.Body)
-	if err != nil {
-		return nil, nil, err
-	}
-	responseBody, err := anyToMapOfKeyStringValueAny(expectation.Response.Body)
-	if err != nil {
-		return nil, nil, err
-	}
-	return requestBody, responseBody, nil
 }

@@ -1,6 +1,6 @@
 openapi: 3.1.0
 x-stoplight:
-  id: dzxa4gk9e0u03
+  id: 6cx0tkgt5vl5x
 info:
   title: dolus
   version: '1.0'
@@ -31,7 +31,7 @@ paths:
         content:
           application/json:
             schema:
-              type: object
+              $ref: '#/components/schemas/Expectation'
               x-examples:
                 Example 1:
                   priority: 0
@@ -51,30 +51,6 @@ paths:
                       status: good day
                     status: 200
                   callback: null
-              properties:
-                priority:
-                  type: integer
-                request:
-                  type: object
-                  required:
-                    - path
-                    - method
-                  properties:
-                    path:
-                      type: string
-                    method:
-                      type: string
-                response:
-                  type: object
-                  properties:
-                    status:
-                      type: integer
-                callback:
-                  $ref: '#/components/schemas/Callback'
-              required:
-                - priority
-                - request
-                - response
   /v1/dolus/routes:
     get:
       summary: Your GET endpoint
@@ -89,10 +65,10 @@ paths:
                 items:
                   $ref: '#/components/schemas/Route'
                   x-stoplight:
-                    id: pl8iwqrnpj6oc
+                    id: c7rg1wyygdcpd
       operationId: get-v1-dolus-routes
       x-stoplight:
-        id: 3694eed8o2kp8
+        id: p628l5j5m3iym
   /v1/dolus/logs:
     get:
       summary: Your GET endpoint
@@ -100,7 +76,7 @@ paths:
       responses: {}
       operationId: get-v1-dolus-logs
       x-stoplight:
-        id: sz1mrfdiyawqz
+        id: 58wunsu9erbjf
       parameters:
         - schema:
             type: integer
@@ -115,7 +91,7 @@ paths:
       responses: {}
       operationId: get-v1-dolus-logs-ws
       x-stoplight:
-        id: 0oosegi3apif3
+        id: r4dqbex0jnbv3
       parameters:
         - schema:
             type: string
@@ -161,25 +137,25 @@ components:
     Callback:
       title: Callback
       x-stoplight:
-        id: rjxf577mq19r4
+        id: 88pslexa9iig4
       type: object
       properties:
         httpMethod:
           type: string
           x-stoplight:
-            id: 1pt45t0acdpmd
+            id: sga8n4vtsftc9
         requestBody:
           type: object
           x-stoplight:
-            id: knwmvv2v3pmno
+            id: i16x1tfjkkdqr
         url:
           type: string
           x-stoplight:
-            id: epe5pnr73tq5x
+            id: 0jf69yeem8wup
         timeout:
           type: integer
           x-stoplight:
-            id: fgno2ugdodph6
+            id: n09z9dwbm1bcb
       required:
         - httpMethod
         - url
@@ -187,70 +163,70 @@ components:
     Request:
       title: Request
       x-stoplight:
-        id: jeyod7vvmt3g2
+        id: a6eclhoj91zdo
       type: object
       properties:
         path:
           type: string
           x-stoplight:
-            id: ztk89hfaw12fc
+            id: res8jde5x0ow0
         method:
           type: string
           x-stoplight:
-            id: 1gq2g4p5dinj2
+            id: 03w9895jscrhl
         body:
           type: object
           x-stoplight:
-            id: 4m6dyn4iy78pr
+            id: 6dxspuylc1df9
       required:
         - path
         - method
     Response:
       title: Response
       x-stoplight:
-        id: dmid12cm7ut6y
+        id: twfgprphk5gad
       type: object
       properties:
         status:
           type: integer
           x-stoplight:
-            id: 6jioalmtsm49v
+            id: ml6sv6me2m6ml
         body:
           type: object
           x-stoplight:
-            id: vv2x0fyzeqtwv
+            id: 82nc0or8edpcl
       required:
         - status
     Expectations:
       title: Expectations
       x-stoplight:
-        id: fdv6bpm1aq23l
+        id: gi4kt1w4nyzy7
       type: object
       properties:
         expectations:
           type: array
           x-stoplight:
-            id: t2dvyf3ytje79
+            id: zsftd2mz4o9wz
           items:
             $ref: '#/components/schemas/Expectation'
             x-stoplight:
-              id: d7i0m4l8c62pr
+              id: myjab1907zuxc
       required:
         - expectations
     Route:
       title: Route
       x-stoplight:
-        id: 8fiydx14b0lgo
+        id: md0y5oj5v3xqo
       type: object
       properties:
         path:
           type: string
           x-stoplight:
-            id: wrajojsud3inv
+            id: rwojafj1z3xk9
         operation:
           type: string
           x-stoplight:
-            id: rfsk93q64pc45
+            id: 4jowjjcwg4v1z
       required:
         - path
         - operation

@@ -2,17 +2,14 @@ package dolus
 
 import (
 	"fmt"
-	"net/http"
 
 	"github.com/MartinSimango/dstruct/generator"
 	"github.com/fatih/color"
-	"github.com/gorilla/websocket"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
 	"github.com/sirupsen/logrus"
 
-	"github.com/DolusMockServer/dolus/internal/server"
-	"github.com/DolusMockServer/dolus/pkg/api"
+	"github.com/DolusMockServer/dolus/internal/api"
 	"github.com/DolusMockServer/dolus/pkg/expectation"
 	"github.com/DolusMockServer/dolus/pkg/expectation/builder"
 	"github.com/DolusMockServer/dolus/pkg/expectation/engine"
@@ -37,15 +34,7 @@ Go framework for creating customizable and extendable mock servers
 	website = "https://github.com/DolusMockServer/dolus"
 )
 
-func printBanner() {
-	logger.Log.SetTextFormatter()
-	versionColor := color.New(color.FgGreen).SprintFunc()("v", Version)
-	websiteColor := color.New(color.FgBlue).SprintFunc()(website)
-	logger.Log.Infof(banner, versionColor, websiteColor)
-	logger.Log.SetDefaultFormatter()
-}
-
-type Dolus struct {
+type Server struct {
 	OpenAPIspec               string
 	HideBanner                bool
 	HidePort                  bool
@@ -59,10 +48,10 @@ type Dolus struct {
 	dolusApi                  api.DolusApi
 }
 
-func New() *Dolus {
+func New() *Server {
 	logger.Log = logger.NewLogger("logfile.log")
 	generationConfig := generator.NewGenerationConfig()
-	return &Dolus{
+	return &Server{
 		HideBanner:       false,
 		HidePort:         false,
 		OpenAPIspec:      "openapi.yaml",
@@ -70,20 +59,22 @@ func New() *Dolus {
 	}
 }
 
-func (d *Dolus) initMiddleware() error {
+func printBanner() {
+	logger.Log.SetTextFormatter()
+	versionColor := color.New(color.FgGreen).SprintFunc()("v", Version)
+	websiteColor := color.New(color.FgBlue).SprintFunc()(website)
+	logger.Log.Infof(banner, versionColor, websiteColor)
+	logger.Log.SetDefaultFormatter()
+}
+
+func (d *Server) initMiddleware() error {
 	d.EchoServer.Use(middleware.CORSWithConfig(middleware.CORSConfig{
 		AllowOrigins: []string{"*"},
 	}))
 	return nil
 }
 
-var upgrader = websocket.Upgrader{
-	CheckOrigin: func(r *http.Request) bool {
-		return true
-	},
-}
-
-func (d *Dolus) initHttpServer() {
+func (d *Server) initHttpServer() {
 	d.EchoServer = echo.New()
 	d.EchoServer.HideBanner = true
 	d.EchoServer.HidePort = d.HidePort
@@ -100,17 +91,10 @@ func (d *Dolus) initHttpServer() {
 
 	d.initMiddleware()
 
-	server.RegisterHandlers(d.EchoServer, d.dolusApi)
+	api.RegisterHandlers(d.EchoServer, d.dolusApi)
 }
 
-// TODO: move this to somewhere more appropriate
-type GeneralError struct {
-	Path     string
-	Method   string
-	ErrorMsg string
-}
-
-func (d *Dolus) addRoutes(route expectation.Route) {
+func (d *Server) addRoutes(route expectation.Route) {
 	if err := d.dolusApi.AddRoute(route); err != nil {
 		fmt.Printf("error adding route: %s\n", err.Error())
 	}
@@ -122,7 +106,7 @@ func (d *Dolus) addRoutes(route expectation.Route) {
 		)
 		response, err := d.expectationEngine.GetResponseForRequest(route.Path, ctx.Request())
 		if err != nil {
-			return ctx.JSON(500, GeneralError{
+			return ctx.JSON(500, api.GeneralError{
 				Path:     ctx.Request().URL.Path,
 				Method:   route.Operation,
 				ErrorMsg: err.Error(),
@@ -134,7 +118,7 @@ func (d *Dolus) addRoutes(route expectation.Route) {
 	})
 }
 
-func (d *Dolus) loadOpenAPISpecExpectations() error {
+func (d *Server) loadOpenAPISpecExpectations() error {
 	expectations, err := d.openApiExpectationBuilder.BuildExpectations()
 	if err != nil {
 		return err
@@ -156,7 +140,7 @@ func (d *Dolus) loadOpenAPISpecExpectations() error {
 	return nil
 }
 
-func (d *Dolus) loadCueExpectations() error {
+func (d *Server) loadCueExpectations() error {
 	expectations, err := d.cueExpectationBuilder.BuildExpectations()
 	if err != nil {
 		return err
@@ -170,7 +154,7 @@ func (d *Dolus) loadCueExpectations() error {
 	return nil
 }
 
-func (d *Dolus) loadExpectations() error {
+func (d *Server) loadExpectations() error {
 	if err := d.loadOpenAPISpecExpectations(); err != nil {
 		return err
 	}
@@ -181,7 +165,7 @@ func (d *Dolus) loadExpectations() error {
 	return nil
 }
 
-func (d *Dolus) startHttpServer(address string) error {
+func (d *Server) startHttpServer(address string) error {
 	d.initHttpServer()
 	go task.RegisterDolusTasks()
 	if err := d.loadExpectations(); err != nil {
@@ -191,7 +175,7 @@ func (d *Dolus) startHttpServer(address string) error {
 	return d.EchoServer.Start(address)
 }
 
-func (d *Dolus) Start(address string) error {
+func (d *Server) Start(address string) error {
 	if !d.HideBanner {
 		printBanner()
 	}
@@ -206,9 +190,10 @@ func (d *Dolus) Start(address string) error {
 	return d.startHttpServer(address)
 }
 
-func (d *Dolus) AddExpectations(files ...string) {
+func (d *Server) AddExpectations(files ...string) {
 	d.expectationFiles = append(d.expectationFiles, files...)
 }
 
-func (d *Dolus) AddCueExpectationsFromFolder() {
+func (d *Server) AddCueExpectationsFromFolder() {
+	// TODO: implement
 }
