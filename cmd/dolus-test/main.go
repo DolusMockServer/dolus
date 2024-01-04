@@ -68,3 +68,7 @@ func main() {
 		fmt.Println(err)
 	}
 }
+
+func testSdk() {
+
+}

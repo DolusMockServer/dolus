@@ -6,7 +6,6 @@ import (
 
 	"github.com/labstack/echo/v4"
 
-	"github.com/DolusMockServer/dolus/internal/server"
 	"github.com/DolusMockServer/dolus/pkg/expectation"
 	"github.com/DolusMockServer/dolus/pkg/expectation/engine"
 	"github.com/DolusMockServer/dolus/pkg/logger"
@@ -44,6 +43,7 @@ func (d *DolusApiImpl) AddRoute(route expectation.Route) error {
 
 // GetV1DolusExpectations implements server.ServerInterface.
 func (d *DolusApiImpl) GetV1DolusExpectations(ctx echo.Context) error {
+
 	apiExpectations, err := d.Mapper.MapCueExpectations(
 		d.ExpectationEngine.
 			GetCueExpectations().
@@ -57,9 +57,9 @@ func (d *DolusApiImpl) GetV1DolusExpectations(ctx echo.Context) error {
 
 // GetV1DolusRoutes implements server.ServerInterface.
 func (d *DolusApiImpl) GetV1DolusRoutes(ctx echo.Context) error {
-	var serverRoutes []server.Route
+	var serverRoutes []Route
 	for r := range d.routes {
-		serverRoutes = append(serverRoutes, server.Route{
+		serverRoutes = append(serverRoutes, Route{
 			Path:      r.Path,
 			Operation: r.Operation,
 		})
@@ -69,12 +69,12 @@ func (d *DolusApiImpl) GetV1DolusRoutes(ctx echo.Context) error {
 }
 
 // PostV1DolusExpectations implements server.ServerInterface.
-func (*DolusApiImpl) PostV1DolusExpectations(ctx echo.Context) error {
+func (d *DolusApiImpl) PostV1DolusExpectations(ctx echo.Context) error {
 	return ctx.JSON(http.StatusNotImplemented, "Not Implemented")
 }
 
 // GetV1DolusLogs implements DolusApi.
-func (*DolusApiImpl) GetV1DolusLogs(ctx echo.Context, params server.GetV1DolusLogsParams) error {
+func (*DolusApiImpl) GetV1DolusLogs(ctx echo.Context, params GetV1DolusLogsParams) error {
 	lines := 1000
 	if params.Lines != nil {
 		lines = *params.Lines
@@ -91,7 +91,7 @@ func (*DolusApiImpl) GetV1DolusLogs(ctx echo.Context, params server.GetV1DolusLo
 // GetV1DolusLogsWs implements DolusApi.
 func (*DolusApiImpl) GetV1DolusLogsWs(
 	ctx echo.Context,
-	params server.GetV1DolusLogsWsParams,
+	params GetV1DolusLogsWsParams,
 ) error {
 	return ctx.JSON(http.StatusNotImplemented, "Not Implemented")
 	// conn, err := upgrader.Upgrade(ctx.Response().Writer, ctx.Request(), nil)
