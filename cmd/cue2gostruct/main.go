@@ -1,5 +1,7 @@
 package main
 
+// This is a very hacky way to generate go code from a cue definition file.
+// Plans to make a better version of this in the future.
 import (
 	"fmt"
 	"io/fs"
@@ -12,7 +14,7 @@ import (
 	"cuelang.org/go/cue/token"
 )
 
-const Version = "0.0.3-alpha"
+const Version = "0.1.0-alpha"
 
 var PackageName string
 
@@ -44,7 +46,7 @@ func generateGoCodeFromCueDefinitionFile(filename string) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	traverseAST(file, 0, nil, false, &goCode)
+	traverseAST(file, 0, nil, nil, &goCode)
 	return goCode.String(), nil
 }
 
@@ -53,11 +55,65 @@ type FieldLabel struct {
 	optional bool
 }
 
+type Struct struct {
+	name string
+}
+
+func handleComments(node ast.Node, goCode *strings.Builder) {
+	// if len(ast.Comments(node)) > 0 {
+	// 	goCode.WriteString(fmt.Sprintf(" %s", (*ast.Comments(node)[0]).Text()))
+	// }
+
+}
+
+func getStructName(name string) string {
+	if strings.HasPrefix(name, "#") {
+		return name[1:]
+	}
+	return name
+}
+
+type MapType struct {
+	KeyType   string
+	ValueType string
+}
+
+func getMapValue(expr ast.Expr) string {
+	switch n := expr.(type) {
+	case *ast.Ident:
+		fmt.Println("ident", n.Name)
+		return getStructName(n.Name)
+	case *ast.StructLit:
+		fmt.Println("struct", n.Elts[0])
+		if m := isMap(n.Elts); m != nil {
+			return fmt.Sprintf("map[%s]%s", m.KeyType, m.ValueType)
+		}
+		return fmt.Sprintf("%s", n.Elts[0])
+	default:
+		panic(fmt.Sprintf("Unhandled type: %s", reflect.TypeOf(n)))
+	}
+}
+
+func isMap(node []ast.Decl) *MapType {
+	for _, ni := range node {
+		switch n := ni.(type) {
+		case *ast.Field:
+			switch l := n.Label.(type) {
+			case *ast.ListLit:
+				return &MapType{
+					KeyType:   getStructName(fmt.Sprintf("%s", l.Elts[0])),
+					ValueType: getStructName(getMapValue(n.Value)),
+				}
+			}
+		}
+	}
+	return nil
+}
 func traverseAST(
 	node ast.Node,
 	depth int,
 	fieldLabel *FieldLabel,
-	inStruct bool,
+	inStruct *Struct,
 	goCode *strings.Builder,
 ) {
 	indent := ""
@@ -66,26 +122,70 @@ func traverseAST(
 	}
 
 	// fmt.Println(reflect.TypeOf(node))
+
+	handleComments(node, goCode)
+
 	switch n := node.(type) {
 	case *ast.Field:
 		label := fmt.Sprintf("%s", n.Label)
+
+		switch labelType := n.Label.(type) {
+		case *ast.Ident:
+			label = labelType.Name
+		case *ast.ListLit:
+			// this is a map
+			goCode.WriteString(fmt.Sprintf("map[%s]%s \n\n", labelType.Elts[0], getStructName(fmt.Sprintf("%s", n.Value))))
+			return
+		default:
+			panic(fmt.Sprintf("Unhandled type: %s", reflect.TypeOf(n.Label)))
+
+		}
+
 		traverseAST(n.Value, depth, &FieldLabel{
 			label:    label,
 			optional: n.Constraint == token.OPTION,
 		}, inStruct, goCode)
 
 	case *ast.StructLit:
-		label := fieldLabel.label
-		if !strings.HasPrefix(label, "#") {
-			panic(fmt.Sprintf("Illegal struct definition found at: %s", n.Pos()))
+		label := getStructName(fieldLabel.label)
+
+		if inStruct != nil {
+			fmt.Println("checking is map ", label)
+			if fieldLabel.optional {
+				label += " *"
+			} else {
+				label += " "
+			}
+
+			if mt := isMap(n.Elts); mt != nil {
+				goCode.WriteString(fmt.Sprintf("%smap[%s]%s\n", label, mt.KeyType, mt.ValueType))
+			} else {
+				l := (strings.ToUpper(label[:1]) + label[1:])
+
+				goCode.WriteString(fmt.Sprintf("%s struct { \n", l))
+				for _, elem := range n.Elts {
+					traverseAST(elem, depth+1, nil, &Struct{name: label}, goCode)
+				}
+				tags := fmt.Sprintf("`json:\"%s\"`", strings.ToLower(label))
+
+				goCode.WriteString(fmt.Sprintf("}%s\n\n", tags))
+
+			}
+		} else {
+			fmt.Println("checking is map", label)
+			if mt := isMap(n.Elts); mt != nil {
+				goCode.WriteString(fmt.Sprintf("type %s map[%s]%s\n\n", label, mt.KeyType, mt.ValueType))
+
+			} else {
+				goCode.WriteString(fmt.Sprintf("type %s struct { \n", label))
+				// go through struct fields
+				for _, elem := range n.Elts {
+					// if above is a map don't create struct but a map
+					traverseAST(elem, depth+1, nil, &Struct{name: label}, goCode)
+				}
+				goCode.WriteString("}\n\n")
+			}
 		}
-		label = label[1:]
-		goCode.WriteString(fmt.Sprintf("type %s struct { \n", label))
-		// go through struct fields
-		for _, elem := range n.Elts {
-			traverseAST(elem, depth+1, nil, true, goCode)
-		}
-		goCode.WriteString("}\n\n")
 
 	case *ast.Ident:
 		typ := n.Name
@@ -111,7 +211,7 @@ func traverseAST(
 		traverseAST(n.X, depth, fieldLabel, inStruct, goCode)
 
 	case *ast.BasicLit:
-		if inStruct {
+		if inStruct != nil {
 			l := (strings.ToLower(fieldLabel.label[:1]) + fieldLabel.label[1:])
 			typ := fmt.Sprintf("%s `json:\"%s\"`", strings.ToLower(n.Kind.String()), l)
 			l = (strings.ToUpper(fieldLabel.label[:1]) + fieldLabel.label[1:])
@@ -126,11 +226,8 @@ func traverseAST(
 		} else {
 			goCode.WriteString(fmt.Sprintf("package %s\n\n", PackageName))
 		}
-
-		// fmt.Printf("package %s\n\n", n.Name)
 	case *ast.Comment:
-		// TODO comments not displaying
-		fmt.Println("Comment!!!", n.Text)
+		// TODO: comments not displaying
 		goCode.WriteString(fmt.Sprintf("%+s", n.Text))
 	case *ast.UnaryExpr:
 		// fmt.Printf("%sUnary: %+v\n", indent, n.X)
@@ -138,6 +235,7 @@ func traverseAST(
 
 	case *ast.ListLit:
 		// fmt.Printf("%sList: %+v\n", indent, reflect.TypeOf(n.Elts[0]))
+		fmt.Println("HERE!: ", fieldLabel)
 		traverseAST(n.Elts[0], depth, fieldLabel, inStruct, goCode)
 	case *ast.Ellipsis:
 		typ := fmt.Sprintf("%s", n.Type)

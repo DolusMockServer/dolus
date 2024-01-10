@@ -1,7 +1,6 @@
 package expectation
 
 import (
-	"net/http"
 	"strings"
 
 	"github.com/DolusMockServer/dolus/pkg/expectation/cue"
@@ -31,22 +30,10 @@ func (r Route) Match(path string) bool {
 }
 
 type DolusResponse struct {
-	Body    dstruct.GeneratedStruct
-	Status  int
-	Headers http.Header
-	Cookies []http.Cookie
+	Body dstruct.GeneratedStruct
 }
 
 type DolusRequest struct {
+	cue.Request
 	Route
-	Body    any
-	Headers http.Header
-	Cookies []http.Cookie
-}
-
-type DolusExpectation struct {
-	Priority       int
-	Response       DolusResponse
-	Request        DolusRequest
-	CueExpectation *cue.Expectation
 }

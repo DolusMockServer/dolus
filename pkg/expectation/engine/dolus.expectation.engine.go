@@ -70,6 +70,7 @@ func (e *DolusExpectationEngine) validateExpectationSchema(exp expectation.Dolus
 		return err
 	}
 	expectationFieldErrors := validateExpectationResponseSchema(
+		ex
 		exp.Response.Body,
 		matchingResponseSchema,
 	)
@@ -278,6 +279,7 @@ func (e *DolusExpectationEngine) getExpectaionsForRequest(
 	}]
 }
 
+// GetResponseForRequest returns the response for the given request
 func (e *DolusExpectationEngine) GetResponseForRequest(
 	pathTemplate string,
 	request *http.Request,
@@ -303,6 +305,7 @@ func (e *DolusExpectationEngine) GetResponseForRequest(
 	return &currentExpectation.Response, nil
 }
 
+// GetCueExpectations returns the cue expectations
 func (e *DolusExpectationEngine) GetCueExpectations() cue.Expectations {
 	// TODO: instead of building the struct here make the engine store an instane of
 	return e.cueExpectations
