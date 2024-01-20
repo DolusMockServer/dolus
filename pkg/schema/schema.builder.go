@@ -97,6 +97,7 @@ func getStructFromOpenApi3Schema(schema openapi3.Schema) any {
 		case "array":
 			// TODO need to accomdate
 			fmt.Printf("ARRAY: %+v\n", p.Value) //#need to get array items
+			panic("ARRAY unimplemented")
 		case "boolean":
 			addField[bool](exportName, tags, nullable, dsb)
 		default:

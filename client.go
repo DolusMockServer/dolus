@@ -4,7 +4,7 @@ import (
 	"context"
 
 	"github.com/DolusMockServer/dolus/internal/api"
-	"github.com/DolusMockServer/dolus/pkg/expectation/cue"
+	"github.com/DolusMockServer/dolus/pkg/expectation"
 )
 
 // Client to the Dolus server
@@ -15,7 +15,7 @@ type Client struct {
 }
 
 // AddExpectation to the Dolus server
-func (c *Client) AddExpectation(expectation cue.Expectation) error {
+func (c *Client) AddExpectation(expectation expectation.Expectation) error {
 	exp, err := c.mapper.MapCueExpectation(expectation)
 	if err != nil {
 		return err

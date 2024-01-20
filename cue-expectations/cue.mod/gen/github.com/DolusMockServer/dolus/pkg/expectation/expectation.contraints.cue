@@ -1,4 +1,4 @@
-package cue
+package expectation
 
 
 // Add contraints
@@ -15,7 +15,7 @@ httpUrlRegex: =~"^(https?://[a-zA-Z0-9.-]+(:[0-9]+)?(/[a-zA-Z0-9-._~:/?#@$&'()*+
     match: string| *"eq"
 } & (
     { match: "has", value: null} |
-    { match: "eq" | "regex" | "not", value: string } )
+    { match: "eq" | "regex" | "not", value: _ } )
 
 #Callback: #Callback & {
     timeout: int | *1000

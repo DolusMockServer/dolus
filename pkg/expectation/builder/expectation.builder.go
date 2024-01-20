@@ -1,15 +1,15 @@
 package builder
 
 import (
-	"strings"
-
 	"github.com/DolusMockServer/dolus/pkg/expectation"
+	"github.com/DolusMockServer/dolus/pkg/schema"
 )
 
-type ExpectationBuilder interface {
-	BuildExpectations() ([]expectation.DolusExpectation, error)
+type Output struct {
+	Expectations    []expectation.Expectation
+	RouteProperties schema.RouteProperties
 }
 
-func pathFromOpenApiPath(path string) string {
-	return strings.ReplaceAll(strings.ReplaceAll(path, "{", ":"), "}", "")
+type ExpectationBuilder interface {
+	BuildExpectations() (*Output, error)
 }

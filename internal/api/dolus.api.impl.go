@@ -6,15 +6,15 @@ import (
 
 	"github.com/labstack/echo/v4"
 
-	"github.com/DolusMockServer/dolus/pkg/expectation"
 	"github.com/DolusMockServer/dolus/pkg/expectation/engine"
 	"github.com/DolusMockServer/dolus/pkg/logger"
+	"github.com/DolusMockServer/dolus/pkg/schema"
 )
 
 type DolusApiImpl struct {
 	ExpectationEngine engine.ExpectationEngine
 	Mapper            Mapper
-	routes            map[expectation.Route]bool
+	routes            map[schema.Route]bool
 }
 
 var _ DolusApi = &DolusApiImpl{}
@@ -25,16 +25,16 @@ func NewDolusApi(expectationEngine engine.ExpectationEngine,
 	return &DolusApiImpl{
 		ExpectationEngine: expectationEngine,
 		Mapper:            mapper,
-		routes:            make(map[expectation.Route]bool),
+		routes:            make(map[schema.Route]bool),
 	}
 }
 
-func (d *DolusApiImpl) AddRoute(route expectation.Route) error {
+func (d *DolusApiImpl) AddRoute(route schema.Route) error {
 	if d.routes[route] {
 		return fmt.Errorf(
 			"route %s with operation %s already exists",
 			route.Path,
-			route.Operation,
+			route.Method,
 		)
 	}
 	d.routes[route] = true
@@ -43,7 +43,6 @@ func (d *DolusApiImpl) AddRoute(route expectation.Route) error {
 
 // GetV1DolusExpectations implements server.ServerInterface.
 func (d *DolusApiImpl) GetV1DolusExpectations(ctx echo.Context) error {
-
 	apiExpectations, err := d.Mapper.MapCueExpectations(
 		d.ExpectationEngine.
 			GetCueExpectations().
@@ -61,7 +60,7 @@ func (d *DolusApiImpl) GetV1DolusRoutes(ctx echo.Context) error {
 	for r := range d.routes {
 		serverRoutes = append(serverRoutes, Route{
 			Path:      r.Path,
-			Operation: r.Operation,
+			Operation: r.Method,
 		})
 	}
 

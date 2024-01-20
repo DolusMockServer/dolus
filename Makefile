@@ -42,7 +42,8 @@ gen-go-server-client: $(GOPATH)/bin/oapi-codegen
 	
 
 gen-cue-expectations:
-	cd cue-expectations && cue get go ../pkg/expectation/cue
+	cd cue-expectations && cue get go ../pkg/expectation/ -e \
+	ExpectationError,ExpectationFieldError,Route
 
 ### TOOLS ###
 $(GOPATH)/bin/dlv:

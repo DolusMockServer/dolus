@@ -8,7 +8,6 @@ import (
 	"github.com/MartinSimango/dstruct/generator"
 
 	"github.com/DolusMockServer/dolus/pkg/expectation"
-	cueE "github.com/DolusMockServer/dolus/pkg/expectation/cue"
 	"github.com/DolusMockServer/dolus/pkg/expectation/loader"
 	"github.com/DolusMockServer/dolus/pkg/logger"
 	"github.com/DolusMockServer/dolus/pkg/schema"
@@ -33,17 +32,19 @@ func NewCueExpectationBuilder(
 }
 
 // BuildExpectations implements ExpectationBuilder.
-func (ceb *CueExpectationBuilder) BuildExpectations() ([]expectation.DolusExpectation, error) {
+func (ceb *CueExpectationBuilder) BuildExpectations() (*Output, error) {
 	if s, err := ceb.loader.Load(); err != nil {
 		return nil, err
 	} else {
-		return ceb.buildExpectationsFromCueLoadType(s), nil
+		return &Output{
+			Expectations: ceb.buildExpectationsFromCueLoadType(s),
+		}, nil
 	}
 }
 
 func (ceb *CueExpectationBuilder) buildExpectationsFromCueLoadType(
 	spec *loader.CueExpectationLoadType,
-) (expectations []expectation.DolusExpectation) {
+) (expectations []expectation.Expectation) {
 	for _, instance := range *spec {
 		expectations = append(expectations, ceb.buildExpectationFromCueInstance(instance)...)
 	}
@@ -52,38 +53,25 @@ func (ceb *CueExpectationBuilder) buildExpectationsFromCueLoadType(
 
 func (ceb *CueExpectationBuilder) buildExpectationFromCueInstance(
 	instance cue.Value,
-) (expectations []expectation.DolusExpectation) {
+) (expectations []expectation.Expectation) {
 	e, err := instance.Value().LookupPath(cue.ParsePath("expectations")).List()
 	if err != nil {
 		fmt.Printf("error with expectation in file %s: %s \n", instance.Pos().Filename(), err)
 		return
 	}
 	for e.Next() {
-		var cueExpectation cueE.Expectation
+		var cueExpectation expectation.Expectation
 		err := e.Value().Decode(&cueExpectation)
 		if err != nil {
 			logger.Log.Error("Error decoding expectation: ", err)
 			continue
 		}
+		cueExpectation.Response.GeneratedBody = dstruct.NewGeneratedStructWithConfig(
+			schema.SchemaFromAny(cueExpectation.Response.Body),
+			&ceb.fieldGenerator,
+		)
 
-		expectations = append(expectations, expectation.DolusExpectation{
-			CueExpectation: &cueExpectation,
-			Priority:       cueExpectation.Priority,
-			Request: expectation.DolusRequest{
-				Route: expectation.Route{
-					Path:      pathFromOpenApiPath(cueExpectation.Request.Path),
-					Operation: string(cueExpectation.Request.Method),
-				},
-				Body: cueExpectation.Request.Body,
-			},
-			Response: expectation.DolusResponse{
-				Body: dstruct.NewGeneratedStructWithConfig(
-					schema.SchemaFromAny(cueExpectation.Response.Body),
-					&ceb.fieldGenerator,
-				),
-				Status: cueExpectation.Response.Status,
-			},
-		})
+		expectations = append(expectations, cueExpectation)
 
 	}
 	return

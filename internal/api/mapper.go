@@ -1,12 +1,12 @@
 package api
 
 import (
-	"github.com/DolusMockServer/dolus/pkg/expectation/cue"
+	"github.com/DolusMockServer/dolus/pkg/expectation"
 )
 
 type Mapper interface {
 	MapCueExpectations(
-		expectations []cue.Expectation,
+		expectations []expectation.Expectation,
 	) ([]Expectation, error)
-	MapCueExpectation(expectation cue.Expectation) (*Expectation, error)
+	MapCueExpectation(expectation expectation.Expectation) (*Expectation, error)
 }
