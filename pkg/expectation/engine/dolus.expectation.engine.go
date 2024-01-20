@@ -274,23 +274,21 @@ func (e *DolusExpectationEngine) getExpectationsForRequest(
 	requestParameters schema.RequestParameters,
 ) []expectation.Expectation {
 	// check for exact matches (with query parameters)
-	expectations := e.expectationMatcherMap[schema.Route{
+	// check for exact matches (with query parameters)
+	expectations := matchRequestParameters(requestParameters, e.expectationMatcherMap[schema.Route{
 		Path:   request.RequestURI,
 		Method: request.Method,
-	}]
-
-	expectations = matchRequestParameters(requestParameters, expectations)
+	}])
 
 	if len(expectations) > 0 {
 		return expectations
 	}
 
-	expectations = e.expectationMatcherMap[schema.Route{
+	expectations = matchRequestParameters(requestParameters, e.expectationMatcherMap[schema.Route{
 		Path:   pathTemplate,
 		Method: request.Method,
-	}]
-
-	expectations = matchRequestParameters(requestParameters, expectations)
+	}],
+	)
 
 	return expectations
 
