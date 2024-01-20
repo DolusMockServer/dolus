@@ -386,7 +386,7 @@ paths:
           in: query
           name: value
         - schema:
-            type: string
+            $ref: '#/components/schemas/Age'
           in: query
           name: age
       responses:
@@ -617,6 +617,8 @@ paths:
           description: User not found
 components:
   schemas:
+    Age:
+      type: integer
     Order:
       type: object
       xml:

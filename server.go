@@ -14,6 +14,7 @@ import (
 	"github.com/DolusMockServer/dolus/pkg/expectation/builder"
 	"github.com/DolusMockServer/dolus/pkg/expectation/engine"
 	"github.com/DolusMockServer/dolus/pkg/logger"
+	"github.com/DolusMockServer/dolus/pkg/schema"
 	"github.com/DolusMockServer/dolus/pkg/task"
 )
 
@@ -46,16 +47,19 @@ type Server struct {
 	openApiExpectationBuilder builder.ExpectationBuilder
 	fieldGenerator            *generator.Generator
 	dolusApi                  api.DolusApi
+	schemaMapper              schema.Mapper
 }
 
 func New() *Server {
 	logger.Log = logger.NewLogger("logfile.log")
+
 	generationConfig := generator.NewGenerationConfig()
 	return &Server{
 		HideBanner:       false,
 		HidePort:         false,
 		OpenAPIspec:      "openapi.yaml",
 		GenerationConfig: *generationConfig,
+		schemaMapper:     schema.NewMapper(),
 	}
 }
 
@@ -94,44 +98,50 @@ func (d *Server) initHttpServer() {
 	api.RegisterHandlers(d.EchoServer, d.dolusApi)
 }
 
-func (d *Server) addRoutes(route expectation.Route) {
+func (d *Server) addRoutes(route schema.Route) {
 	if err := d.dolusApi.AddRoute(route); err != nil {
 		fmt.Printf("error adding route: %s\n", err.Error())
 	}
-	d.EchoServer.Router().Add(route.Operation, route.Path, func(ctx echo.Context) error {
+	d.EchoServer.Router().Add(route.Method, route.Path, func(ctx echo.Context) error {
 		logger.Log.Infof(
 			"Received request for path %s and method %s",
 			ctx.Request().URL.RequestURI(),
-			route.Operation,
+			route.Method,
 		)
-		response, err := d.expectationEngine.GetResponseForRequest(route.Path, ctx.Request())
+
+		response, err := d.expectationEngine.GetResponseForRequest(
+			ctx.Request(),
+			d.schemaMapper.MapToRequestParameters(ctx),
+			route.Path,
+		)
 		if err != nil {
 			return ctx.JSON(500, api.GeneralError{
 				Path:     ctx.Request().URL.Path,
-				Method:   route.Operation,
+				Method:   route.Method,
 				ErrorMsg: err.Error(),
 			})
 		}
 
-		response.Body.GenerateAndUpdate()
-		return ctx.JSON(response.Status, response.Body.Instance())
+		response.GeneratedBody.GenerateAndUpdate()
+		return ctx.JSON(response.Status, response.GeneratedBody.Instance())
 	})
 }
 
 func (d *Server) loadOpenAPISpecExpectations() error {
-	expectations, err := d.openApiExpectationBuilder.BuildExpectations()
+	output, err := d.openApiExpectationBuilder.BuildExpectations()
 	if err != nil {
 		return err
 	}
+	d.expectationEngine.SetRouteProperties(output.RouteProperties)
+	for _, e := range output.Expectations {
+		d.addRoutes(e.Request.Route())
 
-	for _, e := range expectations {
-		d.addRoutes(e.Request.Route)
 		d.expectationEngine.AddResponseSchemaForRoute(
-			e.Request.Route,
-			e.Response.Body,
+			e.Request.Route(),
+			e.Response.GeneratedBody,
 		)
 
-		if err := d.expectationEngine.AddExpectation(e, false); err != nil {
+		if err := d.expectationEngine.AddExpectation(e, false, expectation.OpenAPI); err != nil {
 			fmt.Printf("Error adding expectation:\n%s\n", err)
 		}
 
@@ -141,12 +151,12 @@ func (d *Server) loadOpenAPISpecExpectations() error {
 }
 
 func (d *Server) loadCueExpectations() error {
-	expectations, err := d.cueExpectationBuilder.BuildExpectations()
+	output, err := d.cueExpectationBuilder.BuildExpectations()
 	if err != nil {
 		return err
 	}
-	for _, e := range expectations {
-		if err := d.expectationEngine.AddExpectation(e, true); err != nil {
+	for _, e := range output.Expectations {
+		if err := d.expectationEngine.AddExpectation(e, true, expectation.Cue); err != nil {
 			fmt.Printf("Error adding expectation:\n%s\n", err)
 		}
 	}
@@ -179,7 +189,7 @@ func (d *Server) Start(address string) error {
 	if !d.HideBanner {
 		printBanner()
 	}
-	logger.Log.SetLevel(logrus.InfoLevel)
+	logger.Log.SetLevel(logrus.DebugLevel)
 
 	if d.expectationEngine == nil {
 		generationConfig := d.GenerationConfig
@@ -195,5 +205,4 @@ func (d *Server) AddExpectations(files ...string) {
 }
 
 func (d *Server) AddCueExpectationsFromFolder() {
-	// TODO: implement
 }

@@ -10,16 +10,16 @@ type ExpectationFieldError struct {
 }
 
 type ExpectationError struct {
-	DolusExpectation
+	Expectation
 	ExpectationFieldErrors []ExpectationFieldError
 }
 
 func (e ExpectationError) Error() string {
 	retString := fmt.Sprintf(
 		"Expectation Error:\nPath: %s\nMethod: %s\nPriority: %d\nErrors:\n",
-		e.DolusExpectation.Request.Path,
-		e.DolusExpectation.Request.Operation,
-		e.DolusExpectation.Priority,
+		e.Expectation.Request.Path,
+		e.Expectation.Request.Method,
+		e.Expectation.Priority,
 	)
 	for i, err := range e.ExpectationFieldErrors {
 		retString = fmt.Sprintf("%s%d. %+v\n", retString, (i + 1), err)
