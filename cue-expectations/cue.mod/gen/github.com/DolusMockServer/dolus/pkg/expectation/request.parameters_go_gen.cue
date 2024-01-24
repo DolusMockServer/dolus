@@ -8,6 +8,6 @@ package expectation
 #PATH_PARAM:  "Path"
 
 #RequestParameters: {
-	path: {[string]: #Matcher} @go(Path,map[string]Matcher[string])
-	query: {[string]: #Matcher} @go(Query,map[string]Matcher[[]string])
+	path: {...} @go(Path,map[string]any)
+	query: {...} @go(Query,map[string]any)
 }

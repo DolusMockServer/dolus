@@ -389,6 +389,7 @@ paths:
             $ref: '#/components/schemas/Age'
           in: query
           name: age
+          required: true
       responses:
         '200':
           description: successful operation
