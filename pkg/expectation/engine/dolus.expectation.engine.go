@@ -140,7 +140,9 @@ func (e *DolusExpectationEngine) getMatchingResponseSchemaForRoute(exp *expectat
 		if schemaRoute.Method == expectationRoute.Method {
 			if pathParams, ok := schemaRoute.Match(schema.PathFromOpenApiPath(parsedURL.Path)); ok {
 				// TODO: move this to getMatchingRequestSchemaForRoute
-				exp.AddRequestParameterMatchers(pathParams, parsedURL.Query())
+				if err := exp.AddRequestParameterMatchers(pathParams, parsedURL.Query()); err != nil {
+					return nil, err
+				}
 				if err := exp.ValidateRequestParameters(e.routeProperties[schemaRoute]); err != nil {
 					return nil, err
 				}
@@ -273,41 +275,31 @@ func (e *DolusExpectationEngine) getExpectationsForRequest(
 	request *http.Request,
 	requestParameters schema.RequestParameters,
 ) []expectation.Expectation {
-	// check for exact matches (with query parameters)
-	// check for exact matches (with query parameters)
-	expectations := matchRequestParameters(requestParameters, e.expectationMatcherMap[schema.Route{
-		Path:   request.RequestURI,
-		Method: request.Method,
-	}])
-
-	if len(expectations) > 0 {
+	if expectations := e.findExpectationMatches(request.URL.Path, request, requestParameters); len(expectations) > 0 {
 		return expectations
 	}
 
-	expectations = matchRequestParameters(requestParameters, e.expectationMatcherMap[schema.Route{
-		Path:   pathTemplate,
-		Method: request.Method,
-	}],
-	)
-
-	return expectations
-
+	return e.findExpectationMatches(pathTemplate, request, requestParameters)
 }
 
-func matchRequestParameters(
+func (e *DolusExpectationEngine) findExpectationMatches(
+	requestPath string,
+	request *http.Request,
 	requestParameters schema.RequestParameters,
-	expectations []expectation.Expectation,
 ) (filtered []expectation.Expectation) {
-	// TODO: get path paratemers of request
-	// if expectation already has a pathe parameter ignore the additional filter ones
-	// requestPathParameters = request.URL.Query()
 
-	for _, e := range expectations {
-		if e.Request.Parameters == nil || e.Request.Parameters.Match(requestParameters) {
-			filtered = append(filtered, e)
+	expectations := e.expectationMatcherMap[schema.Route{
+		Path:   requestPath,
+		Method: request.Method,
+	}]
+
+	for _, expectation := range expectations {
+		if expectation.Request.Match(request, requestParameters) {
+			filtered = append(filtered, expectation)
 		}
 	}
 	return
+
 }
 
 // GetResponseForRequest returns the response for the given request
@@ -324,14 +316,9 @@ func (e *DolusExpectationEngine) GetResponseForRequest(
 		return nil, fmt.Errorf("no expectation found for path and HTTP method")
 	}
 
-	// findMatchingPathParameters(expectations)
 	// findHighestPriorityExpectation(expectations)
 	currentExpectation := expectations[0]
 	for _, v := range expectations {
-		if request.URL.Path == v.Request.Path {
-			currentExpectation = v
-			return &currentExpectation.Response, nil
-		}
 		if v.Priority > currentExpectation.Priority {
 			currentExpectation = v
 		}

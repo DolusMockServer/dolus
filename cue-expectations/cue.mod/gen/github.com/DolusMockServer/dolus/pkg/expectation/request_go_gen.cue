@@ -4,11 +4,21 @@
 
 package expectation
 
+#Test: [...]
+
+#StringMatcher: string
+
+#StringSliceMatcher: string
+
+#MatcherValueType: _
+
+#MatcherValueTypeImpl: Type: string
+
 #Request: {
 	path:    string                    @go(Path)
 	method:  string                    @go(Method)
 	body:    _                         @go(Body,any)
 	params?: null | #RequestParameters @go(Parameters,*RequestParameters)
-	headers?: null | {[string]: [...string]} @go(Headers,*map[string][]string)
+	headers: {...} @go(Headers,map[string]any)
 	cookies?: null | [...#Cookie] @go(Cookies,*[]Cookie)
 }

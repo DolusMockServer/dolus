@@ -54,8 +54,6 @@ func (cel *CueExpectationLoader) Load() (*CueExpectationLoadType, error) {
 	})
 
 	for _, bi := range bis {
-		// check for errors on the  instance
-		// these are typically parsing errors
 		if bi.Err != nil {
 			logger.Log.Error("Error during load: ", bi.Err)
 			continue
@@ -67,7 +65,6 @@ func (cel *CueExpectationLoader) Load() (*CueExpectationLoadType, error) {
 			continue
 		}
 
-		// Validate the value
 		err := value.Validate()
 		if err != nil {
 			logger.Log.Error("Error during validation:", err)

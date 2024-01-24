@@ -2,6 +2,7 @@ package dolus
 
 import (
 	"fmt"
+	"time"
 
 	"github.com/MartinSimango/dstruct/generator"
 	"github.com/fatih/color"
@@ -165,22 +166,29 @@ func (d *Server) loadCueExpectations() error {
 }
 
 func (d *Server) loadExpectations() error {
+	s := time.Now()
 	if err := d.loadOpenAPISpecExpectations(); err != nil {
 		return err
 	}
-
+	fmt.Println("Time to load openapi expectations: ", time.Since(s))
+	s2 := time.Now()
 	if err := d.loadCueExpectations(); err != nil {
 		return err
 	}
+	fmt.Println("Time to load cue expectations: ", time.Since(s2))
 	return nil
 }
 
 func (d *Server) startHttpServer(address string) error {
 	d.initHttpServer()
 	go task.RegisterDolusTasks()
+	now := time.Now()
+
 	if err := d.loadExpectations(); err != nil {
 		return err
 	}
+	logger.Log.Infof("Server started in %s", time.Since(now))
+
 	d.EchoServer.Logger.SetOutput(logger.Log.Out)
 	return d.EchoServer.Start(address)
 }

@@ -1,13 +1,15 @@
 package expectation
 
-import "reflect"
+import (
+	"reflect"
+)
 
 type Matcher[T any] struct {
 	Match string `json:"match"`
 	Value *T     `json:"value"`
 }
 
-func (m *Matcher[T]) Matches(value *T) bool {
+func (m Matcher[T]) Matches(value *T) bool {
 	switch m.Match {
 	case "eq":
 		return reflect.DeepEqual(value, m.Value)
