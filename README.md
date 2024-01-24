@@ -64,5 +64,3 @@ Dolus is a mock server designed to simulate HTTP-based APIs. It's useful in test
 3. Start the Dolus server. The server will listen for incoming requests and match them against the predefined expectations. If a match is found, the server will return the corresponding response.
 
 ---
-
-Please note that this is a basic outline and might not cover all aspects of your project. You should expand upon this outline with more specific information about your project, such as how to install and run it, how to contribute, and any other relevant details.
