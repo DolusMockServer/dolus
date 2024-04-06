@@ -23,11 +23,6 @@ const (
 // // id (optional) - used for updating an existing expectation (i.e. when the id matches)
 
 // // requestMatcher (create tickets)
-// // method - property matcher - done
-// // path - property matcher - done
-// // path parameters - key to multiple values matcher - in progress
-// // query string parameters - key to multiple values matcher - to do (partial query matches)
-// // headers - key to multiple values matcher - to do
 // // cookies - key to single value matcher - to do
 // // body - body matchers - to do
 // // secure - boolean value, true for HTTPS - to do (default to false)
@@ -64,10 +59,7 @@ func (e *Expectation) addPathParameters(pathParams map[string]string) error {
 		} else if strings.TrimSpace(v) == "" {
 			return fmt.Errorf("path parameter '%s' is empty", k)
 		}
-		e.Request.Parameters.Path[k] = Matcher[string]{
-			Match: matchType,
-			Value: &value,
-		}
+		e.Request.Parameters.Path[k] = NewStringMatcher(value, matchType)
 
 	}
 	return nil
@@ -79,10 +71,7 @@ func (e *Expectation) addQueryParameters(queryParams url.Values) {
 	}
 	for k, v := range queryParams {
 		value := v
-		e.Request.Parameters.Query[k] = Matcher[[]string]{
-			Match: "eq",
-			Value: &value,
-		}
+		e.Request.Parameters.Query[k] = NewStringArrayMatcher(value, "eq")
 	}
 }
 
@@ -90,25 +79,25 @@ func (e *Expectation) addQueryParameters(queryParams url.Values) {
 func (e *Expectation) ValidateRequestParameters(requestParamProp schema.RequestParameterProperty) error {
 
 	// Validate Path and Query Parameters
-	if err := checkParametersExistence[string](PATH_PARAM, requestParamProp.PathParameterProperties, e.Request.Parameters.Path); err != nil {
+	if err := checkParametersExistence(PATH_PARAM, requestParamProp.PathParameterProperties, e.Request.Parameters.Path); err != nil {
 		return err
 	}
 
-	if err := checkRequiredParameters[string](PATH_PARAM, requestParamProp.PathParameterProperties, e.Request.Parameters.Path); err != nil {
+	if err := checkRequiredParameters[*StringMatcher](PATH_PARAM, requestParamProp.PathParameterProperties, e.Request.Parameters.Path); err != nil {
 		return err
 	}
 
-	if err := checkParametersExistence[[]string](QUERY_PARAM, requestParamProp.QueryParameterProperties, e.Request.Parameters.Query); err != nil {
+	if err := checkParametersExistence(QUERY_PARAM, requestParamProp.QueryParameterProperties, e.Request.Parameters.Query); err != nil {
 		return err
 	}
 
-	if err := checkRequiredParameters[[]string](QUERY_PARAM, requestParamProp.QueryParameterProperties, e.Request.Parameters.Query); err != nil {
+	if err := checkRequiredParameters[*StringArrayMatcher](QUERY_PARAM, requestParamProp.QueryParameterProperties, e.Request.Parameters.Query); err != nil {
 		return err
 	}
 	return nil
 }
 
-func checkParametersExistence[T any](paramType string, properties schema.ParameterProperties, parameters map[string]any) error {
+func checkParametersExistence(paramType string, properties schema.ParameterProperties, parameters map[string]any) error {
 	for name := range parameters {
 		if properties[name] == nil {
 			return fmt.Errorf("%s parameter '%s' does not exist", paramType, name)
@@ -117,10 +106,10 @@ func checkParametersExistence[T any](paramType string, properties schema.Paramet
 	return nil
 }
 
-func checkRequiredParameters[T any](paramType string, properties schema.ParameterProperties, values map[string]any) error {
+func checkRequiredParameters[T MatcherType](paramType string, properties schema.ParameterProperties, values map[string]any) error {
 	for value, param := range properties {
 
-		if param.Required && (values[value] == nil || values[value].(Matcher[T]).Value == nil) {
+		if param.Required && (values[value] == nil || values[value].(T).GetValue() == nil) {
 			return fmt.Errorf("required %s parameter '%s' is missing", paramType, value)
 		}
 	}

@@ -60,8 +60,8 @@ func (cel *CueExpectationLoader) Load() (*CueExpectationLoadType, error) {
 		}
 		value := ctx.BuildInstance(bi)
 
-		if value.Err() != nil {
-			logger.Log.Error("Error during load: ", value.Err())
+		if err := value.Err(); err != nil {
+			logger.Log.Error("Error during load: ", err)
 			continue
 		}
 

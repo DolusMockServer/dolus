@@ -28,20 +28,20 @@ import "time"
 
 // struct taking from net/http package
 #Cookie: {
-	Name:       string
-	Value:      string
-	Path:       string
-	Domain:     string
-	Expires:    time.Time
-	RawExpires: string
+	name:       string    @go(Name)
+	value:      string    @go(Value)
+	path:       string    @go(Path)
+	domain:     string    @go(Domain)
+	expires:    time.Time @go(Expires)
+	rawExpires: string    @go(RawExpires)
 
 	// MaxAge=0 means no 'Max-Age' attribute specified.
 	// MaxAge<0 means delete cookie now, equivalently 'Max-Age: 0'
 	// MaxAge>0 means Max-Age attribute present and given in seconds
-	MaxAge:   int
-	Secure:   bool
-	HttpOnly: bool
-	SameSite: #SameSite
-	Raw:      string
-	Unparsed: [...string] @go(,[]string)
+	maxAge:   int       @go(MaxAge)
+	secure:   bool      @go(Secure)
+	httpOnly: bool      @go(HttpOnly)
+	sameSite: #SameSite @go(SameSite)
+	raw:      string    @go(Raw)
+	unparsed: [...string] @go(Unparsed,[]string)
 }

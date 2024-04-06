@@ -4,7 +4,21 @@
 
 package expectation
 
+#MatcherType: _
+
 #Matcher: {
-	match:  string   @go(Match)
+	match:  string   @go(MatchExpression)
 	value?: null | _ @go(Value,*T)
+}
+
+#StringMatcher: {
+	Matcher: #Matcher @go(,Matcher[string])
+}
+
+#StringArrayMatcher: {
+	Matcher: #Matcher @go(,Matcher[[]string])
+}
+
+#CookieMatcher: {
+	Matcher: #Matcher @go(,Matcher[Cookie])
 }

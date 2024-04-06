@@ -22,7 +22,14 @@ func (r *RequestParameters) Match(rp schema.RequestParameters) bool {
 func matchParams[T any](pathType string, params map[string]any, values map[string]T) bool {
 	for name, value := range params {
 		v := values[name]
-		if !(value.(Matcher[T])).Matches(&v) {
+		var match bool = false
+		switch any(*new(T)).(type) {
+		case string:
+			match = value.(StringMatcher).Matches(v)
+		case []string:
+			match = value.(StringArrayMatcher).Matches(v)
+		}
+		if !match {
 			logger.Log.Debugf("No match for expectation! %s parameter '%s' with value %v does not match %v", pathType, name, *(value.(Matcher[T]).Value), v)
 			return false
 		}

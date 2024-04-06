@@ -14,26 +14,45 @@ type Request struct {
 	Body       any                `json:"body"`
 	Parameters *RequestParameters `json:"params"`
 	Headers    map[string]any     `json:"headers"`
-	Cookies    *[]Cookie          `json:"cookies"`
+	Cookies    []any              `json:"cookies"`
 }
 
 func (r *Request) Match(req *http.Request, reqParam schema.RequestParameters) bool {
-	return (r.Parameters == nil || r.Parameters.Match(reqParam)) && r.matchHeaders(req.Header)
+	return (r.Parameters == nil || r.Parameters.Match(reqParam)) && r.matchHeaders(req.Header) &&
+		r.matchCookies(req)
 }
 
 func (r *Request) matchHeaders(headers http.Header) bool {
 	for name, value := range r.Headers {
 		requestHeaderValues := headers[name]
 		if len(requestHeaderValues) == 0 {
-			logger.Log.Debugf("No match for expectation! Header '%s' not found", name)
+			logger.Log.Debugf("No match for expectation! Header '%s' not present", name)
 			return false
 		}
-		if !(value.(Matcher[[]string])).Matches(&requestHeaderValues) {
+		if !(value.(StringArrayMatcher)).Matches(requestHeaderValues) {
 			logger.Log.Debugf("No match for expectation! Header '%s' with value %v does not match %v", name, *(value.(Matcher[[]string])).Value, requestHeaderValues)
 			return false
 		}
 	}
 	return true
+}
+
+func (r *Request) matchCookies(request *http.Request) bool {
+	for _, cookie := range r.Cookies {
+		cookieMatcherValue := cookie.(CookieMatcher)
+		requestCookieValue, err := request.Cookie(cookieMatcherValue.Value.Name)
+		if err != nil {
+			logger.Log.Debugf("No match for expectation! Cookie '%s' not present", cookieMatcherValue.Value.Name)
+			return false
+		}
+		if !(cookieMatcherValue).Matches(requestCookieValue) {
+			logger.Log.Debugf("No match for expectation! Cookie '%s' with value %+v does not match %+v", cookieMatcherValue.Value.Name, cookieMatcherValue, *requestCookieValue)
+			return false
+		}
+	}
+
+	return true
+
 }
 
 func (r *Request) Route() schema.Route {
