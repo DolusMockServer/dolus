@@ -30,7 +30,7 @@ func matchParams[T any](pathType string, params map[string]any, values map[strin
 			match = value.(StringArrayMatcher).Matches(v)
 		}
 		if !match {
-			logger.Log.Debugf("No match for expectation! %s parameter '%s' with value %v does not match %v", pathType, name, *(value.(Matcher[T]).Value), v)
+			logger.Log.Debugf("No match for expectation! %s parameter '%s' with value %v does not match %v", pathType, name, (value.(SimpleMatcher[T]).Value), v)
 			return false
 		}
 	}

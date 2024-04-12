@@ -30,7 +30,7 @@ func (r *Request) matchHeaders(headers http.Header) bool {
 			return false
 		}
 		if !(value.(StringArrayMatcher)).Matches(requestHeaderValues) {
-			logger.Log.Debugf("No match for expectation! Header '%s' with value %v does not match %v", name, *(value.(Matcher[[]string])).Value, requestHeaderValues)
+			logger.Log.Debugf("No match for expectation! Header '%s' with value %v does not match %v", name, (value.(SimpleMatcher[[]string])).Value, requestHeaderValues)
 			return false
 		}
 	}

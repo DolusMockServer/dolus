@@ -106,7 +106,7 @@ func checkParametersExistence(paramType string, properties schema.ParameterPrope
 	return nil
 }
 
-func checkRequiredParameters[T MatcherType](paramType string, properties schema.ParameterProperties, values map[string]any) error {
+func checkRequiredParameters[T Matcher](paramType string, properties schema.ParameterProperties, values map[string]any) error {
 	for value, param := range properties {
 
 		if param.Required && (values[value] == nil || values[value].(T).GetValue() == nil) {
