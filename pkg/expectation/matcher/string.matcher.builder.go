@@ -7,9 +7,9 @@ import (
 
 type StringMatcherBuilder struct{}
 
-var _ MatcherBuilder[string] = &StringMatcherBuilder{}
+var _ MatcherBuilder[string, string] = &StringMatcherBuilder{}
 
-func (b StringMatcherBuilder) Create(field map[string]any) (Matcher[string], error) {
+func (b StringMatcherBuilder) Create(field map[string]any) (Matcher[string, string], error) {
 
 	data, _ := json.Marshal(field["value"]) // this should never fail as cue validated it
 	matchExpr := field["match"].(string)
@@ -18,14 +18,16 @@ func (b StringMatcherBuilder) Create(field map[string]any) (Matcher[string], err
 
 		return nil, err
 	}
-	return NewStringMatcher(v, matchExpr), nil
+	return NewStringMatcher(&v, matchExpr), nil
 
 }
 
-func (b StringMatcherBuilder) CreateFromArrayValue(value []any, matchExpr string) (Matcher[string], error) {
-	return NewStringMatcher(fmt.Sprintf("%v", value), matchExpr), nil
+func (b StringMatcherBuilder) CreateFromArrayValue(value []any, matchExpr string) (Matcher[string, string], error) {
+	v := fmt.Sprintf("%v", value)
+	return NewStringMatcher(&v, matchExpr), nil
 }
 
-func (b StringMatcherBuilder) CreateFromSingleValue(value any, matchExpr string) (Matcher[string], error) {
-	return NewStringMatcher(fmt.Sprintf("%v", value), matchExpr), nil
+func (b StringMatcherBuilder) CreateFromSingleValue(value any, matchExpr string) (Matcher[string, string], error) {
+	v := fmt.Sprintf("%v", value)
+	return NewStringMatcher(&v, matchExpr), nil
 }

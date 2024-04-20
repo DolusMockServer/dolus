@@ -188,7 +188,7 @@ func addPathParameters(pathParams map[string]string, e *models.Expectation) erro
 		} else if strings.TrimSpace(v) == "" {
 			return fmt.Errorf("path parameter '%s' is empty", k)
 		}
-		e.Request.Parameters.Path[k] = matcher.NewStringMatcher(value, matchType)
+		e.Request.Parameters.Path[k] = matcher.NewStringMatcher(&value, matchType)
 
 	}
 	return nil
@@ -228,7 +228,7 @@ func checkParametersExistence(paramType string, properties schema.ParameterPrope
 func checkRequiredQueryParameters(properties schema.ParameterProperties, parameters map[string]any) error {
 	for name, param := range properties {
 
-		if param.Required && (parameters[name] == nil || len(parameters[name].(*matcher.StringArrayMatcher).GetValue()) == 0) {
+		if param.Required && (parameters[name] == nil || len(*parameters[name].(*matcher.StringArrayMatcher).GetValue()) == 0) {
 			return fmt.Errorf("required query parameter '%s' is missing", name)
 		}
 	}
@@ -238,7 +238,7 @@ func checkRequiredQueryParameters(properties schema.ParameterProperties, paramet
 func checkRequiredPathParameters(properties schema.ParameterProperties, parameters map[string]any) error {
 	for name, param := range properties {
 
-		if param.Required && (parameters[name] == nil || parameters[name].(*matcher.StringMatcher).GetValue() == "") {
+		if param.Required && (parameters[name] == nil || *parameters[name].(*matcher.StringMatcher).GetValue() == "") {
 			return fmt.Errorf("required path parameter '%s' is missing", name)
 		}
 	}
@@ -382,7 +382,7 @@ func (e *DolusExpectationEngine) findExpectationMatches(
 
 	for _, expectation := range expectations {
 		requestMatcher := matcher.NewRequestMatcher(expectation.Request)
-		if requestMatcher.MatchWithHttpRequest(request, requestParameters) {
+		if requestMatcher.Matches(request, &requestParameters) {
 			filtered = append(filtered, expectation)
 		}
 	}
@@ -412,6 +412,7 @@ func (e *DolusExpectationEngine) GetResponseForRequest(
 		}
 	}
 
+	fmt.Println("RESONSE", len(expectations))
 	return &currentExpectation.Response, nil
 }
 

@@ -7,14 +7,14 @@ import (
 )
 
 type RequestParameterMatcher struct {
-	SimpleMatcher[models.RequestParameters]
+	CueMatcher[models.RequestParameters]
 }
 
-var _ Matcher[models.RequestParameters] = &RequestParameterMatcher{}
+var _ Matcher[models.RequestParameters, schema.RequestParameters] = &RequestParameterMatcher{}
 
-func NewRequestParameterMatcher(value models.RequestParameters) *RequestParameterMatcher {
+func NewRequestParameterMatcher(value *models.RequestParameters) *RequestParameterMatcher {
 	return &RequestParameterMatcher{
-		SimpleMatcher: SimpleMatcher[models.RequestParameters]{
+		CueMatcher: CueMatcher[models.RequestParameters]{
 			MatchExpression: "eq",
 			Value:           value,
 		},
@@ -22,11 +22,7 @@ func NewRequestParameterMatcher(value models.RequestParameters) *RequestParamete
 
 }
 
-func (r *RequestParameterMatcher) Match(rp models.RequestParameters) bool {
-	return true
-}
-
-func (r *RequestParameterMatcher) MatchWith(rp schema.RequestParameters) bool {
+func (r *RequestParameterMatcher) Matches(rp *schema.RequestParameters) bool {
 	return r.matchPathParams(rp.PathParams) && r.matchQueryParams(rp.QueryParams)
 }
 
@@ -35,9 +31,10 @@ func (r *RequestParameterMatcher) matchQueryParams(queryParams map[string][]stri
 	// query parameters are already validated so we can just check if the values match
 	for name, value := range r.Value.Query {
 		matcher := value.(*StringArrayMatcher)
-		matches := matcher.Matches(queryParams[name])
+		param := queryParams[name]
+		matches := matcher.Matches(&param)
 		if !matches {
-			logger.Log.Debugf("No match for expectation! Query parameter '%s' with value %v does not match %v", name, matcher.Value, queryParams[name])
+			logger.Log.Debugf("No match for expectation! Query parameter '%s' with value %v does not match %v", name, *matcher.Value, queryParams[name])
 			return false
 		}
 	}
@@ -49,9 +46,10 @@ func (r *RequestParameterMatcher) matchPathParams(pathParams map[string]string) 
 	// query parameters are already validated so we can just check if the values match
 	for name, value := range r.Value.Path {
 		matcher := value.(*StringMatcher)
-		matches := matcher.Matches(pathParams[name])
+		param := pathParams[name]
+		matches := matcher.Matches(&param)
 		if !matches {
-			logger.Log.Debugf("No match for expectation! Path parameter '%s' with value %v does not match %v", name, matcher.Value, pathParams[name])
+			logger.Log.Debugf("No match for expectation! Path parameter '%s' with value %v does not match %v", name, *matcher.Value, pathParams[name])
 			return false
 		}
 	}

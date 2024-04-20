@@ -1,30 +1,15 @@
 package matcher
 
-import "reflect"
-
-type Matcher[T any] interface {
-	Matches(value T) bool
-	GetValue() T
+type Matcher[T any, M any] interface {
+	Matches(value *M) bool
+	GetValue() *T
 }
 
-var _ Matcher[string] = &SimpleMatcher[string]{}
-
-type SimpleMatcher[T any] struct {
+type CueMatcher[T any] struct {
 	MatchExpression string `json:"match"`
-	Value           T      `json:"value"` // TODO think about why this needs to be a pointer
+	Value           *T     `json:"value"` // pointers allows a match value to be missing
 }
 
-// Matches implements Matcher.
-func (m SimpleMatcher[T]) Matches(value T) bool {
-	switch m.MatchExpression {
-	case "eq":
-		return reflect.DeepEqual(m.Value, value)
-		// case "has":
-		// 	return m.Value != nil
-	}
-	return false
-}
-
-func (m SimpleMatcher[T]) GetValue() T {
+func (m CueMatcher[T]) GetValue() *T {
 	return m.Value
 }

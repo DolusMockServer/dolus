@@ -1,14 +1,14 @@
 package matcher
 
 type StringMatcher struct {
-	SimpleMatcher[string]
+	CueMatcher[string]
 }
 
-var _ Matcher[string] = &StringMatcher{}
+var _ Matcher[string, string] = &StringMatcher{}
 
-func NewStringMatcher(value, matchType string) *StringMatcher {
+func NewStringMatcher(value *string, matchType string) *StringMatcher {
 	return &StringMatcher{
-		SimpleMatcher: SimpleMatcher[string]{
+		CueMatcher: CueMatcher[string]{
 			MatchExpression: matchType,
 			Value:           value,
 		},
@@ -16,12 +16,12 @@ func NewStringMatcher(value, matchType string) *StringMatcher {
 
 }
 
-func (m StringMatcher) Matches(value string) bool {
+func (m StringMatcher) Matches(value *string) bool {
 	switch m.MatchExpression {
 	case "eq":
-		return m.Value == value
+		return *m.Value == *value
 	case "has":
-		return true
+		return value != nil
 	}
 	return false
 }

@@ -9,39 +9,22 @@ import (
 )
 
 type RequestMatcher struct {
-	SimpleMatcher[models.Request]
-	HeaderMatcher           SimpleMatcher[StringArrayMatcher]
-	CookieMatcher           SimpleMatcher[CookieMatcher]
-	RequestParameterMatcher SimpleMatcher[RequestParameterMatcher]
+	Value                   models.Request
+	RequestParameterMatcher *RequestParameterMatcher
 }
-
-var _ Matcher[models.Request] = &RequestMatcher{}
 
 func NewRequestMatcher(value models.Request) *RequestMatcher {
 	return &RequestMatcher{
-		SimpleMatcher: SimpleMatcher[models.Request]{
-			MatchExpression: "eq",
-			Value:           value,
-		},
+		Value:                   value,
+		RequestParameterMatcher: NewRequestParameterMatcher(value.Parameters),
 	}
 
 }
 
-func (rm RequestMatcher) MatchWithHttpRequest(request *http.Request, requestParameters schema.RequestParameters) bool {
-	// match header
-	return (rm.Value.Parameters == nil || rm.matchRequestParameters(requestParameters)) && rm.matchHeaders(request.Header) && rm.matchCookies(request)
+func (rm RequestMatcher) Matches(request *http.Request, requestParameters *schema.RequestParameters) bool {
+
+	return (rm.Value.Parameters == nil || rm.RequestParameterMatcher.Matches(requestParameters)) && rm.matchHeaders(request.Header) && rm.matchCookies(request)
 }
-
-func (rm RequestMatcher) Matches(value models.Request) bool {
-
-	return true
-}
-
-// func (r *RequestMatcher) match(req *http.Request, reqParam schema.RequestParameters) bool {
-
-// 	return (r.Parameters == nil || r.Parameters.Match(reqParam)) && r.matchHeaders(req.Header) &&
-// 		r.matchCookies(req)
-// }
 
 func (r *RequestMatcher) matchHeaders(headers map[string][]string) bool {
 	for name, value := range r.Value.Headers {
@@ -51,8 +34,8 @@ func (r *RequestMatcher) matchHeaders(headers map[string][]string) bool {
 			return false
 		}
 		headerMatcher := value.(*StringArrayMatcher)
-		if !(headerMatcher).Matches(requestHeaderValues) {
-			logger.Log.Debugf("No match for expectation! Header '%s' with value %v does not match %v", name, headerMatcher.Value, requestHeaderValues)
+		if !(headerMatcher).Matches(&requestHeaderValues) {
+			logger.Log.Debugf("No match for expectation! Header '%s' with value %v does not match %v", name, *headerMatcher.Value, requestHeaderValues)
 			return false
 		}
 	}
@@ -67,7 +50,7 @@ func (r *RequestMatcher) matchCookies(request *http.Request) bool {
 			logger.Log.Debugf("No match for expectation! Cookie '%s' not present", cookieMatcherValue.Value.Name)
 			return false
 		}
-		if !(cookieMatcherValue).MatchesWithRequestCookie(requestCookieValue) {
+		if !(cookieMatcherValue).Matches(requestCookieValue) {
 			logger.Log.Debugf("No match for expectation! Cookie '%s' with value %+v does not match %+v", cookieMatcherValue.Value.Name, cookieMatcherValue, *requestCookieValue)
 			return false
 		}
@@ -75,8 +58,4 @@ func (r *RequestMatcher) matchCookies(request *http.Request) bool {
 
 	return true
 
-}
-
-func (r *RequestMatcher) matchRequestParameters(rp schema.RequestParameters) bool {
-	return NewRequestParameterMatcher(*r.Value.Parameters).MatchWith(rp)
 }

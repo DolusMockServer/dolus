@@ -3,8 +3,8 @@ package builder
 import (
 	"encoding/json"
 	"fmt"
+	"net/http"
 	"net/url"
-	"reflect"
 	"sync"
 	"time"
 
@@ -20,8 +20,11 @@ import (
 )
 
 type CueExpectationBuilder struct {
-	loader         loader.Loader[loader.CueExpectationLoadType]
-	fieldGenerator generator.Generator
+	loader                    loader.Loader[loader.CueExpectationLoadType]
+	fieldGenerator            generator.Generator
+	cookieMatcherBuilder      matcher.MatcherBuilder[models.Cookie, http.Cookie]
+	stringArrayMatcherBuilder matcher.MatcherBuilder[[]string, []string]
+	stringMatcherBuilder      matcher.MatcherBuilder[string, string]
 }
 
 // check that we implement the interface
@@ -32,8 +35,11 @@ func NewCueExpectationBuilder(
 	fieldGenerator generator.Generator,
 ) *CueExpectationBuilder {
 	return &CueExpectationBuilder{
-		loader:         loader.NewCueExpectationLoader(cueExpectationFiles),
-		fieldGenerator: fieldGenerator,
+		loader:                    loader.NewCueExpectationLoader(cueExpectationFiles),
+		fieldGenerator:            fieldGenerator,
+		cookieMatcherBuilder:      matcher.CookieMatcherBuilder{},
+		stringArrayMatcherBuilder: matcher.StringArrayMatcherBuilder{},
+		stringMatcherBuilder:      matcher.StringMatcherBuilder{},
 	}
 }
 
@@ -80,7 +86,7 @@ func (ceb *CueExpectationBuilder) buildExpectationFromCueInstance(
 				// continue
 				return
 			}
-			if err := decodeMatcherFields(&cueExpectation); err != nil {
+			if err := ceb.decodeMatcherFields(&cueExpectation); err != nil {
 				logger.Log.Error("Error marshalling fields into matcher: ", err)
 				// continue
 				return
@@ -106,71 +112,23 @@ func (ceb *CueExpectationBuilder) buildExpectationFromCueInstance(
 	return
 }
 
-// func createHeaderMatchRule(cueExpectation *models.Expectation) (err error) {
-// 	for k, v := range cueExpectation.Request.Headers {
-// 		var m matcher.Matcher[[]string]
-// 		if m, err = ConvertToMatcher(v, matcher.StringArrayMatcherBuilder{}); err != nil {
-// 			return fmt.Errorf("failed to convert map field to matcher: %w", err)
-// 		}
-// 		cueExpectation.MatchRules.Headers[k] = models.Rule[[]string]{
-// 			MatchType: m.(*matcher.StringArrayMatcher).MatchExpression,
-// 			Value:     m.GetValue(),
-// 		}
-// 	}
-// 	return nil
-// }
+func (ceb *CueExpectationBuilder) decodeMatcherFields(cueExpectation *models.Expectation) (err error) {
 
-// decodeMatcherFields decodes the matcher fields in the cueExpectation.
-func decodeMatcherFields(cueExpectation *models.Expectation) (err error) {
-
-	if err = ConvertMapKeysToMatchers(matcher.StringArrayMatcherBuilder{}, cueExpectation.Request.Headers); err != nil {
+	if err = matcher.ConvertMapKeysToMatchers(ceb.stringArrayMatcherBuilder, cueExpectation.Request.Headers); err != nil {
 		return
 	}
 	if cueExpectation.Request.Parameters != nil {
-		if err = ConvertMapKeysToMatchers(matcher.StringMatcherBuilder{}, cueExpectation.Request.Parameters.Path); err != nil {
+		if err = matcher.ConvertMapKeysToMatchers(ceb.stringMatcherBuilder, cueExpectation.Request.Parameters.Path); err != nil {
 			return
 		}
-		if err = ConvertMapKeysToMatchers(matcher.StringArrayMatcherBuilder{}, cueExpectation.Request.Parameters.Query); err != nil {
+		if err = matcher.ConvertMapKeysToMatchers(ceb.stringArrayMatcherBuilder, cueExpectation.Request.Parameters.Query); err != nil {
 			return
 		}
 	}
-	if err = ConvertArrayFieldsToMatchers(matcher.CookieMatcherBuilder{}, cueExpectation.Request.Cookies); err != nil {
+	if err = matcher.ConvertArrayFieldsToMatchers(ceb.cookieMatcherBuilder, cueExpectation.Request.Cookies); err != nil {
 		return
 	}
 	return nil
-}
-
-func ConvertMapKeysToMatchers[T any](builder matcher.MatcherBuilder[T], mapValue map[string]any) (err error) {
-
-	for k, v := range mapValue {
-		if mapValue[k], err = ConvertToMatcher(v, builder); err != nil {
-			return fmt.Errorf("failed to convert map field to matcher: %w", err)
-		}
-	}
-	return nil
-
-}
-
-func ConvertArrayFieldsToMatchers[T any](builder matcher.MatcherBuilder[T], arrayValue []any) (err error) {
-	for i, v := range arrayValue {
-		if arrayValue[i], err = ConvertToMatcher(v, builder); err != nil {
-			return fmt.Errorf("failed to convert array field to matcher: %w", err)
-		}
-	}
-	return nil
-}
-
-func ConvertToMatcher[T any](v any, builder matcher.MatcherBuilder[T]) (matcher.Matcher[T], error) {
-	switch field := v.(type) {
-	case map[string]interface{}:
-		return builder.Create(field)
-	case []interface{}:
-		return builder.CreateFromArrayValue(field, "eq")
-	case interface{}:
-		return builder.CreateFromSingleValue(field, "eq")
-
-	}
-	return nil, fmt.Errorf("could not marshal into Matcher: %v. Unsupported type %v", v, reflect.TypeOf(v))
 }
 
 func addQueryParameters(expectation *models.Expectation) error {
@@ -188,7 +146,7 @@ func addQueryParameters(expectation *models.Expectation) error {
 	}
 	for k, v := range queryParams {
 		value := v
-		expectation.Request.Parameters.Query[k] = matcher.NewStringArrayMatcher(value, "eq")
+		expectation.Request.Parameters.Query[k] = matcher.NewStringArrayMatcher(&value, "eq")
 	}
 	return nil
 }
