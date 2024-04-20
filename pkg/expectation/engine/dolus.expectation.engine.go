@@ -13,6 +13,8 @@ import (
 	"github.com/MartinSimango/dstruct/generator"
 
 	"github.com/DolusMockServer/dolus/pkg/expectation"
+	"github.com/DolusMockServer/dolus/pkg/expectation/matcher"
+	"github.com/DolusMockServer/dolus/pkg/expectation/models"
 	"github.com/DolusMockServer/dolus/pkg/schema"
 )
 
@@ -24,10 +26,10 @@ import (
 
 type DolusExpectationEngine struct {
 	cueExpectationsFiles  []string
-	expectationMatcherMap map[schema.Route][]expectation.Expectation // should be a priority queue and not just a list
-	expectations          []expectation.Expectation
-	cueExpectations       []expectation.Expectation
-	openApiExpectations   []expectation.Expectation
+	expectationMatcherMap map[schema.Route][]models.Expectation // should be a priority queue and not just a list
+	expectations          []models.Expectation
+	cueExpectations       []models.Expectation
+	openApiExpectations   []models.Expectation
 	ResponseSchemas       map[schema.Route]dstruct.DynamicStructModifier
 	RequestSchemas        map[schema.Route]dstruct.DynamicStructModifier
 	GenerationConfig      generator.GenerationConfig
@@ -43,7 +45,7 @@ func NewDolusExpectationEngine(
 ) (dolusExpectationEngine *DolusExpectationEngine) {
 	dolusExpectationEngine = &DolusExpectationEngine{}
 	dolusExpectationEngine.expectationMatcherMap = make(
-		map[schema.Route][]expectation.Expectation,
+		map[schema.Route][]models.Expectation,
 	)
 	dolusExpectationEngine.ResponseSchemas = make(
 		map[schema.Route]dstruct.DynamicStructModifier,
@@ -54,9 +56,9 @@ func NewDolusExpectationEngine(
 }
 
 func (e *DolusExpectationEngine) AddExpectation(
-	expect expectation.Expectation,
+	expect models.Expectation,
 	validateExpectationSchema bool,
-	expectationType expectation.ExpectationType,
+	expectationType models.ExpectationType,
 ) error {
 	// TODO: check if exception overrides another one i.e has same request matcher
 
@@ -73,16 +75,16 @@ func (e *DolusExpectationEngine) AddExpectation(
 
 	e.expectationMatcherMap[*route] = append(e.expectationMatcherMap[*route], expect)
 
-	if expectationType == expectation.Cue {
+	if expectationType == models.Cue {
 		e.cueExpectations = append(e.cueExpectations, expect)
-	} else if expectationType == expectation.OpenAPI {
+	} else if expectationType == models.OpenAPI {
 		e.openApiExpectations = append(e.openApiExpectations, expect)
 	}
 
 	return nil
 }
 
-func (e *DolusExpectationEngine) validateExpectationSchema(exp *expectation.Expectation) error {
+func (e *DolusExpectationEngine) validateExpectationSchema(exp *models.Expectation) error {
 	matchingResponseSchema, err := e.getMatchingResponseSchemaForRoute(exp)
 	if err != nil {
 		return err
@@ -112,7 +114,7 @@ func (e *DolusExpectationEngine) AddResponseSchemaForRoute(
 	return nil
 }
 
-func (e *DolusExpectationEngine) GetAllExpectations() map[schema.Route][]expectation.Expectation {
+func (e *DolusExpectationEngine) GetAllExpectations() map[schema.Route][]models.Expectation {
 	return e.expectationMatcherMap
 }
 
@@ -125,12 +127,12 @@ func (e *DolusExpectationEngine) GetExpectationRoutes() []schema.Route {
 
 func (e *DolusExpectationEngine) GetExpectation(
 	route schema.Route,
-) []expectation.Expectation {
+) []models.Expectation {
 	return e.expectationMatcherMap[route]
 }
 
 // getMatchingResponseSchemaForRoute returns the response schema for the given route
-func (e *DolusExpectationEngine) getMatchingResponseSchemaForRoute(exp *expectation.Expectation) (dstruct.DynamicStructModifier, error) {
+func (e *DolusExpectationEngine) getMatchingResponseSchemaForRoute(exp *models.Expectation) (dstruct.DynamicStructModifier, error) {
 	expectationRoute := exp.Request.Route()
 	parsedURL, err := url.Parse(expectationRoute.Path)
 	if err != nil {
@@ -140,10 +142,15 @@ func (e *DolusExpectationEngine) getMatchingResponseSchemaForRoute(exp *expectat
 		if schemaRoute.Method == expectationRoute.Method {
 			if pathParams, ok := schemaRoute.Match(schema.PathFromOpenApiPath(parsedURL.Path)); ok {
 				// TODO: move this to getMatchingRequestSchemaForRoute
-				if err := exp.AddRequestParameterMatchers(pathParams, parsedURL.Query()); err != nil {
+
+				// we can add the path parameters here as we can only figure out what the path parameters are
+				// once know what the route is
+				if err := addPathParametersFromRequestPath(exp, pathParams); err != nil {
 					return nil, err
 				}
-				if err := exp.ValidateRequestParameters(e.routeProperties[schemaRoute]); err != nil {
+				// found the matching right path and operation now validate the request parameter
+
+				if err := validateRequestParameters(exp, e.routeProperties[schemaRoute]); err != nil {
 					return nil, err
 				}
 				return responseSchema, nil
@@ -158,8 +165,88 @@ func (e *DolusExpectationEngine) getMatchingResponseSchemaForRoute(exp *expectat
 	)
 }
 
+// TODO  refractor add and validate code
+func addPathParametersFromRequestPath(expectation *models.Expectation, pathParams map[string]string) error {
+
+	if expectation.Request.Parameters == nil {
+		expectation.Request.Parameters = &models.RequestParameters{}
+	}
+	return addPathParameters(pathParams, expectation)
+
+	return fmt.Errorf("failed to add path parameters for expectation with path: %s", expectation.Request.Path)
+}
+
+func addPathParameters(pathParams map[string]string, e *models.Expectation) error {
+	if e.Request.Parameters.Path == nil {
+		e.Request.Parameters.Path = make(map[string]any)
+	}
+	for k, v := range pathParams {
+		matchType := "eq"
+		value := v
+		if v == ":"+k {
+			matchType = "has"
+		} else if strings.TrimSpace(v) == "" {
+			return fmt.Errorf("path parameter '%s' is empty", k)
+		}
+		e.Request.Parameters.Path[k] = matcher.NewStringMatcher(value, matchType)
+
+	}
+	return nil
+}
+
+func validateRequestParameters(expectation *models.Expectation, routeProperty schema.RequestParameterProperty) error {
+
+	// Validate Path and Query Parameters
+	if err := checkParametersExistence("Path", routeProperty.PathParameterProperties, expectation.Request.Parameters.Path); err != nil {
+		return err
+	}
+
+	if err := checkRequiredPathParameters(routeProperty.PathParameterProperties, expectation.Request.Parameters.Path); err != nil {
+		return err
+	}
+
+	if err := checkParametersExistence("Query", routeProperty.QueryParameterProperties, expectation.Request.Parameters.Query); err != nil {
+		return err
+	}
+
+	if err := checkRequiredQueryParameters(routeProperty.QueryParameterProperties, expectation.Request.Parameters.Query); err != nil {
+		return err
+	}
+	return nil
+}
+
+// checkParametersExistence checks for extra parameters not defined in the schema
+func checkParametersExistence(paramType string, properties schema.ParameterProperties, parameters map[string]any) error {
+	for name := range parameters {
+		if properties[name] == nil {
+			return fmt.Errorf("%s parameter '%s' does not exist", paramType, name)
+		}
+	}
+	return nil
+}
+
+func checkRequiredQueryParameters(properties schema.ParameterProperties, parameters map[string]any) error {
+	for name, param := range properties {
+
+		if param.Required && (parameters[name] == nil || len(parameters[name].(*matcher.StringArrayMatcher).GetValue()) == 0) {
+			return fmt.Errorf("required query parameter '%s' is missing", name)
+		}
+	}
+	return nil
+}
+
+func checkRequiredPathParameters(properties schema.ParameterProperties, parameters map[string]any) error {
+	for name, param := range properties {
+
+		if param.Required && (parameters[name] == nil || parameters[name].(*matcher.StringMatcher).GetValue() == "") {
+			return fmt.Errorf("required path parameter '%s' is missing", name)
+		}
+	}
+	return nil
+}
+
 func (e *DolusExpectationEngine) getMatchingRequestSchemaForRoute(
-	exp *expectation.Expectation) (dstruct.DynamicStructModifier, error) {
+	exp *models.Expectation) (dstruct.DynamicStructModifier, error) {
 	// TODO: implement
 
 	// for schemaRoute, requestSchema := range e.RequestSchemas {
@@ -274,7 +361,7 @@ func (e *DolusExpectationEngine) getExpectationsForRequest(
 	pathTemplate string,
 	request *http.Request,
 	requestParameters schema.RequestParameters,
-) []expectation.Expectation {
+) []models.Expectation {
 	if expectations := e.findExpectationMatches(request.URL.Path, request, requestParameters); len(expectations) > 0 {
 		return expectations
 	}
@@ -286,7 +373,7 @@ func (e *DolusExpectationEngine) findExpectationMatches(
 	requestPath string,
 	request *http.Request,
 	requestParameters schema.RequestParameters,
-) (filtered []expectation.Expectation) {
+) (filtered []models.Expectation) {
 
 	expectations := e.expectationMatcherMap[schema.Route{
 		Path:   requestPath,
@@ -294,7 +381,8 @@ func (e *DolusExpectationEngine) findExpectationMatches(
 	}]
 
 	for _, expectation := range expectations {
-		if expectation.Request.Match(request, requestParameters) {
+		requestMatcher := matcher.NewRequestMatcher(expectation.Request)
+		if requestMatcher.MatchWithHttpRequest(request, requestParameters) {
 			filtered = append(filtered, expectation)
 		}
 	}
@@ -307,7 +395,7 @@ func (e *DolusExpectationEngine) GetResponseForRequest(
 	request *http.Request,
 	requestParameters schema.RequestParameters,
 	pathTemplate string,
-) (*expectation.Response, error) {
+) (*models.Response, error) {
 	expectations := e.getExpectationsForRequest(pathTemplate, request, requestParameters)
 
 	// TODO: find the right expectation depending on request matchers and priority
@@ -328,9 +416,9 @@ func (e *DolusExpectationEngine) GetResponseForRequest(
 }
 
 // GetCueExpectations returns the cue expectations
-func (e *DolusExpectationEngine) GetCueExpectations() expectation.Expectations {
+func (e *DolusExpectationEngine) GetCueExpectations() models.Expectations {
 	// TODO: implement
-	return expectation.Expectations{
+	return models.Expectations{
 		Expectations: e.cueExpectations,
 	}
 }

@@ -3,6 +3,7 @@ package builder
 import (
 	"encoding/json"
 	"fmt"
+	"net/url"
 	"reflect"
 	"sync"
 	"time"
@@ -11,8 +12,9 @@ import (
 	"github.com/MartinSimango/dstruct"
 	"github.com/MartinSimango/dstruct/generator"
 
-	"github.com/DolusMockServer/dolus/pkg/expectation"
 	"github.com/DolusMockServer/dolus/pkg/expectation/loader"
+	"github.com/DolusMockServer/dolus/pkg/expectation/matcher"
+	"github.com/DolusMockServer/dolus/pkg/expectation/models"
 	"github.com/DolusMockServer/dolus/pkg/logger"
 	"github.com/DolusMockServer/dolus/pkg/schema"
 )
@@ -48,7 +50,7 @@ func (ceb *CueExpectationBuilder) BuildExpectations() (*Output, error) {
 
 func (ceb *CueExpectationBuilder) buildExpectationsFromCueLoadType(
 	spec *loader.CueExpectationLoadType,
-) (expectations []expectation.Expectation) {
+) (expectations []models.Expectation) {
 	t := time.Now()
 	for _, instance := range *spec {
 		expectations = append(expectations, ceb.buildExpectationFromCueInstance(instance)...)
@@ -59,7 +61,7 @@ func (ceb *CueExpectationBuilder) buildExpectationsFromCueLoadType(
 
 func (ceb *CueExpectationBuilder) buildExpectationFromCueInstance(
 	instance cue.Value,
-) (expectations []expectation.Expectation) {
+) (expectations []models.Expectation) {
 	e, err := instance.Value().LookupPath(cue.ParsePath("expectations")).List()
 	if err != nil {
 		fmt.Printf("error with expectation in file %s: %s \n", instance.Pos().Filename(), err)
@@ -70,7 +72,7 @@ func (ceb *CueExpectationBuilder) buildExpectationFromCueInstance(
 		wg.Add(1)
 		go func(cueValue cue.Value) {
 			defer wg.Done()
-			var cueExpectation expectation.Expectation
+			var cueExpectation models.Expectation
 
 			err := cueValue.Decode(&cueExpectation)
 			if err != nil {
@@ -83,11 +85,14 @@ func (ceb *CueExpectationBuilder) buildExpectationFromCueInstance(
 				// continue
 				return
 			}
+			// add query parameters from path to expectation and overrides old query parameters from cue file
+			addQueryParameters(&cueExpectation)
+
 			a, _ := json.Marshal(cueExpectation.Request.Headers)
 			fmt.Printf("AFTER: %v\n", string(a))
 
 			b, _ := json.Marshal(cueExpectation.Request.Cookies)
-			fmt.Printf("AFTER: %v\n", string(b))
+			fmt.Printf("AFTER COOKIES: %v\n", string(b))
 
 			cueExpectation.Response.GeneratedBody = dstruct.NewGeneratedStructWithConfig(
 				schema.SchemaFromAny(cueExpectation.Response.Body),
@@ -101,27 +106,41 @@ func (ceb *CueExpectationBuilder) buildExpectationFromCueInstance(
 	return
 }
 
-// decodeMatcherFields decodes the matcher fields in the cueExpectation.
-func decodeMatcherFields(cueExpectation *expectation.Expectation) (err error) {
+// func createHeaderMatchRule(cueExpectation *models.Expectation) (err error) {
+// 	for k, v := range cueExpectation.Request.Headers {
+// 		var m matcher.Matcher[[]string]
+// 		if m, err = ConvertToMatcher(v, matcher.StringArrayMatcherBuilder{}); err != nil {
+// 			return fmt.Errorf("failed to convert map field to matcher: %w", err)
+// 		}
+// 		cueExpectation.MatchRules.Headers[k] = models.Rule[[]string]{
+// 			MatchType: m.(*matcher.StringArrayMatcher).MatchExpression,
+// 			Value:     m.GetValue(),
+// 		}
+// 	}
+// 	return nil
+// }
 
-	if err = ConvertMapKeysToMatchers(expectation.StringArrayMatcherBuilder{}, cueExpectation.Request.Headers); err != nil {
+// decodeMatcherFields decodes the matcher fields in the cueExpectation.
+func decodeMatcherFields(cueExpectation *models.Expectation) (err error) {
+
+	if err = ConvertMapKeysToMatchers(matcher.StringArrayMatcherBuilder{}, cueExpectation.Request.Headers); err != nil {
 		return
 	}
 	if cueExpectation.Request.Parameters != nil {
-		if err = ConvertMapKeysToMatchers(expectation.StringMatcherBuilder{}, cueExpectation.Request.Parameters.Path); err != nil {
+		if err = ConvertMapKeysToMatchers(matcher.StringMatcherBuilder{}, cueExpectation.Request.Parameters.Path); err != nil {
 			return
 		}
-		if err = ConvertMapKeysToMatchers(expectation.StringArrayMatcherBuilder{}, cueExpectation.Request.Parameters.Query); err != nil {
+		if err = ConvertMapKeysToMatchers(matcher.StringArrayMatcherBuilder{}, cueExpectation.Request.Parameters.Query); err != nil {
 			return
 		}
 	}
-	if err = ConvertArrayFieldsToMatchers(expectation.CookieMatcherBuilder{}, cueExpectation.Request.Cookies); err != nil {
+	if err = ConvertArrayFieldsToMatchers(matcher.CookieMatcherBuilder{}, cueExpectation.Request.Cookies); err != nil {
 		return
 	}
 	return nil
 }
 
-func ConvertMapKeysToMatchers(builder expectation.MatcherBuilder, mapValue map[string]any) (err error) {
+func ConvertMapKeysToMatchers[T any](builder matcher.MatcherBuilder[T], mapValue map[string]any) (err error) {
 
 	for k, v := range mapValue {
 		if mapValue[k], err = ConvertToMatcher(v, builder); err != nil {
@@ -132,7 +151,7 @@ func ConvertMapKeysToMatchers(builder expectation.MatcherBuilder, mapValue map[s
 
 }
 
-func ConvertArrayFieldsToMatchers(builder expectation.MatcherBuilder, arrayValue []any) (err error) {
+func ConvertArrayFieldsToMatchers[T any](builder matcher.MatcherBuilder[T], arrayValue []any) (err error) {
 	for i, v := range arrayValue {
 		if arrayValue[i], err = ConvertToMatcher(v, builder); err != nil {
 			return fmt.Errorf("failed to convert array field to matcher: %w", err)
@@ -141,7 +160,7 @@ func ConvertArrayFieldsToMatchers(builder expectation.MatcherBuilder, arrayValue
 	return nil
 }
 
-func ConvertToMatcher(v any, builder expectation.MatcherBuilder) (expectation.Matcher, error) {
+func ConvertToMatcher[T any](v any, builder matcher.MatcherBuilder[T]) (matcher.Matcher[T], error) {
 	switch field := v.(type) {
 	case map[string]interface{}:
 		return builder.Create(field)
@@ -152,4 +171,24 @@ func ConvertToMatcher(v any, builder expectation.MatcherBuilder) (expectation.Ma
 
 	}
 	return nil, fmt.Errorf("could not marshal into Matcher: %v. Unsupported type %v", v, reflect.TypeOf(v))
+}
+
+func addQueryParameters(expectation *models.Expectation) error {
+	parsedURL, err := url.Parse(expectation.Request.Path)
+	if err != nil {
+		return fmt.Errorf("failed to add query parameters for expectation with path '%s': %w", expectation.Request.Path, err)
+
+	}
+	queryParams := parsedURL.Query()
+	if expectation.Request.Parameters == nil {
+		expectation.Request.Parameters = &models.RequestParameters{}
+	}
+	if expectation.Request.Parameters.Query == nil {
+		expectation.Request.Parameters.Query = make(map[string]any)
+	}
+	for k, v := range queryParams {
+		value := v
+		expectation.Request.Parameters.Query[k] = matcher.NewStringArrayMatcher(value, "eq")
+	}
+	return nil
 }

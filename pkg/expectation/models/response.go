@@ -1,4 +1,4 @@
-package expectation
+package models
 
 import "github.com/MartinSimango/dstruct"
 
