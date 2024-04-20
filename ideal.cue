@@ -16,7 +16,7 @@ expectation.#Expectations & {
 				headers: {
 					"Content-Type": "application/json"
 					"T": ["3", "4"]
-					"G": expectation.#Matcher & {match: "regex", value: "hello"}
+					"G": expectation.#CueMatcher & {match: "eq", value: "hello"}
 				}
 				// params: {
 				// 	query: { 

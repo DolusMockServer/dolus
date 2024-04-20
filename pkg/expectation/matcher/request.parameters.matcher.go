@@ -1,20 +1,20 @@
 package matcher
 
 import (
-	"github.com/DolusMockServer/dolus/pkg/expectation/models"
+	"github.com/DolusMockServer/dolus/pkg/expectation"
 	"github.com/DolusMockServer/dolus/pkg/logger"
 	"github.com/DolusMockServer/dolus/pkg/schema"
 )
 
 type RequestParameterMatcher struct {
-	CueMatcher[models.RequestParameters]
+	expectation.CueMatcher[expectation.RequestParameters]
 }
 
-var _ Matcher[models.RequestParameters, schema.RequestParameters] = &RequestParameterMatcher{}
+var _ Matcher[expectation.RequestParameters, schema.RequestParameters] = &RequestParameterMatcher{}
 
-func NewRequestParameterMatcher(value *models.RequestParameters) *RequestParameterMatcher {
+func NewRequestParameterMatcher(value *expectation.RequestParameters) *RequestParameterMatcher {
 	return &RequestParameterMatcher{
-		CueMatcher: CueMatcher[models.RequestParameters]{
+		CueMatcher: expectation.CueMatcher[expectation.RequestParameters]{
 			MatchExpression: "eq",
 			Value:           value,
 		},

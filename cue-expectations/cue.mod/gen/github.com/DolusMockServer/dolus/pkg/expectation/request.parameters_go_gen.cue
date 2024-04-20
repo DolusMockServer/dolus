@@ -4,9 +4,6 @@
 
 package expectation
 
-#QUERY_PARAM: "Query"
-#PATH_PARAM:  "Path"
-
 #RequestParameters: {
 	path: {...} @go(Path,map[string]any)
 	query: {...} @go(Query,map[string]any)

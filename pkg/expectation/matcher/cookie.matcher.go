@@ -3,18 +3,18 @@ package matcher
 import (
 	"net/http"
 
-	"github.com/DolusMockServer/dolus/pkg/expectation/models"
+	"github.com/DolusMockServer/dolus/pkg/expectation"
 )
 
 type CookieMatcher struct {
-	CueMatcher[models.Cookie]
+	expectation.CueMatcher[expectation.Cookie]
 }
 
-var _ Matcher[models.Cookie, http.Cookie] = &CookieMatcher{}
+var _ Matcher[expectation.Cookie, http.Cookie] = &CookieMatcher{}
 
-func NewCookieMatcher(value models.Cookie, matchType string) *CookieMatcher {
+func NewCookieMatcher(value expectation.Cookie, matchType string) *CookieMatcher {
 	return &CookieMatcher{
-		CueMatcher: CueMatcher[models.Cookie]{
+		CueMatcher: expectation.CueMatcher[expectation.Cookie]{
 			MatchExpression: matchType,
 			Value:           &value,
 		},

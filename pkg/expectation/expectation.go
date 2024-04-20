@@ -1,4 +1,4 @@
-package models
+package expectation
 
 type ExpectationType int
 

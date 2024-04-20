@@ -2,8 +2,6 @@ package expectation
 
 import (
 	"fmt"
-
-	"github.com/DolusMockServer/dolus/pkg/expectation/models"
 )
 
 type ExpectationFieldError struct {
@@ -12,7 +10,7 @@ type ExpectationFieldError struct {
 }
 
 type ExpectationError struct {
-	models.Expectation
+	Expectation
 	ExpectationFieldErrors []ExpectationFieldError
 }
 

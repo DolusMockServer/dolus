@@ -1,4 +1,4 @@
-package models
+package expectation
 
 type Callback struct {
 	Request any    `json:"request"`

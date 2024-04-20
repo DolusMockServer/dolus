@@ -3,17 +3,17 @@ package matcher
 import (
 	"net/http"
 
-	"github.com/DolusMockServer/dolus/pkg/expectation/models"
+	"github.com/DolusMockServer/dolus/pkg/expectation"
 	"github.com/DolusMockServer/dolus/pkg/logger"
 	"github.com/DolusMockServer/dolus/pkg/schema"
 )
 
 type RequestMatcher struct {
-	Value                   models.Request
+	Value                   expectation.Request
 	RequestParameterMatcher *RequestParameterMatcher
 }
 
-func NewRequestMatcher(value models.Request) *RequestMatcher {
+func NewRequestMatcher(value expectation.Request) *RequestMatcher {
 	return &RequestMatcher{
 		Value:                   value,
 		RequestParameterMatcher: NewRequestParameterMatcher(value.Parameters),

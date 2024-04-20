@@ -11,9 +11,9 @@ import (
 	"github.com/sirupsen/logrus"
 
 	"github.com/DolusMockServer/dolus/internal/api"
+	"github.com/DolusMockServer/dolus/pkg/expectation"
 	"github.com/DolusMockServer/dolus/pkg/expectation/builder"
 	"github.com/DolusMockServer/dolus/pkg/expectation/engine"
-	"github.com/DolusMockServer/dolus/pkg/expectation/models"
 	"github.com/DolusMockServer/dolus/pkg/logger"
 	"github.com/DolusMockServer/dolus/pkg/schema"
 	"github.com/DolusMockServer/dolus/pkg/task"
@@ -142,7 +142,7 @@ func (d *Server) loadOpenAPISpecExpectations() error {
 			e.Response.GeneratedBody,
 		)
 
-		if err := d.expectationEngine.AddExpectation(e, false, models.OpenAPI); err != nil {
+		if err := d.expectationEngine.AddExpectation(e, false, expectation.OpenAPI); err != nil {
 			fmt.Printf("Error adding expectation:\n%s\n", err)
 		}
 
@@ -157,7 +157,7 @@ func (d *Server) loadCueExpectations() error {
 		return err
 	}
 	for _, e := range output.Expectations {
-		if err := d.expectationEngine.AddExpectation(e, true, models.Cue); err != nil {
+		if err := d.expectationEngine.AddExpectation(e, true, expectation.Cue); err != nil {
 			fmt.Printf("Error adding expectation:\n%s\n", err)
 		}
 	}

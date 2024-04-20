@@ -2,17 +2,19 @@ package matcher
 
 import (
 	"reflect"
+
+	"github.com/DolusMockServer/dolus/pkg/expectation"
 )
 
 type StringArrayMatcher struct {
-	CueMatcher[[]string]
+	expectation.CueMatcher[[]string]
 }
 
 var _ Matcher[[]string, []string] = &StringArrayMatcher{}
 
 func NewStringArrayMatcher(value *[]string, matchType string) *StringArrayMatcher {
 	return &StringArrayMatcher{
-		CueMatcher: CueMatcher[[]string]{
+		CueMatcher: expectation.CueMatcher[[]string]{
 			MatchExpression: matchType,
 			Value:           value,
 		},

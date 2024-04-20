@@ -5,26 +5,26 @@ import (
 
 	"github.com/MartinSimango/dstruct"
 
-	"github.com/DolusMockServer/dolus/pkg/expectation/models"
+	"github.com/DolusMockServer/dolus/pkg/expectation"
 	"github.com/DolusMockServer/dolus/pkg/schema"
 )
 
 type ExpectationEngine interface {
-	AddExpectation(expectation models.Expectation,
+	AddExpectation(expectation expectation.Expectation,
 		validateExpectationSchema bool,
-		expectationType models.ExpectationType) error
+		expectationType expectation.ExpectationType) error
 	AddResponseSchemaForRoute(
 		route schema.Route,
 		responseSchema dstruct.DynamicStructModifier,
 	) error
-	GetAllExpectations() map[schema.Route][]models.Expectation
-	GetExpectation(route schema.Route) []models.Expectation
+	GetAllExpectations() map[schema.Route][]expectation.Expectation
+	GetExpectation(route schema.Route) []expectation.Expectation
 	GetResponseForRequest(
 		request *http.Request,
 		reqParam schema.RequestParameters,
 		path string,
-	) (*models.Response, error)
-	GetCueExpectations() models.Expectations
+	) (*expectation.Response, error)
+	GetCueExpectations() expectation.Expectations
 	GetExpectationRoutes() []schema.Route
 	SetRouteProperties(routeProperties schema.RouteProperties)
 }

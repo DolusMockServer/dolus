@@ -1,4 +1,4 @@
-package models
+package expectation
 
 // const (
 // 	QUERY_PARAM string = "Query"

@@ -1,14 +1,16 @@
 package matcher
 
+import "github.com/DolusMockServer/dolus/pkg/expectation"
+
 type StringMatcher struct {
-	CueMatcher[string]
+	expectation.CueMatcher[string]
 }
 
 var _ Matcher[string, string] = &StringMatcher{}
 
 func NewStringMatcher(value *string, matchType string) *StringMatcher {
 	return &StringMatcher{
-		CueMatcher: CueMatcher[string]{
+		CueMatcher: expectation.CueMatcher[string]{
 			MatchExpression: matchType,
 			Value:           value,
 		},

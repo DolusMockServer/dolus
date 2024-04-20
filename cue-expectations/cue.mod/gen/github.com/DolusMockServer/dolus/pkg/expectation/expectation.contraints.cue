@@ -27,26 +27,26 @@ httpUrlRegex: =~"^(https?://[a-zA-Z0-9.-]+(:[0-9]+)?(/[a-zA-Z0-9-._~:/?#@$&'()*+
 }
 
 
-#HeaderMatcher: #Matcher & {
+#HeaderMatcher: #CueMatcher & {
     match: string| *"eq"
 } & (
     { match: "has", value: null} |
     { match: "eq" | "regex" | "not", value: #HeaderValueType} )
 
-#PathMatcher: #Matcher & {
+#PathMatcher: #CueMatcher & {
     match: string| *"eq"
 } & (
     { match: "has", value: null} |
     { match: "eq" | "regex" | "not", value: #PathValueType } )
 
 
-#QueryMatcher: #Matcher & {
+#QueryMatcher: #CueMatcher & {
     match: string| *"eq"
 } & (
     { match: "has", value: null} |
     { match: "eq" | "regex" | "not", value: #QueryValueType } )
 
-#CookieMatcher: #Matcher & {
+#CookieMatcher: #CueMatcher & {
     match: string| *"eq"
 } & (
     { match: "has", value: null} |

@@ -12,9 +12,9 @@ import (
 	"github.com/MartinSimango/dstruct"
 	"github.com/MartinSimango/dstruct/generator"
 
+	"github.com/DolusMockServer/dolus/pkg/expectation"
 	"github.com/DolusMockServer/dolus/pkg/expectation/loader"
 	"github.com/DolusMockServer/dolus/pkg/expectation/matcher"
-	"github.com/DolusMockServer/dolus/pkg/expectation/models"
 	"github.com/DolusMockServer/dolus/pkg/logger"
 	"github.com/DolusMockServer/dolus/pkg/schema"
 )
@@ -22,7 +22,7 @@ import (
 type CueExpectationBuilder struct {
 	loader                    loader.Loader[loader.CueExpectationLoadType]
 	fieldGenerator            generator.Generator
-	cookieMatcherBuilder      matcher.MatcherBuilder[models.Cookie, http.Cookie]
+	cookieMatcherBuilder      matcher.MatcherBuilder[expectation.Cookie, http.Cookie]
 	stringArrayMatcherBuilder matcher.MatcherBuilder[[]string, []string]
 	stringMatcherBuilder      matcher.MatcherBuilder[string, string]
 }
@@ -56,7 +56,7 @@ func (ceb *CueExpectationBuilder) BuildExpectations() (*Output, error) {
 
 func (ceb *CueExpectationBuilder) buildExpectationsFromCueLoadType(
 	spec *loader.CueExpectationLoadType,
-) (expectations []models.Expectation) {
+) (expectations []expectation.Expectation) {
 	t := time.Now()
 	for _, instance := range *spec {
 		expectations = append(expectations, ceb.buildExpectationFromCueInstance(instance)...)
@@ -67,7 +67,7 @@ func (ceb *CueExpectationBuilder) buildExpectationsFromCueLoadType(
 
 func (ceb *CueExpectationBuilder) buildExpectationFromCueInstance(
 	instance cue.Value,
-) (expectations []models.Expectation) {
+) (expectations []expectation.Expectation) {
 	e, err := instance.Value().LookupPath(cue.ParsePath("expectations")).List()
 	if err != nil {
 		fmt.Printf("error with expectation in file %s: %s \n", instance.Pos().Filename(), err)
@@ -78,7 +78,7 @@ func (ceb *CueExpectationBuilder) buildExpectationFromCueInstance(
 		wg.Add(1)
 		go func(cueValue cue.Value) {
 			defer wg.Done()
-			var cueExpectation models.Expectation
+			var cueExpectation expectation.Expectation
 
 			err := cueValue.Decode(&cueExpectation)
 			if err != nil {
@@ -112,7 +112,7 @@ func (ceb *CueExpectationBuilder) buildExpectationFromCueInstance(
 	return
 }
 
-func (ceb *CueExpectationBuilder) decodeMatcherFields(cueExpectation *models.Expectation) (err error) {
+func (ceb *CueExpectationBuilder) decodeMatcherFields(cueExpectation *expectation.Expectation) (err error) {
 
 	if err = matcher.ConvertMapKeysToMatchers(ceb.stringArrayMatcherBuilder, cueExpectation.Request.Headers); err != nil {
 		return
@@ -131,22 +131,22 @@ func (ceb *CueExpectationBuilder) decodeMatcherFields(cueExpectation *models.Exp
 	return nil
 }
 
-func addQueryParameters(expectation *models.Expectation) error {
-	parsedURL, err := url.Parse(expectation.Request.Path)
+func addQueryParameters(e *expectation.Expectation) error {
+	parsedURL, err := url.Parse(e.Request.Path)
 	if err != nil {
-		return fmt.Errorf("failed to add query parameters for expectation with path '%s': %w", expectation.Request.Path, err)
+		return fmt.Errorf("failed to add query parameters for expectation with path '%s': %w", e.Request.Path, err)
 
 	}
 	queryParams := parsedURL.Query()
-	if expectation.Request.Parameters == nil {
-		expectation.Request.Parameters = &models.RequestParameters{}
+	if e.Request.Parameters == nil {
+		e.Request.Parameters = &expectation.RequestParameters{}
 	}
-	if expectation.Request.Parameters.Query == nil {
-		expectation.Request.Parameters.Query = make(map[string]any)
+	if e.Request.Parameters.Query == nil {
+		e.Request.Parameters.Query = make(map[string]any)
 	}
 	for k, v := range queryParams {
 		value := v
-		expectation.Request.Parameters.Query[k] = matcher.NewStringArrayMatcher(&value, "eq")
+		e.Request.Parameters.Query[k] = matcher.NewStringArrayMatcher(&value, "eq")
 	}
 	return nil
 }

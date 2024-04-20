@@ -7,8 +7,8 @@ import (
 	"github.com/MartinSimango/dstruct/generator"
 	"github.com/getkin/kin-openapi/openapi3"
 
+	"github.com/DolusMockServer/dolus/pkg/expectation"
 	"github.com/DolusMockServer/dolus/pkg/expectation/loader"
-	"github.com/DolusMockServer/dolus/pkg/expectation/models"
 	"github.com/DolusMockServer/dolus/pkg/logger"
 	"github.com/DolusMockServer/dolus/pkg/schema"
 )
@@ -65,7 +65,7 @@ func getRequestParameterProperty(operation *openapi3.Operation) (requestParamete
 func (oeb *OpenApiExpectationBuilder) buildExpectationsFromOpenApiSpec(
 	spec *loader.OpenAPISpecLoadType,
 ) *Output {
-	var expectations []models.Expectation
+	var expectations []expectation.Expectation
 	routeProperties := make(schema.RouteProperties)
 	for path := range spec.Paths.Map() {
 		refinedPath := schema.PathFromOpenApiPath(path)
@@ -98,14 +98,14 @@ func (oeb *OpenApiExpectationBuilder) buildExpectationsFromOpenApiSpec(
 					&oeb.fieldGenerator,
 				)
 
-				expectations = append(expectations, models.Expectation{
+				expectations = append(expectations, expectation.Expectation{
 					Priority: 0,
-					Request: models.Request{
+					Request: expectation.Request{
 						Body:   nil,
 						Path:   refinedPath,
 						Method: method,
 					},
-					Response: models.Response{
+					Response: expectation.Response{
 						Body:          body,
 						GeneratedBody: body,
 						Status:        status,

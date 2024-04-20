@@ -1,12 +1,12 @@
 package builder
 
 import (
-	"github.com/DolusMockServer/dolus/pkg/expectation/models"
+	"github.com/DolusMockServer/dolus/pkg/expectation"
 	"github.com/DolusMockServer/dolus/pkg/schema"
 )
 
 type Output struct {
-	Expectations    []models.Expectation
+	Expectations    []expectation.Expectation
 	RouteProperties schema.RouteProperties
 }
 
