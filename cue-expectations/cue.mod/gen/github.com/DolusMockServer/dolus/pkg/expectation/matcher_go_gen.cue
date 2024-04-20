@@ -4,7 +4,7 @@
 
 package expectation
 
-#Matcher: {
-	match:  string   @go(Match)
+#CueMatcher: {
+	match:  string   @go(MatchExpression)
 	value?: null | _ @go(Value,*T)
 }

@@ -11,25 +11,26 @@ expectation.#Expectations & {
 			priority: 2
 			// add an expectation ID that will be generated
 			request: expectation.#Request & {
-				path:   "/store/order/2/p?value=3" 
+				path:   "/store/order/2/p?value=3&age=5"
 				method: "GET"
-                headers: {
-                    "Content-Type": "application/json"
-                    "T" : ["3","4"]
-                }
-                params: {
-					query: {
-						value: [3]
-						age: 5
-					}
-                }
-		
-			}
-			// cookies: {
-			//   "cookie1": core.#Matcher & { match: "eq",	value: "value1" }
-			// }
+				headers: {
+					"Content-Type": "application/json"
+					"T": ["3", "4"]
+					"G": expectation.#CueMatcher & {match: "eq", value: "hello"}
+				}
+				// params: {
+				// 	query: { 
+				// 		value: [3]
+				// 		age: expectation.#Matcher & {match: "eq", value: 2}
+				// 	}
+				// }
+				cookies: [
+					expectation.#Cookie & {name: "cookie1", value: "As", path: "/p"},
+					// expectation.#CookieMatcher & { match: "eq", value: expectation.#Cookie &{name: "cookie2", value: "Bs", path: "/p" }}
+				]
 
-			// 	}
+			}
+
 			response: expectation.#Response & {
 				body: {
 					petId: {
@@ -46,7 +47,7 @@ expectation.#Expectations & {
 
 		},
 
-			expectation.#Expectation & {
+		expectation.#Expectation & {
 			priority: 1
 			// add an expectation ID that will be generated
 			request: expectation.#Request & {
@@ -54,12 +55,12 @@ expectation.#Expectations & {
 				method: "GET"
 				headers: {
 					"Content-Type": ["application/json"]
-					"T" : ["3","4"]
+					"T": ["3", "4"]
 				}
 				params: {
 					query: {
 						value: [3]
-						age: ["5"]	
+						age: ["5"]
 					}
 					path: {
 						orderId: "3"
@@ -73,7 +74,7 @@ expectation.#Expectations & {
 					petId: {
 						id: task.#GenInt32 & {min: 80, max: 100}
 					}
-			
+
 					complete: false
 					status:   "good day"
 				}
@@ -82,5 +83,5 @@ expectation.#Expectations & {
 			}
 
 		},
-    ]
+	]
 }

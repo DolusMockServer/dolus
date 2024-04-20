@@ -67,16 +67,16 @@ func (oeb *OpenApiExpectationBuilder) buildExpectationsFromOpenApiSpec(
 ) *Output {
 	var expectations []expectation.Expectation
 	routeProperties := make(schema.RouteProperties)
-	for path := range spec.Paths {
+	for path := range spec.Paths.Map() {
 		refinedPath := schema.PathFromOpenApiPath(path)
-		for method, operation := range spec.Paths[path].Operations() {
+		for method, operation := range spec.Paths.Map()[path].Operations() {
 
 			routeProperties[schema.Route{
 				Path:   refinedPath,
 				Method: method,
 			}] = getRequestParameterProperty(operation)
 
-			for code, ref := range operation.Responses {
+			for code, ref := range operation.Responses.Map() {
 				if path != "/store/order/{orderId}/p" || code != "200" {
 					continue
 				}

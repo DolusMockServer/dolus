@@ -56,3 +56,5 @@ $(GOPATH)/bin/oapi-codegen:
 
 update-dolus-expectations:
 	./install-local.sh
+
+.PHONY: build

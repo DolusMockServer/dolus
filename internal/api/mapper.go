@@ -1,8 +1,6 @@
 package api
 
-import (
-	"github.com/DolusMockServer/dolus/pkg/expectation"
-)
+import "github.com/DolusMockServer/dolus/pkg/expectation"
 
 type Mapper interface {
 	MapCueExpectations(
