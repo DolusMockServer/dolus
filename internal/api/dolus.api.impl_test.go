@@ -1,7 +1,16 @@
 package api
 
 import (
+	"fmt"
+	"net/http"
+	"net/http/httptest"
 	"testing"
+
+	"github.com/DolusMockServer/dolus/pkg/expectation"
+	"github.com/DolusMockServer/dolus/pkg/expectation/engine"
+	"github.com/labstack/echo/v4"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/suite"
 )
 
 /*
@@ -23,31 +32,51 @@ import (
 
 */
 
-func TestGetV1DolusExpectations(t *testing.T) {
-	// TODO mock mapper
-	// mockEngine := new(engine.MockEngine)
-	mockMapper := api.NewMockMapper(t)
-	mockMapper
+type DolusApiImplTestSuite struct {
+	suite.Suite
+	mockEngine *engine.ExpectationEngineMock
+	mockMapper *MapperMock
+	api        DolusApi
+}
 
-	// Create new DolusApi instance
-	// api := NewDolusApi(mockEngine, mockMapper)
+func (suite *DolusApiImplTestSuite) SetupTest() {
+	fmt.Println("RESET!")
+	suite.mockEngine = engine.NewExpectationEngineMock(suite.T())
+	suite.mockMapper = NewMapperMock(suite.T())
+	suite.api = NewDolusApi(suite.mockEngine, suite.mockMapper)
+}
 
-	// Define a route
-	// route := schema.Route{
-	// 	Path:   "/test",
-	// 	Method: "GET",
-	// }
+func (suite *DolusApiImplTestSuite) TestGetV1DolusExpectations() {
 
-	// // Test AddRoute method
-	// err := api.AddRoute(route)
-	// assert.NoError(t, err)
+	suite.T().Run("should return 200 OK with expectations", func(t *testing.T) {
+		expectations := expectation.Expectations{}
+		suite.mockEngine.EXPECT().GetCueExpectations().Return(expectations)
+		suite.mockMapper.EXPECT().MapCueExpectations(expectations.Expectations).Return([]Expectation{}, nil)
 
-	// // Test adding the same route again
-	// err = api.AddRoute(route)
-	// assert.Error(t, err)
+		req := httptest.NewRequest(http.MethodGet, "/v1/dolus/expectations", nil)
+		rec := httptest.NewRecorder()
 
-	// // Test GetV1DolusExpectations method
-	// ctx := echo.New().NewContext(nil, nil)
-	// err = api.GetV1DolusExpectations(ctx)
-	// assert.NoError(t, err)
+		err := suite.api.GetV1DolusExpectations(echo.New().NewContext(req, rec))
+		assert.NoError(t, err)
+		assert.Equal(t, rec.Code, http.StatusOK)
+	})
+
+	suite.T().Run("should return 500", func(t *testing.T) {
+		suite.SetupTest()
+		expectations := expectation.Expectations{}
+		suite.mockEngine.EXPECT().GetCueExpectations().Return(expectations)
+		suite.mockMapper.EXPECT().MapCueExpectations(expectations.Expectations).Return(nil,
+			fmt.Errorf("error"))
+
+		req := httptest.NewRequest(http.MethodGet, "/v1/dolus/expectations", nil)
+		rec := httptest.NewRecorder()
+
+		err := suite.api.GetV1DolusExpectations(echo.New().NewContext(req, rec))
+		assert.NoError(t, err)
+		assert.Equal(t, rec.Code, http.StatusInternalServerError)
+	})
+}
+
+func TestDolusApiTestSuite(t *testing.T) {
+	suite.Run(t, new(DolusApiImplTestSuite))
 }

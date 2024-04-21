@@ -1,11 +1,13 @@
 with-expecter: True
-inpackage: True
+inpackage: true
 dir: "{{.InterfaceDir}}"
-mockname: "{{.InterfaceName}}"
-outpkg: "{{.PackageName}}"
-filename: "{{.InterfaceName}}.go"
-all: True
+mockname: "{{.InterfaceName}}Mock"
+outpkg: "mocks"
+filename: "{{.InterfaceName | lower }}_mock.go"
 packages:
-  github.com/DolusMockServer/dolus:
-    config:
-      recursive: True
+  github.com/DolusMockServer/dolus/internal/api:
+    interfaces:
+      Mapper:
+  github.com/DolusMockServer/dolus/pkg/expectation/engine:
+    interfaces:
+      ExpectationEngine:
