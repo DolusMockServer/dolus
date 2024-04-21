@@ -35,7 +35,7 @@ docker-push:
 	docker push dolusmockserver/dolus:latest
 
 
-gen: gen-go-server-client gen-cue-expectations
+gen: gen-go-server-client gen-cue-expectations gen-mocks
 
 gen-go-server-client: $(GOPATH)/bin/oapi-codegen
 	oapi-codegen --package=api -generate=server,types,spec,client api/dolus.yaml > internal/api/api.gen.go
@@ -44,6 +44,19 @@ gen-go-server-client: $(GOPATH)/bin/oapi-codegen
 gen-cue-expectations:
 	cd cue-expectations && cue get go ../pkg/expectation/ -e \
 	ExpectationError,ExpectationFieldError,Route
+
+
+gen-mocks:
+	mockery
+
+test:
+	go test ./...
+
+test-verbose:
+	go test -v ./...
+
+
+
 
 ### TOOLS ###
 $(GOPATH)/bin/dlv:
