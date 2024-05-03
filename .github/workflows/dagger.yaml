@@ -15,5 +15,5 @@ jobs:
         with:
           version: "0.11.1"
           verb: call
-          module: github.com/kpenfound/dagger-modules/golang@v0.1.5
-          args: test --source=. --args=.
+          module: github.com/kpenfound/dagger-modules/golang@v0.1.10
+          args: test --source=. --args=./...
