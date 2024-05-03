@@ -1,0 +1,19 @@
+name: Run Go tests with Dagger
+on:
+  push:
+    branches: [ '**' ]
+
+jobs:
+  test:
+    name: test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      -
+        name: Run Dagger Function for Go tests
+        uses: dagger/dagger-for-github@v5
+        with:
+          version: "0.11.1"
+          verb: call
+          module: github.com/kpenfound/dagger-modules/golang@v0.1.5
+          args: test --source=. --args=.
