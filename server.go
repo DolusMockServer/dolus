@@ -100,7 +100,7 @@ func (d *Server) initHttpServer() {
 }
 
 func (d *Server) addRoutes(route schema.Route) {
-	if err := d.dolusApi.AddRoute(route); err != nil {
+	if err := d.expectationEngine.AddRoute(route); err != nil {
 		fmt.Printf("error adding route: %s\n", err.Error())
 	}
 	d.EchoServer.Router().Add(route.Method, route.Path, func(ctx echo.Context) error {
@@ -142,7 +142,7 @@ func (d *Server) loadOpenAPISpecExpectations() error {
 			e.Response.GeneratedBody,
 		)
 
-		if err := d.expectationEngine.AddExpectation(e, false, expectation.OpenAPI); err != nil {
+		if err := d.expectationEngine.AddExpectation(e, false, expectation.Default); err != nil {
 			fmt.Printf("Error adding expectation:\n%s\n", err)
 		}
 
@@ -157,7 +157,7 @@ func (d *Server) loadCueExpectations() error {
 		return err
 	}
 	for _, e := range output.Expectations {
-		if err := d.expectationEngine.AddExpectation(e, true, expectation.Cue); err != nil {
+		if err := d.expectationEngine.AddExpectation(e, true, expectation.Custom); err != nil {
 			fmt.Printf("Error adding expectation:\n%s\n", err)
 		}
 	}

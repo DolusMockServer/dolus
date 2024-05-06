@@ -16,11 +16,11 @@ type Client struct {
 
 // AddExpectation to the Dolus server
 func (c *Client) AddExpectation(expectation expectation.Expectation) error {
-	exp, err := c.mapper.MapCueExpectation(expectation)
+	exp, err := c.mapper.MapToApiExpectation(expectation)
 	if err != nil {
 		return err
 	}
-	c.client.PostV1DolusExpectations(c.context, *exp)
+	c.client.CreateExpectation(c.context, *exp)
 
 	return nil
 }

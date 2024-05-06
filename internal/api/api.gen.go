@@ -21,12 +21,60 @@ import (
 	"github.com/oapi-codegen/runtime"
 )
 
+// Defines values for ExpectationTypeParameter.
+const (
+	ExpectationTypeParameterALL     ExpectationTypeParameter = "ALL"
+	ExpectationTypeParameterCUSTOM  ExpectationTypeParameter = "CUSTOM"
+	ExpectationTypeParameterDEFAULT ExpectationTypeParameter = "DEFAULT"
+)
+
+// Defines values for MethodParameter.
+const (
+	MethodParameterCONNECT MethodParameter = "CONNECT"
+	MethodParameterDELETE  MethodParameter = "DELETE"
+	MethodParameterGET     MethodParameter = "GET"
+	MethodParameterHEAD    MethodParameter = "HEAD"
+	MethodParameterOPTIONS MethodParameter = "OPTIONS"
+	MethodParameterPATCH   MethodParameter = "PATCH"
+	MethodParameterPOST    MethodParameter = "POST"
+	MethodParameterPUT     MethodParameter = "PUT"
+	MethodParameterTRACE   MethodParameter = "TRACE"
+)
+
+// Defines values for GetExpectationsParamsExpectationType.
+const (
+	GetExpectationsParamsExpectationTypeALL     GetExpectationsParamsExpectationType = "ALL"
+	GetExpectationsParamsExpectationTypeCUSTOM  GetExpectationsParamsExpectationType = "CUSTOM"
+	GetExpectationsParamsExpectationTypeDEFAULT GetExpectationsParamsExpectationType = "DEFAULT"
+)
+
+// Defines values for GetExpectationsParamsMethod.
+const (
+	GetExpectationsParamsMethodCONNECT GetExpectationsParamsMethod = "CONNECT"
+	GetExpectationsParamsMethodDELETE  GetExpectationsParamsMethod = "DELETE"
+	GetExpectationsParamsMethodGET     GetExpectationsParamsMethod = "GET"
+	GetExpectationsParamsMethodHEAD    GetExpectationsParamsMethod = "HEAD"
+	GetExpectationsParamsMethodOPTIONS GetExpectationsParamsMethod = "OPTIONS"
+	GetExpectationsParamsMethodPATCH   GetExpectationsParamsMethod = "PATCH"
+	GetExpectationsParamsMethodPOST    GetExpectationsParamsMethod = "POST"
+	GetExpectationsParamsMethodPUT     GetExpectationsParamsMethod = "PUT"
+	GetExpectationsParamsMethodTRACE   GetExpectationsParamsMethod = "TRACE"
+)
+
+// BadRequest defines model for BadRequest.
+type BadRequest = ErrorResponseBody
+
 // Callback defines model for Callback.
 type Callback struct {
 	HttpMethod  string                  `json:"httpMethod"`
 	RequestBody *map[string]interface{} `json:"requestBody,omitempty"`
 	Timeout     int                     `json:"timeout"`
 	Url         string                  `json:"url"`
+}
+
+// ErrorResponseBody defines model for ErrorResponseBody.
+type ErrorResponseBody struct {
+	Message string `json:"message"`
 }
 
 // Expectation defines model for Expectation.
@@ -41,6 +89,9 @@ type Expectation struct {
 type Expectations struct {
 	Expectations []Expectation `json:"expectations"`
 }
+
+// InternalServerError defines model for InternalServerError.
+type InternalServerError = ErrorResponseBody
 
 // Request defines model for Request.
 type Request struct {
@@ -61,20 +112,41 @@ type Route struct {
 	Path      string `json:"path"`
 }
 
-// GetV1DolusLogsParams defines parameters for GetV1DolusLogs.
-type GetV1DolusLogsParams struct {
+// ExpectationTypeParameter defines model for ExpectationTypeParameter.
+type ExpectationTypeParameter string
+
+// MethodParameter defines model for MethodParameter.
+type MethodParameter string
+
+// PathParameter defines model for PathParameter.
+type PathParameter = string
+
+// GetExpectationsParams defines parameters for GetExpectations.
+type GetExpectationsParams struct {
+	// ExpectationType The type of expectation to return
+	ExpectationType *GetExpectationsParamsExpectationType `form:"expectationType,omitempty" json:"expectationType,omitempty"`
+
+	// Path The path of the expectation
+	Path *PathParameter `form:"path,omitempty" json:"path,omitempty"`
+
+	// Method The http method of the expectation
+	Method *GetExpectationsParamsMethod `form:"method,omitempty" json:"method,omitempty"`
+}
+
+// GetExpectationsParamsExpectationType defines parameters for GetExpectations.
+type GetExpectationsParamsExpectationType string
+
+// GetExpectationsParamsMethod defines parameters for GetExpectations.
+type GetExpectationsParamsMethod string
+
+// GetLogsParams defines parameters for GetLogs.
+type GetLogsParams struct {
 	// Lines number of log lines to return
 	Lines *int `form:"lines,omitempty" json:"lines,omitempty"`
 }
 
-// GetV1DolusLogsWsParams defines parameters for GetV1DolusLogsWs.
-type GetV1DolusLogsWsParams struct {
-	// Lines number of log lines to return
-	Lines *string `form:"lines,omitempty" json:"lines,omitempty"`
-}
-
-// PostV1DolusExpectationsJSONRequestBody defines body for PostV1DolusExpectations for application/json ContentType.
-type PostV1DolusExpectationsJSONRequestBody = Expectation
+// CreateExpectationJSONRequestBody defines body for CreateExpectation for application/json ContentType.
+type CreateExpectationJSONRequestBody = Expectation
 
 // RequestEditorFn  is the function signature for the RequestEditor callback function
 type RequestEditorFn func(ctx context.Context, req *http.Request) error
@@ -149,26 +221,23 @@ func WithRequestEditorFn(fn RequestEditorFn) ClientOption {
 
 // The interface specification for the client above.
 type ClientInterface interface {
-	// GetV1DolusExpectations request
-	GetV1DolusExpectations(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error)
+	// GetExpectations request
+	GetExpectations(ctx context.Context, params *GetExpectationsParams, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	// PostV1DolusExpectationsWithBody request with any body
-	PostV1DolusExpectationsWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+	// CreateExpectationWithBody request with any body
+	CreateExpectationWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	PostV1DolusExpectations(ctx context.Context, body PostV1DolusExpectationsJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+	CreateExpectation(ctx context.Context, body CreateExpectationJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	// GetV1DolusLogs request
-	GetV1DolusLogs(ctx context.Context, params *GetV1DolusLogsParams, reqEditors ...RequestEditorFn) (*http.Response, error)
+	// GetLogs request
+	GetLogs(ctx context.Context, params *GetLogsParams, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	// GetV1DolusLogsWs request
-	GetV1DolusLogsWs(ctx context.Context, params *GetV1DolusLogsWsParams, reqEditors ...RequestEditorFn) (*http.Response, error)
-
-	// GetV1DolusRoutes request
-	GetV1DolusRoutes(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error)
+	// GetRoutes request
+	GetRoutes(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error)
 }
 
-func (c *Client) GetV1DolusExpectations(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewGetV1DolusExpectationsRequest(c.Server)
+func (c *Client) GetExpectations(ctx context.Context, params *GetExpectationsParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewGetExpectationsRequest(c.Server, params)
 	if err != nil {
 		return nil, err
 	}
@@ -179,8 +248,8 @@ func (c *Client) GetV1DolusExpectations(ctx context.Context, reqEditors ...Reque
 	return c.Client.Do(req)
 }
 
-func (c *Client) PostV1DolusExpectationsWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewPostV1DolusExpectationsRequestWithBody(c.Server, contentType, body)
+func (c *Client) CreateExpectationWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewCreateExpectationRequestWithBody(c.Server, contentType, body)
 	if err != nil {
 		return nil, err
 	}
@@ -191,8 +260,8 @@ func (c *Client) PostV1DolusExpectationsWithBody(ctx context.Context, contentTyp
 	return c.Client.Do(req)
 }
 
-func (c *Client) PostV1DolusExpectations(ctx context.Context, body PostV1DolusExpectationsJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewPostV1DolusExpectationsRequest(c.Server, body)
+func (c *Client) CreateExpectation(ctx context.Context, body CreateExpectationJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewCreateExpectationRequest(c.Server, body)
 	if err != nil {
 		return nil, err
 	}
@@ -203,8 +272,8 @@ func (c *Client) PostV1DolusExpectations(ctx context.Context, body PostV1DolusEx
 	return c.Client.Do(req)
 }
 
-func (c *Client) GetV1DolusLogs(ctx context.Context, params *GetV1DolusLogsParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewGetV1DolusLogsRequest(c.Server, params)
+func (c *Client) GetLogs(ctx context.Context, params *GetLogsParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewGetLogsRequest(c.Server, params)
 	if err != nil {
 		return nil, err
 	}
@@ -215,8 +284,8 @@ func (c *Client) GetV1DolusLogs(ctx context.Context, params *GetV1DolusLogsParam
 	return c.Client.Do(req)
 }
 
-func (c *Client) GetV1DolusLogsWs(ctx context.Context, params *GetV1DolusLogsWsParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewGetV1DolusLogsWsRequest(c.Server, params)
+func (c *Client) GetRoutes(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewGetRoutesRequest(c.Server)
 	if err != nil {
 		return nil, err
 	}
@@ -227,20 +296,8 @@ func (c *Client) GetV1DolusLogsWs(ctx context.Context, params *GetV1DolusLogsWsP
 	return c.Client.Do(req)
 }
 
-func (c *Client) GetV1DolusRoutes(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewGetV1DolusRoutesRequest(c.Server)
-	if err != nil {
-		return nil, err
-	}
-	req = req.WithContext(ctx)
-	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
-		return nil, err
-	}
-	return c.Client.Do(req)
-}
-
-// NewGetV1DolusExpectationsRequest generates requests for GetV1DolusExpectations
-func NewGetV1DolusExpectationsRequest(server string) (*http.Request, error) {
+// NewGetExpectationsRequest generates requests for GetExpectations
+func NewGetExpectationsRequest(server string, params *GetExpectationsParams) (*http.Request, error) {
 	var err error
 
 	serverURL, err := url.Parse(server)
@@ -258,6 +315,60 @@ func NewGetV1DolusExpectationsRequest(server string) (*http.Request, error) {
 		return nil, err
 	}
 
+	if params != nil {
+		queryValues := queryURL.Query()
+
+		if params.ExpectationType != nil {
+
+			if queryFrag, err := runtime.StyleParamWithLocation("form", true, "expectationType", runtime.ParamLocationQuery, *params.ExpectationType); err != nil {
+				return nil, err
+			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
+				return nil, err
+			} else {
+				for k, v := range parsed {
+					for _, v2 := range v {
+						queryValues.Add(k, v2)
+					}
+				}
+			}
+
+		}
+
+		if params.Path != nil {
+
+			if queryFrag, err := runtime.StyleParamWithLocation("form", true, "path", runtime.ParamLocationQuery, *params.Path); err != nil {
+				return nil, err
+			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
+				return nil, err
+			} else {
+				for k, v := range parsed {
+					for _, v2 := range v {
+						queryValues.Add(k, v2)
+					}
+				}
+			}
+
+		}
+
+		if params.Method != nil {
+
+			if queryFrag, err := runtime.StyleParamWithLocation("form", true, "method", runtime.ParamLocationQuery, *params.Method); err != nil {
+				return nil, err
+			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
+				return nil, err
+			} else {
+				for k, v := range parsed {
+					for _, v2 := range v {
+						queryValues.Add(k, v2)
+					}
+				}
+			}
+
+		}
+
+		queryURL.RawQuery = queryValues.Encode()
+	}
+
 	req, err := http.NewRequest("GET", queryURL.String(), nil)
 	if err != nil {
 		return nil, err
@@ -266,19 +377,19 @@ func NewGetV1DolusExpectationsRequest(server string) (*http.Request, error) {
 	return req, nil
 }
 
-// NewPostV1DolusExpectationsRequest calls the generic PostV1DolusExpectations builder with application/json body
-func NewPostV1DolusExpectationsRequest(server string, body PostV1DolusExpectationsJSONRequestBody) (*http.Request, error) {
+// NewCreateExpectationRequest calls the generic CreateExpectation builder with application/json body
+func NewCreateExpectationRequest(server string, body CreateExpectationJSONRequestBody) (*http.Request, error) {
 	var bodyReader io.Reader
 	buf, err := json.Marshal(body)
 	if err != nil {
 		return nil, err
 	}
 	bodyReader = bytes.NewReader(buf)
-	return NewPostV1DolusExpectationsRequestWithBody(server, "application/json", bodyReader)
+	return NewCreateExpectationRequestWithBody(server, "application/json", bodyReader)
 }
 
-// NewPostV1DolusExpectationsRequestWithBody generates requests for PostV1DolusExpectations with any type of body
-func NewPostV1DolusExpectationsRequestWithBody(server string, contentType string, body io.Reader) (*http.Request, error) {
+// NewCreateExpectationRequestWithBody generates requests for CreateExpectation with any type of body
+func NewCreateExpectationRequestWithBody(server string, contentType string, body io.Reader) (*http.Request, error) {
 	var err error
 
 	serverURL, err := url.Parse(server)
@@ -306,8 +417,8 @@ func NewPostV1DolusExpectationsRequestWithBody(server string, contentType string
 	return req, nil
 }
 
-// NewGetV1DolusLogsRequest generates requests for GetV1DolusLogs
-func NewGetV1DolusLogsRequest(server string, params *GetV1DolusLogsParams) (*http.Request, error) {
+// NewGetLogsRequest generates requests for GetLogs
+func NewGetLogsRequest(server string, params *GetLogsParams) (*http.Request, error) {
 	var err error
 
 	serverURL, err := url.Parse(server)
@@ -355,57 +466,8 @@ func NewGetV1DolusLogsRequest(server string, params *GetV1DolusLogsParams) (*htt
 	return req, nil
 }
 
-// NewGetV1DolusLogsWsRequest generates requests for GetV1DolusLogsWs
-func NewGetV1DolusLogsWsRequest(server string, params *GetV1DolusLogsWsParams) (*http.Request, error) {
-	var err error
-
-	serverURL, err := url.Parse(server)
-	if err != nil {
-		return nil, err
-	}
-
-	operationPath := fmt.Sprintf("/v1/dolus/logs/ws")
-	if operationPath[0] == '/' {
-		operationPath = "." + operationPath
-	}
-
-	queryURL, err := serverURL.Parse(operationPath)
-	if err != nil {
-		return nil, err
-	}
-
-	if params != nil {
-		queryValues := queryURL.Query()
-
-		if params.Lines != nil {
-
-			if queryFrag, err := runtime.StyleParamWithLocation("form", true, "lines", runtime.ParamLocationQuery, *params.Lines); err != nil {
-				return nil, err
-			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
-				return nil, err
-			} else {
-				for k, v := range parsed {
-					for _, v2 := range v {
-						queryValues.Add(k, v2)
-					}
-				}
-			}
-
-		}
-
-		queryURL.RawQuery = queryValues.Encode()
-	}
-
-	req, err := http.NewRequest("GET", queryURL.String(), nil)
-	if err != nil {
-		return nil, err
-	}
-
-	return req, nil
-}
-
-// NewGetV1DolusRoutesRequest generates requests for GetV1DolusRoutes
-func NewGetV1DolusRoutesRequest(server string) (*http.Request, error) {
+// NewGetRoutesRequest generates requests for GetRoutes
+func NewGetRoutesRequest(server string) (*http.Request, error) {
 	var err error
 
 	serverURL, err := url.Parse(server)
@@ -474,32 +536,31 @@ func WithBaseURL(baseURL string) ClientOption {
 
 // ClientWithResponsesInterface is the interface specification for the client with responses above.
 type ClientWithResponsesInterface interface {
-	// GetV1DolusExpectationsWithResponse request
-	GetV1DolusExpectationsWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*GetV1DolusExpectationsResponse, error)
+	// GetExpectationsWithResponse request
+	GetExpectationsWithResponse(ctx context.Context, params *GetExpectationsParams, reqEditors ...RequestEditorFn) (*GetExpectationsResponse, error)
 
-	// PostV1DolusExpectationsWithBodyWithResponse request with any body
-	PostV1DolusExpectationsWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*PostV1DolusExpectationsResponse, error)
+	// CreateExpectationWithBodyWithResponse request with any body
+	CreateExpectationWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*CreateExpectationResponse, error)
 
-	PostV1DolusExpectationsWithResponse(ctx context.Context, body PostV1DolusExpectationsJSONRequestBody, reqEditors ...RequestEditorFn) (*PostV1DolusExpectationsResponse, error)
+	CreateExpectationWithResponse(ctx context.Context, body CreateExpectationJSONRequestBody, reqEditors ...RequestEditorFn) (*CreateExpectationResponse, error)
 
-	// GetV1DolusLogsWithResponse request
-	GetV1DolusLogsWithResponse(ctx context.Context, params *GetV1DolusLogsParams, reqEditors ...RequestEditorFn) (*GetV1DolusLogsResponse, error)
+	// GetLogsWithResponse request
+	GetLogsWithResponse(ctx context.Context, params *GetLogsParams, reqEditors ...RequestEditorFn) (*GetLogsResponse, error)
 
-	// GetV1DolusLogsWsWithResponse request
-	GetV1DolusLogsWsWithResponse(ctx context.Context, params *GetV1DolusLogsWsParams, reqEditors ...RequestEditorFn) (*GetV1DolusLogsWsResponse, error)
-
-	// GetV1DolusRoutesWithResponse request
-	GetV1DolusRoutesWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*GetV1DolusRoutesResponse, error)
+	// GetRoutesWithResponse request
+	GetRoutesWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*GetRoutesResponse, error)
 }
 
-type GetV1DolusExpectationsResponse struct {
+type GetExpectationsResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
 	JSON200      *Expectations
+	JSON400      *BadRequest
+	JSON500      *InternalServerError
 }
 
 // Status returns HTTPResponse.Status
-func (r GetV1DolusExpectationsResponse) Status() string {
+func (r GetExpectationsResponse) Status() string {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.Status
 	}
@@ -507,20 +568,20 @@ func (r GetV1DolusExpectationsResponse) Status() string {
 }
 
 // StatusCode returns HTTPResponse.StatusCode
-func (r GetV1DolusExpectationsResponse) StatusCode() int {
+func (r GetExpectationsResponse) StatusCode() int {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.StatusCode
 	}
 	return 0
 }
 
-type PostV1DolusExpectationsResponse struct {
+type CreateExpectationResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
 }
 
 // Status returns HTTPResponse.Status
-func (r PostV1DolusExpectationsResponse) Status() string {
+func (r CreateExpectationResponse) Status() string {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.Status
 	}
@@ -528,20 +589,20 @@ func (r PostV1DolusExpectationsResponse) Status() string {
 }
 
 // StatusCode returns HTTPResponse.StatusCode
-func (r PostV1DolusExpectationsResponse) StatusCode() int {
+func (r CreateExpectationResponse) StatusCode() int {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.StatusCode
 	}
 	return 0
 }
 
-type GetV1DolusLogsResponse struct {
+type GetLogsResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
 }
 
 // Status returns HTTPResponse.Status
-func (r GetV1DolusLogsResponse) Status() string {
+func (r GetLogsResponse) Status() string {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.Status
 	}
@@ -549,42 +610,21 @@ func (r GetV1DolusLogsResponse) Status() string {
 }
 
 // StatusCode returns HTTPResponse.StatusCode
-func (r GetV1DolusLogsResponse) StatusCode() int {
+func (r GetLogsResponse) StatusCode() int {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.StatusCode
 	}
 	return 0
 }
 
-type GetV1DolusLogsWsResponse struct {
-	Body         []byte
-	HTTPResponse *http.Response
-}
-
-// Status returns HTTPResponse.Status
-func (r GetV1DolusLogsWsResponse) Status() string {
-	if r.HTTPResponse != nil {
-		return r.HTTPResponse.Status
-	}
-	return http.StatusText(0)
-}
-
-// StatusCode returns HTTPResponse.StatusCode
-func (r GetV1DolusLogsWsResponse) StatusCode() int {
-	if r.HTTPResponse != nil {
-		return r.HTTPResponse.StatusCode
-	}
-	return 0
-}
-
-type GetV1DolusRoutesResponse struct {
+type GetRoutesResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
 	JSON200      *[]Route
 }
 
 // Status returns HTTPResponse.Status
-func (r GetV1DolusRoutesResponse) Status() string {
+func (r GetRoutesResponse) Status() string {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.Status
 	}
@@ -592,75 +632,66 @@ func (r GetV1DolusRoutesResponse) Status() string {
 }
 
 // StatusCode returns HTTPResponse.StatusCode
-func (r GetV1DolusRoutesResponse) StatusCode() int {
+func (r GetRoutesResponse) StatusCode() int {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.StatusCode
 	}
 	return 0
 }
 
-// GetV1DolusExpectationsWithResponse request returning *GetV1DolusExpectationsResponse
-func (c *ClientWithResponses) GetV1DolusExpectationsWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*GetV1DolusExpectationsResponse, error) {
-	rsp, err := c.GetV1DolusExpectations(ctx, reqEditors...)
+// GetExpectationsWithResponse request returning *GetExpectationsResponse
+func (c *ClientWithResponses) GetExpectationsWithResponse(ctx context.Context, params *GetExpectationsParams, reqEditors ...RequestEditorFn) (*GetExpectationsResponse, error) {
+	rsp, err := c.GetExpectations(ctx, params, reqEditors...)
 	if err != nil {
 		return nil, err
 	}
-	return ParseGetV1DolusExpectationsResponse(rsp)
+	return ParseGetExpectationsResponse(rsp)
 }
 
-// PostV1DolusExpectationsWithBodyWithResponse request with arbitrary body returning *PostV1DolusExpectationsResponse
-func (c *ClientWithResponses) PostV1DolusExpectationsWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*PostV1DolusExpectationsResponse, error) {
-	rsp, err := c.PostV1DolusExpectationsWithBody(ctx, contentType, body, reqEditors...)
+// CreateExpectationWithBodyWithResponse request with arbitrary body returning *CreateExpectationResponse
+func (c *ClientWithResponses) CreateExpectationWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*CreateExpectationResponse, error) {
+	rsp, err := c.CreateExpectationWithBody(ctx, contentType, body, reqEditors...)
 	if err != nil {
 		return nil, err
 	}
-	return ParsePostV1DolusExpectationsResponse(rsp)
+	return ParseCreateExpectationResponse(rsp)
 }
 
-func (c *ClientWithResponses) PostV1DolusExpectationsWithResponse(ctx context.Context, body PostV1DolusExpectationsJSONRequestBody, reqEditors ...RequestEditorFn) (*PostV1DolusExpectationsResponse, error) {
-	rsp, err := c.PostV1DolusExpectations(ctx, body, reqEditors...)
+func (c *ClientWithResponses) CreateExpectationWithResponse(ctx context.Context, body CreateExpectationJSONRequestBody, reqEditors ...RequestEditorFn) (*CreateExpectationResponse, error) {
+	rsp, err := c.CreateExpectation(ctx, body, reqEditors...)
 	if err != nil {
 		return nil, err
 	}
-	return ParsePostV1DolusExpectationsResponse(rsp)
+	return ParseCreateExpectationResponse(rsp)
 }
 
-// GetV1DolusLogsWithResponse request returning *GetV1DolusLogsResponse
-func (c *ClientWithResponses) GetV1DolusLogsWithResponse(ctx context.Context, params *GetV1DolusLogsParams, reqEditors ...RequestEditorFn) (*GetV1DolusLogsResponse, error) {
-	rsp, err := c.GetV1DolusLogs(ctx, params, reqEditors...)
+// GetLogsWithResponse request returning *GetLogsResponse
+func (c *ClientWithResponses) GetLogsWithResponse(ctx context.Context, params *GetLogsParams, reqEditors ...RequestEditorFn) (*GetLogsResponse, error) {
+	rsp, err := c.GetLogs(ctx, params, reqEditors...)
 	if err != nil {
 		return nil, err
 	}
-	return ParseGetV1DolusLogsResponse(rsp)
+	return ParseGetLogsResponse(rsp)
 }
 
-// GetV1DolusLogsWsWithResponse request returning *GetV1DolusLogsWsResponse
-func (c *ClientWithResponses) GetV1DolusLogsWsWithResponse(ctx context.Context, params *GetV1DolusLogsWsParams, reqEditors ...RequestEditorFn) (*GetV1DolusLogsWsResponse, error) {
-	rsp, err := c.GetV1DolusLogsWs(ctx, params, reqEditors...)
+// GetRoutesWithResponse request returning *GetRoutesResponse
+func (c *ClientWithResponses) GetRoutesWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*GetRoutesResponse, error) {
+	rsp, err := c.GetRoutes(ctx, reqEditors...)
 	if err != nil {
 		return nil, err
 	}
-	return ParseGetV1DolusLogsWsResponse(rsp)
+	return ParseGetRoutesResponse(rsp)
 }
 
-// GetV1DolusRoutesWithResponse request returning *GetV1DolusRoutesResponse
-func (c *ClientWithResponses) GetV1DolusRoutesWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*GetV1DolusRoutesResponse, error) {
-	rsp, err := c.GetV1DolusRoutes(ctx, reqEditors...)
-	if err != nil {
-		return nil, err
-	}
-	return ParseGetV1DolusRoutesResponse(rsp)
-}
-
-// ParseGetV1DolusExpectationsResponse parses an HTTP response from a GetV1DolusExpectationsWithResponse call
-func ParseGetV1DolusExpectationsResponse(rsp *http.Response) (*GetV1DolusExpectationsResponse, error) {
+// ParseGetExpectationsResponse parses an HTTP response from a GetExpectationsWithResponse call
+func ParseGetExpectationsResponse(rsp *http.Response) (*GetExpectationsResponse, error) {
 	bodyBytes, err := io.ReadAll(rsp.Body)
 	defer func() { _ = rsp.Body.Close() }()
 	if err != nil {
 		return nil, err
 	}
 
-	response := &GetV1DolusExpectationsResponse{
+	response := &GetExpectationsResponse{
 		Body:         bodyBytes,
 		HTTPResponse: rsp,
 	}
@@ -673,20 +704,34 @@ func ParseGetV1DolusExpectationsResponse(rsp *http.Response) (*GetV1DolusExpecta
 		}
 		response.JSON200 = &dest
 
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
+		var dest BadRequest
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON400 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 500:
+		var dest InternalServerError
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON500 = &dest
+
 	}
 
 	return response, nil
 }
 
-// ParsePostV1DolusExpectationsResponse parses an HTTP response from a PostV1DolusExpectationsWithResponse call
-func ParsePostV1DolusExpectationsResponse(rsp *http.Response) (*PostV1DolusExpectationsResponse, error) {
+// ParseCreateExpectationResponse parses an HTTP response from a CreateExpectationWithResponse call
+func ParseCreateExpectationResponse(rsp *http.Response) (*CreateExpectationResponse, error) {
 	bodyBytes, err := io.ReadAll(rsp.Body)
 	defer func() { _ = rsp.Body.Close() }()
 	if err != nil {
 		return nil, err
 	}
 
-	response := &PostV1DolusExpectationsResponse{
+	response := &CreateExpectationResponse{
 		Body:         bodyBytes,
 		HTTPResponse: rsp,
 	}
@@ -694,15 +739,15 @@ func ParsePostV1DolusExpectationsResponse(rsp *http.Response) (*PostV1DolusExpec
 	return response, nil
 }
 
-// ParseGetV1DolusLogsResponse parses an HTTP response from a GetV1DolusLogsWithResponse call
-func ParseGetV1DolusLogsResponse(rsp *http.Response) (*GetV1DolusLogsResponse, error) {
+// ParseGetLogsResponse parses an HTTP response from a GetLogsWithResponse call
+func ParseGetLogsResponse(rsp *http.Response) (*GetLogsResponse, error) {
 	bodyBytes, err := io.ReadAll(rsp.Body)
 	defer func() { _ = rsp.Body.Close() }()
 	if err != nil {
 		return nil, err
 	}
 
-	response := &GetV1DolusLogsResponse{
+	response := &GetLogsResponse{
 		Body:         bodyBytes,
 		HTTPResponse: rsp,
 	}
@@ -710,31 +755,15 @@ func ParseGetV1DolusLogsResponse(rsp *http.Response) (*GetV1DolusLogsResponse, e
 	return response, nil
 }
 
-// ParseGetV1DolusLogsWsResponse parses an HTTP response from a GetV1DolusLogsWsWithResponse call
-func ParseGetV1DolusLogsWsResponse(rsp *http.Response) (*GetV1DolusLogsWsResponse, error) {
+// ParseGetRoutesResponse parses an HTTP response from a GetRoutesWithResponse call
+func ParseGetRoutesResponse(rsp *http.Response) (*GetRoutesResponse, error) {
 	bodyBytes, err := io.ReadAll(rsp.Body)
 	defer func() { _ = rsp.Body.Close() }()
 	if err != nil {
 		return nil, err
 	}
 
-	response := &GetV1DolusLogsWsResponse{
-		Body:         bodyBytes,
-		HTTPResponse: rsp,
-	}
-
-	return response, nil
-}
-
-// ParseGetV1DolusRoutesResponse parses an HTTP response from a GetV1DolusRoutesWithResponse call
-func ParseGetV1DolusRoutesResponse(rsp *http.Response) (*GetV1DolusRoutesResponse, error) {
-	bodyBytes, err := io.ReadAll(rsp.Body)
-	defer func() { _ = rsp.Body.Close() }()
-	if err != nil {
-		return nil, err
-	}
-
-	response := &GetV1DolusRoutesResponse{
+	response := &GetRoutesResponse{
 		Body:         bodyBytes,
 		HTTPResponse: rsp,
 	}
@@ -754,21 +783,18 @@ func ParseGetV1DolusRoutesResponse(rsp *http.Response) (*GetV1DolusRoutesRespons
 
 // ServerInterface represents all server handlers.
 type ServerInterface interface {
-	// Fetch expectations
+	// Get expectations
 	// (GET /v1/dolus/expectations)
-	GetV1DolusExpectations(ctx echo.Context) error
-
+	GetExpectations(ctx echo.Context, params GetExpectationsParams) error
+	// Create an expectation
 	// (POST /v1/dolus/expectations)
-	PostV1DolusExpectations(ctx echo.Context) error
-	// Your GET endpoint
+	CreateExpectation(ctx echo.Context) error
+	// Get the mock server logs
 	// (GET /v1/dolus/logs)
-	GetV1DolusLogs(ctx echo.Context, params GetV1DolusLogsParams) error
-	// Your GET endpoint
-	// (GET /v1/dolus/logs/ws)
-	GetV1DolusLogsWs(ctx echo.Context, params GetV1DolusLogsWsParams) error
-	// Your GET endpoint
+	GetLogs(ctx echo.Context, params GetLogsParams) error
+	// Get all the mock server routes
 	// (GET /v1/dolus/routes)
-	GetV1DolusRoutes(ctx echo.Context) error
+	GetRoutes(ctx echo.Context) error
 }
 
 // ServerInterfaceWrapper converts echo contexts to parameters.
@@ -776,30 +802,53 @@ type ServerInterfaceWrapper struct {
 	Handler ServerInterface
 }
 
-// GetV1DolusExpectations converts echo context to params.
-func (w *ServerInterfaceWrapper) GetV1DolusExpectations(ctx echo.Context) error {
-	var err error
-
-	// Invoke the callback with all the unmarshaled arguments
-	err = w.Handler.GetV1DolusExpectations(ctx)
-	return err
-}
-
-// PostV1DolusExpectations converts echo context to params.
-func (w *ServerInterfaceWrapper) PostV1DolusExpectations(ctx echo.Context) error {
-	var err error
-
-	// Invoke the callback with all the unmarshaled arguments
-	err = w.Handler.PostV1DolusExpectations(ctx)
-	return err
-}
-
-// GetV1DolusLogs converts echo context to params.
-func (w *ServerInterfaceWrapper) GetV1DolusLogs(ctx echo.Context) error {
+// GetExpectations converts echo context to params.
+func (w *ServerInterfaceWrapper) GetExpectations(ctx echo.Context) error {
 	var err error
 
 	// Parameter object where we will unmarshal all parameters from the context
-	var params GetV1DolusLogsParams
+	var params GetExpectationsParams
+	// ------------- Optional query parameter "expectationType" -------------
+
+	err = runtime.BindQueryParameter("form", true, false, "expectationType", ctx.QueryParams(), &params.ExpectationType)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter expectationType: %s", err))
+	}
+
+	// ------------- Optional query parameter "path" -------------
+
+	err = runtime.BindQueryParameter("form", true, false, "path", ctx.QueryParams(), &params.Path)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter path: %s", err))
+	}
+
+	// ------------- Optional query parameter "method" -------------
+
+	err = runtime.BindQueryParameter("form", true, false, "method", ctx.QueryParams(), &params.Method)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter method: %s", err))
+	}
+
+	// Invoke the callback with all the unmarshaled arguments
+	err = w.Handler.GetExpectations(ctx, params)
+	return err
+}
+
+// CreateExpectation converts echo context to params.
+func (w *ServerInterfaceWrapper) CreateExpectation(ctx echo.Context) error {
+	var err error
+
+	// Invoke the callback with all the unmarshaled arguments
+	err = w.Handler.CreateExpectation(ctx)
+	return err
+}
+
+// GetLogs converts echo context to params.
+func (w *ServerInterfaceWrapper) GetLogs(ctx echo.Context) error {
+	var err error
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params GetLogsParams
 	// ------------- Optional query parameter "lines" -------------
 
 	err = runtime.BindQueryParameter("form", true, false, "lines", ctx.QueryParams(), &params.Lines)
@@ -808,34 +857,16 @@ func (w *ServerInterfaceWrapper) GetV1DolusLogs(ctx echo.Context) error {
 	}
 
 	// Invoke the callback with all the unmarshaled arguments
-	err = w.Handler.GetV1DolusLogs(ctx, params)
+	err = w.Handler.GetLogs(ctx, params)
 	return err
 }
 
-// GetV1DolusLogsWs converts echo context to params.
-func (w *ServerInterfaceWrapper) GetV1DolusLogsWs(ctx echo.Context) error {
-	var err error
-
-	// Parameter object where we will unmarshal all parameters from the context
-	var params GetV1DolusLogsWsParams
-	// ------------- Optional query parameter "lines" -------------
-
-	err = runtime.BindQueryParameter("form", true, false, "lines", ctx.QueryParams(), &params.Lines)
-	if err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter lines: %s", err))
-	}
-
-	// Invoke the callback with all the unmarshaled arguments
-	err = w.Handler.GetV1DolusLogsWs(ctx, params)
-	return err
-}
-
-// GetV1DolusRoutes converts echo context to params.
-func (w *ServerInterfaceWrapper) GetV1DolusRoutes(ctx echo.Context) error {
+// GetRoutes converts echo context to params.
+func (w *ServerInterfaceWrapper) GetRoutes(ctx echo.Context) error {
 	var err error
 
 	// Invoke the callback with all the unmarshaled arguments
-	err = w.Handler.GetV1DolusRoutes(ctx)
+	err = w.Handler.GetRoutes(ctx)
 	return err
 }
 
@@ -867,35 +898,34 @@ func RegisterHandlersWithBaseURL(router EchoRouter, si ServerInterface, baseURL 
 		Handler: si,
 	}
 
-	router.GET(baseURL+"/v1/dolus/expectations", wrapper.GetV1DolusExpectations)
-	router.POST(baseURL+"/v1/dolus/expectations", wrapper.PostV1DolusExpectations)
-	router.GET(baseURL+"/v1/dolus/logs", wrapper.GetV1DolusLogs)
-	router.GET(baseURL+"/v1/dolus/logs/ws", wrapper.GetV1DolusLogsWs)
-	router.GET(baseURL+"/v1/dolus/routes", wrapper.GetV1DolusRoutes)
+	router.GET(baseURL+"/v1/dolus/expectations", wrapper.GetExpectations)
+	router.POST(baseURL+"/v1/dolus/expectations", wrapper.CreateExpectation)
+	router.GET(baseURL+"/v1/dolus/logs", wrapper.GetLogs)
+	router.GET(baseURL+"/v1/dolus/routes", wrapper.GetRoutes)
 
 }
 
 // Base64 encoded, gzipped, json marshaled Swagger object
 var swaggerSpec = []string{
 
-	"H4sIAAAAAAAC/7xXXY+jNhT9K8jdx3SBfDXhsdvpatVWrUarVtVqHwy+EBN/jW0CZJX/XtkwCSQTLdOu",
-	"+saE63vvOefeM+YLyiRXUoCwBiVfkMl2wLF/fIcZS3G2d89KSwXaUvBvdtaq38DuJHF/2VYBSpCxmooC",
-	"zVDzvbFSMVrsrHtNiXtZ4I1YHqzJbbZFp9MMaXiqwNgfJWkHSWRaQmbvJKHxuoltXu735En7JJZykJUd",
-	"JKDCQgH6TgYRbY9bUqc8TrPUZ6g0m4ohKvP1tgXgm7pS6PQMgmogKPk0JKVLe2nvs3u0zFU4kzqbBHmz",
-	"UYZBg7eUFkvf8EOjILPYUiluhckGkr3RkKMEfRdeBA57dcNzF6cZUppKTW37AokXmb6W8LEP8yeMksLA",
-	"14/0cddEnhu6VB9k/fwScdBgrljHwUP3HMRjQkTF2BBsNMKW+jHsYng/2ej9w0c0QwrbHUpQaKzUEEpN",
-	"QIfza6BpP8YOJwMLKLG6ghlSYD+QZzW/oDdEssp3abHZuxIgPgi78Pk4blASRzPEqUBJ5GgxFlsXjwop",
-	"SUBwiwY/zqPodLoaCXM7E3D1llrg5mviDKfsdGYca43bO5N6NLklc35cym19vN2OUReDfRj1Pm0nCrrc",
-	"27heivbY/uCn5/Ei5Bh7+gp3WZPGqKplWUzyzqL4qywuWtTbzXZVmkzvmD/fTc600xrMpiSwaiJZR7f0",
-	"+VTnjgb8PZ43ZApGvIaM7WS5jY9E9tRdhvjfc7eZiyySegNEZR325yGdaMycrc1hzWHO15zdwu+zjXD3",
-	"fU8Dbuu8UFrt9qsCkw64rOwLqN3z2VynCLcsZV2WWV0sD/Hx9bLXssR5GR8XzX57V/ZLU0MGPIBp8DmJ",
-	"2pUsV4dF8+R0d3WoyKVvs8/XWdMMHUAbjx/FbyO3/FKBwIqiBC3eup86hJ6t8BCH/lx47TIF+OoETKap",
-	"6ghFD4IoSYUNqAlyqYMcbLajoghg7AJnvB+8DYP9M/7JVbkyi2cD9gXnUdQZsLAgfG2sFKOZjw5L0yna",
-	"+dsr3M90ooxx/P5LN+MV51i3KEE/OyBjFG4QZOdJYzh/SHMXz+hK9K2h9LpfsRbfyvROA7ZA+viLxkwW",
-	"Q23vqfSrC3NDojEHC9qg5NN1CVHxFHQg84DJImBUgAmsDDTYSgvkhhMl6KkC7f7dCMzdgPooNBsAv76u",
-	"nD6P4Y00+ltWOnj/8DGAfgrv7MpqU1fCVFvQaZmjFygI66ks/PX/8tA7zbehQS/JUwpNVIr0sLimQTvv",
-	"mcLCYxf4H3d10pWl88Pry8qU7Z1KiVrPN2xVrviCtrzfDgP68Cyt/5bw3wFJGDKZYbaTxiZxtImQ0+TF",
-	"W0fWRHZf2NWBrRp0Ov0TAAD///O9/FyQDQAA",
+	"H4sIAAAAAAAC/8RXT2/buBP9KsL8etSvktNdYKGb42q3xrpx4DinIgdaGttsJFIhR0GMQt99QVK2/ro2",
+	"0GD3ktjicOa9mTej8Q9IZF5IgYI0RD+gYIrlSKjst/itwIQYcSnWhwLvj4fmLEWdKF6YM4hgvUePDgV6",
+	"cuthc8sj6SmkUgnwgRvDlxLVAXwQLEeIALsRwAed7DFnJgKKMofoG0wXC/Dhc/zn9HGxBh9mjw/r5Vd4",
+	"8sFEhAg0KS52UFU+fEXay/QC0D1R4eXW0uClPbYxn0Hq7EcB/hUbWPfLB/PvSzz9bL492mfT9ewL+LBe",
+	"TWexgb68u4tn5mR5v54v7x4ssUW8jsfp3DPaXyBTMNpfz8JYdzj0Y1bHQyuAW5au8KVETVYcShaoiKM9",
+	"y1FrtsMxJz4ofCm5wtSk52hoGHLKjGWslFQr1IUUGm9lahDWTuTmOyYElQ8zlmUbljwPQ5sCukqPRHfB",
+	"UZP125w3jonnKEtqnXFBuENlDkuVXabUAuBuNE5bLE8ERsgNM/DvJ7jV3sPoSSv7HxRuIYL/Bc2wCGqV",
+	"BCeSlQ+F4lJxOoxnVjVK+pnDo+DsDUfg8pXarp+ZE6AmesvrUz8nPrz9H99YXmRYzz/72Zt0EyLKLGuT",
+	"DTvcNraYzqYeGlE9Imz3RRBokgoDqVJUwU2f6KYWg+GZISFEpEr0oUCaW71z+/dDKrPSoiSmn00IFHNB",
+	"n6y/nL1BNAl9yM0QCG1XEyNjDzspUy9lB2g9vAnDyvZ+SxJ6qAnsnXLCXF8qTltl1SnjTCkDoVevToC2",
+	"nNvPR5Q8F4RKsOwB1SsqK/7/oJ/OjsrNuUmUnx9iTiuXoNbzvPbTArw6yX0EZiO2K3EedTJs6x6e2rAD",
+	"pI42hkSWNALDfD5NpV9LTOOqDcmGHeAxLrjYSuu8NnVN5sMrKu3euZOPoUEhCxSs4BDBp4/mkcNl4Qev",
+	"k8DeC/r9skMavsRjkRaSC/K49rZSeVukZM/FzsOu6E9U5nagIPWaor26fRtvycYkOLvaVf7Fu92t5IoL",
+	"/a2sempGnk3MTRi6kScIhc0RK4qMJxZf8F07KTRby5XzRruidvO9/NvU77d3jNjakkbi3bLUa73Tfn/H",
+	"wGNjbwTB0cxzdt7R0Add5jlTB6enruBMp0k3zLrKmylkhHFn1extXO9dR3Avp55kJsNectjSHjf31GOi",
+	"syAbm6ZVM7lrt+ig2RbmfNBk3eiizDeozDKeyZ2XcYH64g8gazW2kTcTttcsg7KZzT+XybOnXXktlS47",
+	"ZSbeT/mtnMUv9uVVC4Ebv8NVYLRTB2xZlg0Y1/Tcrxf7yJXH7vJ2WY+CIJMJy/ZSUzQJ/wiheqr+CQAA",
+	"///tHubh/Q4AAA==",
 }
 
 // GetSwagger returns the content of the embedded swagger specification file

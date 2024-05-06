@@ -1,16 +1,21 @@
 package api
 
+// integration tests for the dolus api
+
 import (
+	"bytes"
+	"encoding/json"
 	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"testing"
 
-	"github.com/DolusMockServer/dolus/pkg/expectation"
-	"github.com/DolusMockServer/dolus/pkg/expectation/engine"
 	"github.com/labstack/echo/v4"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
+
+	"github.com/DolusMockServer/dolus/pkg/expectation"
+	"github.com/DolusMockServer/dolus/pkg/expectation/engine"
 )
 
 /*
@@ -31,66 +36,99 @@ import (
 
 type DolusApiImplTestSuite struct {
 	suite.Suite
-	mockEngine *engine.ExpectationEngineMock
-	mockMapper *MapperMock
-	api        DolusApi
+	expectationEngine *engine.ExpectationEngineMock
+	mapper            *MapperMock
+	api               DolusApi
 }
 
 func (suite *DolusApiImplTestSuite) SetupTest() {
-	suite.mockEngine = engine.NewExpectationEngineMock(suite.T())
-	suite.mockMapper = NewMapperMock(suite.T())
-	suite.api = NewDolusApi(suite.mockEngine, suite.mockMapper)
+	suite.expectationEngine = engine.NewExpectationEngineMock(suite.T())
+	suite.mapper = NewMapperMock(suite.T())
+	suite.api = NewDolusApi(suite.expectationEngine, suite.mapper)
 }
 
 func (suite *DolusApiImplTestSuite) TestGetV1DolusExpectations() {
-
 	suite.T().Run("should return 200 OK with expectations", func(t *testing.T) {
 		// Given
 		suite.SetupTest()
 		expectations := expectation.Expectations{}
-		suite.mockEngine.EXPECT().GetCueExpectations().Return(expectations)
-		suite.mockMapper.EXPECT().MapCueExpectations(expectations.Expectations).Return([]Expectation{}, nil)
+		suite.expectationEngine.EXPECT().GetCueExpectations().Return(expectations)
+		suite.mapper.EXPECT().
+			MapToApiExpectations(expectations.Expectations).
+			Return([]Expectation{}, nil)
 		req := httptest.NewRequest(http.MethodGet, "/v1/dolus/expectations", nil)
 		rec := httptest.NewRecorder()
 
 		// When
-		err := suite.api.GetV1DolusExpectations(echo.New().NewContext(req, rec))
+		err := suite.api.GetExpectations(echo.New().NewContext(req, rec), GetExpectationsParams{})
 
 		// Then
 		assert.NoError(t, err)
-		assert.Equal(t, rec.Code, http.StatusOK)
+		assert.Equal(t, http.StatusOK, rec.Code)
 	})
 
 	suite.T().Run("should return 500 if mapper fails", func(t *testing.T) {
 		// Given
 		suite.SetupTest()
 		expectations := expectation.Expectations{}
-		suite.mockEngine.EXPECT().GetCueExpectations().Return(expectations)
-		suite.mockMapper.EXPECT().MapCueExpectations(expectations.Expectations).Return(nil,
+		suite.expectationEngine.EXPECT().GetCueExpectations().Return(expectations)
+		suite.mapper.EXPECT().MapToApiExpectations(expectations.Expectations).Return(nil,
 			fmt.Errorf("error"))
 		req := httptest.NewRequest(http.MethodGet, "/v1/dolus/expectations", nil)
 		rec := httptest.NewRecorder()
 
 		// When
-		err := suite.api.GetV1DolusExpectations(echo.New().NewContext(req, rec))
+		err := suite.api.GetExpectations(echo.New().NewContext(req, rec), GetExpectationsParams{})
 
 		// Then
 		assert.NoError(t, err)
-		assert.Equal(t, rec.Code, http.StatusInternalServerError)
+		assert.Equal(t, http.StatusInternalServerError, rec.Code)
 	})
 }
 
-func (suite *DolusApiImplTestSuite) TestPostV1DolusExpectations() {
-	suite.T().Run("should return 200 OK if request", func(t *testing.T) {
+func (suite *DolusApiImplTestSuite) TestCreateDolusExpectations() {
+	suite.T().Run("should return 201 created if request is successful", func(t *testing.T) {
+		// Given
+		suite.SetupTest()
 
+		var request Expectation
+		var mappedRequest *expectation.Expectation = &expectation.Expectation{
+			Priority: 1,
+		}
+		suite.mapper.EXPECT().MapToExpectation(request).Return(mappedRequest, nil)
+		suite.expectationEngine.EXPECT().AddExpectation(mappedRequest, true, expectation.Custom).Return(nil)
+
+		requestBody, err := json.Marshal(request)
+		if err != nil {
+			t.Fatal(err)
+		}
+		req := httptest.NewRequest(
+			http.MethodPost,
+			"/v1/dolus/expectations",
+			bytes.NewBuffer(requestBody),
+		)
+		rec := httptest.NewRecorder()
+
+		// When
+		resultErr := suite.api.CreateExpectation(echo.New().NewContext(req, rec))
+		var result Expectation
+		err = json.Unmarshal(rec.Body.Bytes(), &result)
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		// Then
+		assert.NoError(t, resultErr)
+
+		assert.Equal(t, http.StatusCreated, rec.Code)
+
+		assert.Equal(t, 1, result.Priority)
 	})
 
 	suite.T().Run("should return 400 if malformed function", func(t *testing.T) {
-
 	})
 
 	suite.T().Run("should return 500", func(t *testing.T) {
-
 	})
 }
 

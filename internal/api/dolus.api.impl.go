@@ -6,15 +6,14 @@ import (
 
 	"github.com/labstack/echo/v4"
 
+	"github.com/DolusMockServer/dolus/pkg/expectation"
 	"github.com/DolusMockServer/dolus/pkg/expectation/engine"
 	"github.com/DolusMockServer/dolus/pkg/logger"
-	"github.com/DolusMockServer/dolus/pkg/schema"
 )
 
 type DolusApiImpl struct {
 	ExpectationEngine engine.ExpectationEngine
 	Mapper            Mapper
-	routes            map[schema.Route]bool
 }
 
 var _ DolusApi = &DolusApiImpl{}
@@ -25,25 +24,12 @@ func NewDolusApi(expectationEngine engine.ExpectationEngine,
 	return &DolusApiImpl{
 		ExpectationEngine: expectationEngine,
 		Mapper:            mapper,
-		routes:            make(map[schema.Route]bool),
 	}
-}
-
-func (d *DolusApiImpl) AddRoute(route schema.Route) error {
-	if d.routes[route] {
-		return fmt.Errorf(
-			"route %s with operation %s already exists",
-			route.Path,
-			route.Method,
-		)
-	}
-	d.routes[route] = true
-	return nil
 }
 
 // GetV1DolusExpectations implements server.ServerInterface.
-func (d *DolusApiImpl) GetV1DolusExpectations(ctx echo.Context) error {
-	apiExpectations, err := d.Mapper.MapCueExpectations(
+func (d *DolusApiImpl) GetExpectations(ctx echo.Context, params GetExpectationsParams) error {
+	apiExpectations, err := d.Mapper.MapToApiExpectations(
 		d.ExpectationEngine.
 			GetCueExpectations().
 			Expectations)
@@ -55,9 +41,9 @@ func (d *DolusApiImpl) GetV1DolusExpectations(ctx echo.Context) error {
 }
 
 // GetV1DolusRoutes implements server.ServerInterface.
-func (d *DolusApiImpl) GetV1DolusRoutes(ctx echo.Context) error {
+func (d *DolusApiImpl) GetRoutes(ctx echo.Context) error {
 	var serverRoutes []Route
-	for r := range d.routes {
+	for _, r := range d.ExpectationEngine.GetRoutes() {
 		serverRoutes = append(serverRoutes, Route{
 			Path:      r.Path,
 			Operation: r.Method,
@@ -68,12 +54,31 @@ func (d *DolusApiImpl) GetV1DolusRoutes(ctx echo.Context) error {
 }
 
 // PostV1DolusExpectations implements server.ServerInterface.
-func (d *DolusApiImpl) PostV1DolusExpectations(ctx echo.Context) error {
-	return ctx.JSON(http.StatusNotImplemented, "Not Implemented")
+func (d *DolusApiImpl) CreateExpectation(ctx echo.Context) error {
+	defer ctx.Request().Body.Close()
+	var apiExpectation Expectation
+	if err := ctx.Bind(&apiExpectation); err != nil {
+		fmt.Printf("ERROR: %s", err.Error())
+		return ctx.JSON(http.StatusBadRequest, fmt.Errorf("bad request: %s", err.Error()))
+	}
+
+	expct, err := d.Mapper.MapToExpectation(apiExpectation)
+	if err != nil {
+		return ctx.JSON(http.StatusBadRequest, fmt.Errorf("bad request: %s", err.Error()))
+	}
+
+	if err := d.ExpectationEngine.AddExpectation(*expct, true, expectation.Custom); err != nil {
+		// TODO: depending on the error, return a different status code
+		return ctx.JSON(http.StatusInternalServerError, BadRequest{
+			Message: err.Error(),
+		},
+		)
+	}
+	return ctx.JSON(http.StatusCreated, expct)
 }
 
 // GetV1DolusLogs implements DolusApi.
-func (*DolusApiImpl) GetV1DolusLogs(ctx echo.Context, params GetV1DolusLogsParams) error {
+func (*DolusApiImpl) GetLogs(ctx echo.Context, params GetLogsParams) error {
 	lines := 1000
 	if params.Lines != nil {
 		lines = *params.Lines
@@ -85,18 +90,4 @@ func (*DolusApiImpl) GetV1DolusLogs(ctx echo.Context, params GetV1DolusLogsParam
 	} else {
 		return ctx.String(http.StatusOK, logs)
 	}
-}
-
-// GetV1DolusLogsWs implements DolusApi.
-func (*DolusApiImpl) GetV1DolusLogsWs(
-	ctx echo.Context,
-	params GetV1DolusLogsWsParams,
-) error {
-	return ctx.JSON(http.StatusNotImplemented, "Not Implemented")
-	// conn, err := upgrader.Upgrade(ctx.Response().Writer, ctx.Request(), nil)
-	// if err != nil {
-	// 	return err
-	// }
-	// logger.Log.RegisterWebSocketClient(conn, 1000)
-	// return nil
 }

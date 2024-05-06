@@ -27,4 +27,6 @@ type ExpectationEngine interface {
 	GetCueExpectations() expectation.Expectations
 	GetExpectationRoutes() []schema.Route
 	SetRouteProperties(routeProperties schema.RouteProperties)
+	AddRoute(route schema.Route) error
+	GetRoutes() []schema.Route
 }

@@ -1,7 +1,6 @@
 package builder
 
 import (
-	"encoding/json"
 	"fmt"
 	"net/http"
 	"net/url"
@@ -91,14 +90,8 @@ func (ceb *CueExpectationBuilder) buildExpectationFromCueInstance(
 				// continue
 				return
 			}
-			// add query parameters from path to expectation and overrides old query parameters from cue file
+			// add query parameters from path to expectation and overrides anys query parameters from cue file
 			addQueryParameters(&cueExpectation)
-
-			a, _ := json.Marshal(cueExpectation.Request.Headers)
-			fmt.Printf("AFTER: %v\n", string(a))
-
-			b, _ := json.Marshal(cueExpectation.Request.Cookies)
-			fmt.Printf("AFTER COOKIES: %v\n", string(b))
 
 			cueExpectation.Response.GeneratedBody = dstruct.NewGeneratedStructWithConfig(
 				schema.SchemaFromAny(cueExpectation.Response.Body),

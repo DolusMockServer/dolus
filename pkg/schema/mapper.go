@@ -20,17 +20,16 @@ func NewMapper() *MapperImpl {
 // Map implements Mapper.
 func (*MapperImpl) MapToRequestParameters(ctx echo.Context) RequestParameters {
 	return RequestParameters{
-		PathParams:  getPathParams(ctx, ctx.ParamNames(), ctx.Param),
+		PathParams:  getPathParams(ctx.ParamNames(), ctx.Param),
 		QueryParams: ctx.QueryParams(),
 	}
 }
 
 func getPathParams(
-	ctx echo.Context,
 	paramNames []string,
 	params func(string) string,
 ) (paramMap map[string]string) {
-	if paramNames != nil && len(paramNames) > 0 {
+	if len(paramNames) > 0 {
 		paramMap = make(map[string]string)
 		for _, name := range paramNames {
 			paramMap[name] = params(name)

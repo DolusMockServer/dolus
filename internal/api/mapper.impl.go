@@ -6,6 +6,8 @@ import (
 	"github.com/DolusMockServer/dolus/pkg/expectation"
 )
 
+// TOOD: see if there is a go package that can make mapping less verbose
+
 type MapperImpl struct{}
 
 var _ Mapper = &MapperImpl{}
@@ -14,44 +16,65 @@ func NewMapper() *MapperImpl {
 	return &MapperImpl{}
 }
 
-func (mi *MapperImpl) MapCueExpectations(
+func (mi *MapperImpl) MapToApiExpectations(
 	expectations []expectation.Expectation,
 ) ([]Expectation, error) {
-	var apiServerExpectations []Expectation
-	for _, cueExpectation := range expectations {
-		apiServerExpectation, err := cueExpectationToApiExpectation(cueExpectation)
+	var apiExpectations []Expectation
+	for _, expct := range expectations {
+		apiServerExpectation, err := expectationToApiExpectation(expct)
 		if err != nil {
 			return nil, err
 		}
-		apiServerExpectations = append(apiServerExpectations, *apiServerExpectation)
+		apiExpectations = append(apiExpectations, *apiServerExpectation)
 	}
-	return apiServerExpectations, nil
+	return apiExpectations, nil
 }
 
-func (mi *MapperImpl) MapCueExpectation(expectation expectation.Expectation) (*Expectation, error) {
-	return cueExpectationToApiExpectation(expectation)
+func (mi *MapperImpl) MapToApiExpectation(expct expectation.Expectation) (*Expectation, error) {
+	return expectationToApiExpectation(expct)
 }
 
-func cueExpectationToApiExpectation(cueExpectation expectation.Expectation) (*Expectation, error) {
-	requestBody, responseBody, err := getRequestAndResponseBody(cueExpectation)
+func (mi *MapperImpl) MapToExpectation(expct Expectation) (*expectation.Expectation, error) {
+	callback, err := apiCallbackToCallback(expct.Callback)
 	if err != nil {
 		return nil, err
 	}
-	callback, err := callbackToApiCallback(cueExpectation.Callback)
+
+	return &expectation.Expectation{
+		Priority: expct.Priority,
+		Request: expectation.Request{
+			Method: expct.Request.Method,
+			Path:   expct.Request.Path,
+			Body:   expct.Request.Body,
+		},
+		Response: expectation.Response{
+			Body:   expct.Response.Body,
+			Status: expct.Response.Status,
+		},
+		Callback: callback,
+	}, nil
+}
+
+func expectationToApiExpectation(expct expectation.Expectation) (*Expectation, error) {
+	requestBody, responseBody, err := getRequestAndResponseBody(expct)
+	if err != nil {
+		return nil, err
+	}
+	callback, err := callbackToApiCallback(expct.Callback)
 	if err != nil {
 		return nil, err
 	}
 
 	return &Expectation{
-		Priority: cueExpectation.Priority,
+		Priority: expct.Priority,
 		Request: Request{
-			Method: string(cueExpectation.Request.Method),
-			Path:   cueExpectation.Request.Path,
+			Method: string(expct.Request.Method),
+			Path:   expct.Request.Path,
 			Body:   requestBody,
 		},
 		Response: Response{
 			Body:   responseBody,
-			Status: cueExpectation.Response.Status,
+			Status: expct.Response.Status,
 		},
 		Callback: callback,
 	}, nil
@@ -76,8 +99,25 @@ func anyToMapOfKeyStringValueAny(a any) (*map[string]any, error) {
 		if r, ok := a.(map[string]interface{}); ok {
 			return &r, nil
 		} else {
+			// TODO: see if this scenario is possible
 			return nil, fmt.Errorf("failed to convert %v to map[string]interface{}", a)
 		}
+	}
+	return nil, nil
+}
+
+func apiCallbackToCallback(apiCallback *Callback) (*expectation.Callback, error) {
+	if apiCallback != nil {
+		callbackRequestBody, err := anyToMapOfKeyStringValueAny(apiCallback.RequestBody)
+		if err != nil {
+			return nil, err
+		}
+		return &expectation.Callback{
+			Method:  apiCallback.HttpMethod,
+			Request: callbackRequestBody,
+			Timeout: apiCallback.Timeout,
+			Url:     apiCallback.Url,
+		}, nil
 	}
 	return nil, nil
 }

@@ -20,12 +20,12 @@ func (_m *MapperMock) EXPECT() *MapperMock_Expecter {
 	return &MapperMock_Expecter{mock: &_m.Mock}
 }
 
-// MapCueExpectation provides a mock function with given fields: _a0
-func (_m *MapperMock) MapCueExpectation(_a0 expectation.Expectation) (*Expectation, error) {
+// MapToApiExpectation provides a mock function with given fields: _a0
+func (_m *MapperMock) MapToApiExpectation(_a0 expectation.Expectation) (*Expectation, error) {
 	ret := _m.Called(_a0)
 
 	if len(ret) == 0 {
-		panic("no return value specified for MapCueExpectation")
+		panic("no return value specified for MapToApiExpectation")
 	}
 
 	var r0 *Expectation
@@ -50,40 +50,40 @@ func (_m *MapperMock) MapCueExpectation(_a0 expectation.Expectation) (*Expectati
 	return r0, r1
 }
 
-// MapperMock_MapCueExpectation_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'MapCueExpectation'
-type MapperMock_MapCueExpectation_Call struct {
+// MapperMock_MapToApiExpectation_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'MapToApiExpectation'
+type MapperMock_MapToApiExpectation_Call struct {
 	*mock.Call
 }
 
-// MapCueExpectation is a helper method to define mock.On call
+// MapToApiExpectation is a helper method to define mock.On call
 //   - _a0 expectation.Expectation
-func (_e *MapperMock_Expecter) MapCueExpectation(_a0 interface{}) *MapperMock_MapCueExpectation_Call {
-	return &MapperMock_MapCueExpectation_Call{Call: _e.mock.On("MapCueExpectation", _a0)}
+func (_e *MapperMock_Expecter) MapToApiExpectation(_a0 interface{}) *MapperMock_MapToApiExpectation_Call {
+	return &MapperMock_MapToApiExpectation_Call{Call: _e.mock.On("MapToApiExpectation", _a0)}
 }
 
-func (_c *MapperMock_MapCueExpectation_Call) Run(run func(_a0 expectation.Expectation)) *MapperMock_MapCueExpectation_Call {
+func (_c *MapperMock_MapToApiExpectation_Call) Run(run func(_a0 expectation.Expectation)) *MapperMock_MapToApiExpectation_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		run(args[0].(expectation.Expectation))
 	})
 	return _c
 }
 
-func (_c *MapperMock_MapCueExpectation_Call) Return(_a0 *Expectation, _a1 error) *MapperMock_MapCueExpectation_Call {
+func (_c *MapperMock_MapToApiExpectation_Call) Return(_a0 *Expectation, _a1 error) *MapperMock_MapToApiExpectation_Call {
 	_c.Call.Return(_a0, _a1)
 	return _c
 }
 
-func (_c *MapperMock_MapCueExpectation_Call) RunAndReturn(run func(expectation.Expectation) (*Expectation, error)) *MapperMock_MapCueExpectation_Call {
+func (_c *MapperMock_MapToApiExpectation_Call) RunAndReturn(run func(expectation.Expectation) (*Expectation, error)) *MapperMock_MapToApiExpectation_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
-// MapCueExpectations provides a mock function with given fields: expectations
-func (_m *MapperMock) MapCueExpectations(expectations []expectation.Expectation) ([]Expectation, error) {
+// MapToApiExpectations provides a mock function with given fields: expectations
+func (_m *MapperMock) MapToApiExpectations(expectations []expectation.Expectation) ([]Expectation, error) {
 	ret := _m.Called(expectations)
 
 	if len(ret) == 0 {
-		panic("no return value specified for MapCueExpectations")
+		panic("no return value specified for MapToApiExpectations")
 	}
 
 	var r0 []Expectation
@@ -108,30 +108,88 @@ func (_m *MapperMock) MapCueExpectations(expectations []expectation.Expectation)
 	return r0, r1
 }
 
-// MapperMock_MapCueExpectations_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'MapCueExpectations'
-type MapperMock_MapCueExpectations_Call struct {
+// MapperMock_MapToApiExpectations_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'MapToApiExpectations'
+type MapperMock_MapToApiExpectations_Call struct {
 	*mock.Call
 }
 
-// MapCueExpectations is a helper method to define mock.On call
+// MapToApiExpectations is a helper method to define mock.On call
 //   - expectations []expectation.Expectation
-func (_e *MapperMock_Expecter) MapCueExpectations(expectations interface{}) *MapperMock_MapCueExpectations_Call {
-	return &MapperMock_MapCueExpectations_Call{Call: _e.mock.On("MapCueExpectations", expectations)}
+func (_e *MapperMock_Expecter) MapToApiExpectations(expectations interface{}) *MapperMock_MapToApiExpectations_Call {
+	return &MapperMock_MapToApiExpectations_Call{Call: _e.mock.On("MapToApiExpectations", expectations)}
 }
 
-func (_c *MapperMock_MapCueExpectations_Call) Run(run func(expectations []expectation.Expectation)) *MapperMock_MapCueExpectations_Call {
+func (_c *MapperMock_MapToApiExpectations_Call) Run(run func(expectations []expectation.Expectation)) *MapperMock_MapToApiExpectations_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		run(args[0].([]expectation.Expectation))
 	})
 	return _c
 }
 
-func (_c *MapperMock_MapCueExpectations_Call) Return(_a0 []Expectation, _a1 error) *MapperMock_MapCueExpectations_Call {
+func (_c *MapperMock_MapToApiExpectations_Call) Return(_a0 []Expectation, _a1 error) *MapperMock_MapToApiExpectations_Call {
 	_c.Call.Return(_a0, _a1)
 	return _c
 }
 
-func (_c *MapperMock_MapCueExpectations_Call) RunAndReturn(run func([]expectation.Expectation) ([]Expectation, error)) *MapperMock_MapCueExpectations_Call {
+func (_c *MapperMock_MapToApiExpectations_Call) RunAndReturn(run func([]expectation.Expectation) ([]Expectation, error)) *MapperMock_MapToApiExpectations_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// MapToExpectation provides a mock function with given fields: _a0
+func (_m *MapperMock) MapToExpectation(_a0 Expectation) (*expectation.Expectation, error) {
+	ret := _m.Called(_a0)
+
+	if len(ret) == 0 {
+		panic("no return value specified for MapToExpectation")
+	}
+
+	var r0 *expectation.Expectation
+	var r1 error
+	if rf, ok := ret.Get(0).(func(Expectation) (*expectation.Expectation, error)); ok {
+		return rf(_a0)
+	}
+	if rf, ok := ret.Get(0).(func(Expectation) *expectation.Expectation); ok {
+		r0 = rf(_a0)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*expectation.Expectation)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(Expectation) error); ok {
+		r1 = rf(_a0)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// MapperMock_MapToExpectation_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'MapToExpectation'
+type MapperMock_MapToExpectation_Call struct {
+	*mock.Call
+}
+
+// MapToExpectation is a helper method to define mock.On call
+//   - _a0 Expectation
+func (_e *MapperMock_Expecter) MapToExpectation(_a0 interface{}) *MapperMock_MapToExpectation_Call {
+	return &MapperMock_MapToExpectation_Call{Call: _e.mock.On("MapToExpectation", _a0)}
+}
+
+func (_c *MapperMock_MapToExpectation_Call) Run(run func(_a0 Expectation)) *MapperMock_MapToExpectation_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(Expectation))
+	})
+	return _c
+}
+
+func (_c *MapperMock_MapToExpectation_Call) Return(_a0 *expectation.Expectation, _a1 error) *MapperMock_MapToExpectation_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *MapperMock_MapToExpectation_Call) RunAndReturn(run func(Expectation) (*expectation.Expectation, error)) *MapperMock_MapToExpectation_Call {
 	_c.Call.Return(run)
 	return _c
 }

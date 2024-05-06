@@ -35,6 +35,8 @@ type DolusExpectationEngine struct {
 	expectationRoutes     []string
 	schemaMapper          schema.Mapper
 	routeProperties       schema.RouteProperties
+	routesMap             map[schema.Route]bool
+	routes                []schema.Route
 }
 
 var _ ExpectationEngine = &DolusExpectationEngine{}
@@ -50,6 +52,7 @@ func NewDolusExpectationEngine(
 		map[schema.Route]dstruct.DynamicStructModifier,
 	)
 	dolusExpectationEngine.GenerationConfig = generationConfig
+	dolusExpectationEngine.routesMap = make(map[schema.Route]bool)
 
 	return
 }
@@ -74,9 +77,9 @@ func (e *DolusExpectationEngine) AddExpectation(
 
 	e.expectationMatcherMap[*route] = append(e.expectationMatcherMap[*route], expect)
 
-	if expectationType == expectation.Cue {
+	if expectationType == expectation.Custom {
 		e.cueExpectations = append(e.cueExpectations, expect)
-	} else if expectationType == expectation.OpenAPI {
+	} else if expectationType == expectation.Default {
 		e.openApiExpectations = append(e.openApiExpectations, expect)
 	}
 
@@ -425,4 +428,21 @@ func (e *DolusExpectationEngine) GetCueExpectations() expectation.Expectations {
 
 func (e *DolusExpectationEngine) SetRouteProperties(routeProperties schema.RouteProperties) {
 	e.routeProperties = routeProperties
+}
+
+func (e *DolusExpectationEngine) AddRoute(route schema.Route) error {
+	if e.routesMap[route] {
+		return fmt.Errorf(
+			"route %s with operation %s already exists",
+			route.Path,
+			route.Method,
+		)
+	}
+	e.routesMap[route] = true
+	e.routes = append(e.routes, route)
+	return nil
+}
+
+func (e *DolusExpectationEngine) GetRoutes() []schema.Route {
+	return e.routes
 }

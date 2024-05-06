@@ -1,6 +1,4 @@
 openapi: 3.1.0
-x-stoplight:
-  id: 6cx0tkgt5vl5x
 info:
   title: dolus
   version: '1.0'
@@ -9,7 +7,7 @@ servers:
 paths:
   /v1/dolus/expectations:
     get:
-      summary: Fetch expectations
+      summary: Get expectations
       tags: []
       responses:
         '200':
@@ -18,11 +16,27 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Expectations'
-      operationId: get-v1-dolus-expectations
+        '400':
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BadRequest'
+        '500':
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InternalServerError'
+      operationId: getExpectations
       description: Endpoint is for fetching expectations
+      parameters:
+        - $ref: '#/components/parameters/ExpectationTypeParameter'
+        - $ref: '#/components/parameters/PathParameter'
+        - $ref: '#/components/parameters/MethodParameter'
     post:
-      summary: ''
-      operationId: post-v1-dolus-expectations
+      summary: Create an expectation
+      operationId: createExpectation
       responses:
         '201':
           description: Created
@@ -53,7 +67,7 @@ paths:
                   callback: null
   /v1/dolus/routes:
     get:
-      summary: Your GET endpoint
+      summary: Get all the mock server routes
       tags: []
       responses:
         '200':
@@ -64,19 +78,13 @@ paths:
                 type: array
                 items:
                   $ref: '#/components/schemas/Route'
-                  x-stoplight:
-                    id: c7rg1wyygdcpd
-      operationId: get-v1-dolus-routes
-      x-stoplight:
-        id: p628l5j5m3iym
+      operationId: getRoutes
   /v1/dolus/logs:
     get:
-      summary: Your GET endpoint
+      summary: Get the mock server logs
       tags: []
       responses: {}
-      operationId: get-v1-dolus-logs
-      x-stoplight:
-        id: 58wunsu9erbjf
+      operationId: getLogs
       parameters:
         - schema:
             type: integer
@@ -84,20 +92,6 @@ paths:
           name: lines
           description: number of log lines to return
     parameters: []
-  /v1/dolus/logs/ws:
-    get:
-      summary: Your GET endpoint
-      tags: []
-      responses: {}
-      operationId: get-v1-dolus-logs-ws
-      x-stoplight:
-        id: r4dqbex0jnbv3
-      parameters:
-        - schema:
-            type: string
-          in: query
-          name: lines
-          description: number of log lines to return
 components:
   schemas:
     Expectation:
@@ -136,97 +130,107 @@ components:
         - response
     Callback:
       title: Callback
-      x-stoplight:
-        id: 88pslexa9iig4
       type: object
       properties:
         httpMethod:
           type: string
-          x-stoplight:
-            id: sga8n4vtsftc9
         requestBody:
           type: object
-          x-stoplight:
-            id: i16x1tfjkkdqr
         url:
           type: string
-          x-stoplight:
-            id: 0jf69yeem8wup
         timeout:
           type: integer
-          x-stoplight:
-            id: n09z9dwbm1bcb
       required:
         - httpMethod
         - url
         - timeout
     Request:
       title: Request
-      x-stoplight:
-        id: a6eclhoj91zdo
       type: object
       properties:
         path:
           type: string
-          x-stoplight:
-            id: res8jde5x0ow0
         method:
           type: string
-          x-stoplight:
-            id: 03w9895jscrhl
         body:
           type: object
-          x-stoplight:
-            id: 6dxspuylc1df9
       required:
         - path
         - method
     Response:
       title: Response
-      x-stoplight:
-        id: twfgprphk5gad
       type: object
       properties:
         status:
           type: integer
-          x-stoplight:
-            id: ml6sv6me2m6ml
         body:
           type: object
-          x-stoplight:
-            id: 82nc0or8edpcl
       required:
         - status
     Expectations:
       title: Expectations
-      x-stoplight:
-        id: gi4kt1w4nyzy7
       type: object
       properties:
         expectations:
           type: array
-          x-stoplight:
-            id: zsftd2mz4o9wz
           items:
             $ref: '#/components/schemas/Expectation'
-            x-stoplight:
-              id: myjab1907zuxc
       required:
         - expectations
     Route:
       title: Route
-      x-stoplight:
-        id: md0y5oj5v3xqo
       type: object
       properties:
         path:
           type: string
-          x-stoplight:
-            id: rwojafj1z3xk9
         operation:
           type: string
-          x-stoplight:
-            id: 4jowjjcwg4v1z
       required:
         - path
         - operation
+    BadRequest:
+      $ref: '#/components/schemas/ErrorResponseBody'
+    InternalServerError:
+      $ref: '#/components/schemas/ErrorResponseBody'
+    ErrorResponseBody:
+      title: ErrorResponseBody
+      type: object
+      required:
+        - message
+      properties:
+        message:
+          type: string
+  parameters:
+    ExpectationTypeParameter:
+      name: expectationType
+      in: query
+      schema:
+        type: string
+        enum:
+          - ALL
+          - DEFAULT
+          - CUSTOM
+      description: The type of expectation to return
+    PathParameter:
+      name: path
+      in: query
+      required: false
+      schema:
+        type: string
+      description: The path of the expectation
+    MethodParameter:
+      name: method
+      in: query
+      schema:
+        type: string
+        enum:
+          - GET
+          - POST
+          - HEAD
+          - PUT
+          - PATCH
+          - TRACE
+          - CONNECT
+          - OPTIONS
+          - DELETE
+      description: The http method of the expectation

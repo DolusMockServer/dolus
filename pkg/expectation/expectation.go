@@ -3,8 +3,8 @@ package expectation
 type ExpectationType int
 
 const (
-	OpenAPI ExpectationType = iota
-	Cue
+	Default ExpectationType = iota
+	Custom
 )
 
 // // request matcher - used to match which requests this expectation should be applied to
