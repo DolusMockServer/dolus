@@ -29,6 +29,9 @@ func NewDolusApi(expectationEngine engine.ExpectationEngine,
 
 // GetV1DolusExpectations implements server.ServerInterface.
 func (d *DolusApiImpl) GetExpectations(ctx echo.Context, params GetExpectationsParams) error {
+
+	d.ExpectationEngine.GetExpectations()
+
 	apiExpectations, err := d.Mapper.MapToApiExpectations(
 		d.ExpectationEngine.
 			GetCueExpectations().

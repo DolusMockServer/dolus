@@ -87,7 +87,7 @@ func (e *DolusExpectationEngine) AddExpectation(
 }
 
 func (e *DolusExpectationEngine) validateExpectationSchema(exp *expectation.Expectation) error {
-	matchingResponseSchema, err := e.getMatchingResponseSchemaForRoute(exp)
+	matchingResponseSchema, err := e.getResponseSchemaForExpectation(exp)
 	if err != nil {
 		return err
 	}
@@ -105,7 +105,7 @@ func (e *DolusExpectationEngine) validateExpectationSchema(exp *expectation.Expe
 	return nil
 }
 
-func (e *DolusExpectationEngine) AddResponseSchemaForRoute(
+func (e *DolusExpectationEngine) AddResponseSchema(
 	route schema.Route,
 	responseSchema dstruct.DynamicStructModifier,
 ) error {
@@ -134,7 +134,8 @@ func (e *DolusExpectationEngine) GetExpectation(
 }
 
 // getMatchingResponseSchemaForRoute returns the response schema for the given route
-func (e *DolusExpectationEngine) getMatchingResponseSchemaForRoute(exp *expectation.Expectation) (dstruct.DynamicStructModifier, error) {
+// get the response schema for the expectation if it has one
+func (e *DolusExpectationEngine) getResponseSchemaForExpectation(exp *expectation.Expectation) (dstruct.DynamicStructModifier, error) {
 	expectationRoute := exp.Request.Route()
 	parsedURL, err := url.Parse(expectationRoute.Path)
 	if err != nil {
@@ -197,7 +198,7 @@ func addPathParameters(pathParams map[string]string, e *expectation.Expectation)
 	return nil
 }
 
-func validateRequestParameters(expectation *expectation.Expectation, routeProperty schema.RequestParameterProperty) error {
+func validateRequestParameters(expectation *expectation.Expectation, routeProperty schema.RouteProperty) error {
 
 	// Validate Path and Query Parameters
 	if err := checkParametersExistence("Path", routeProperty.PathParameterProperties, expectation.Request.Parameters.Path); err != nil {
@@ -399,6 +400,7 @@ func (e *DolusExpectationEngine) GetResponseForRequest(
 	requestParameters schema.RequestParameters,
 	pathTemplate string,
 ) (*expectation.Response, error) {
+	// TODO: if Route does not exist in route manager return an error
 	expectations := e.getExpectationsForRequest(pathTemplate, request, requestParameters)
 
 	// TODO: find the right expectation depending on request matchers and priority

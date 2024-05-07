@@ -137,7 +137,7 @@ func (d *Server) loadOpenAPISpecExpectations() error {
 	for _, e := range output.Expectations {
 		d.addRoutes(e.Request.Route())
 
-		d.expectationEngine.AddResponseSchemaForRoute(
+		d.expectationEngine.AddResponseSchema(
 			e.Request.Route(),
 			e.Response.GeneratedBody,
 		)

@@ -4,6 +4,7 @@ import (
 	"reflect"
 	"strings"
 
+	"github.com/MartinSimango/dstruct"
 	"github.com/ucarion/urlpath"
 )
 
@@ -38,9 +39,11 @@ type ParameterProperty struct {
 
 type ParameterProperties map[string]*ParameterProperty
 
-type RequestParameterProperty struct {
+type RouteProperty struct {
 	PathParameterProperties  ParameterProperties
 	QueryParameterProperties ParameterProperties
+	RequestSchema            dstruct.DynamicStructModifier
+	ResponseSchema           dstruct.DynamicStructModifier
 }
 
-type RouteProperties map[Route]RequestParameterProperty
+type RouteProperties map[Route]RouteProperty
