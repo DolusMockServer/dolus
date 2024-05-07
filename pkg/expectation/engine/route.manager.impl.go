@@ -50,3 +50,7 @@ func (r *RouteManagerImpl) GetRoutes() []schema.Route {
 func (r *RouteManagerImpl) GetRouteProperty(route schema.Route) *schema.RouteProperty {
 	return r.routeProperties[route]
 }
+
+func (r *RouteManagerImpl) GetRouteProperties() map[schema.Route]*schema.RouteProperty {
+	return r.routeProperties
+}

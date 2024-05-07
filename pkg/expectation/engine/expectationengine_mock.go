@@ -6,7 +6,6 @@ import (
 	http "net/http"
 
 	expectation "github.com/DolusMockServer/dolus/pkg/expectation"
-	dstruct "github.com/MartinSimango/dstruct"
 
 	mock "github.com/stretchr/testify/mock"
 
@@ -26,17 +25,17 @@ func (_m *ExpectationEngineMock) EXPECT() *ExpectationEngineMock_Expecter {
 	return &ExpectationEngineMock_Expecter{mock: &_m.Mock}
 }
 
-// AddExpectation provides a mock function with given fields: _a0, validateExpectationSchema, expectationType
-func (_m *ExpectationEngineMock) AddExpectation(_a0 expectation.Expectation, validateExpectationSchema bool, expectationType expectation.ExpectationType) error {
-	ret := _m.Called(_a0, validateExpectationSchema, expectationType)
+// AddExpectation provides a mock function with given fields: _a0, validateExpectationSchema
+func (_m *ExpectationEngineMock) AddExpectation(_a0 expectation.Expectation, validateExpectationSchema bool) error {
+	ret := _m.Called(_a0, validateExpectationSchema)
 
 	if len(ret) == 0 {
 		panic("no return value specified for AddExpectation")
 	}
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(expectation.Expectation, bool, expectation.ExpectationType) error); ok {
-		r0 = rf(_a0, validateExpectationSchema, expectationType)
+	if rf, ok := ret.Get(0).(func(expectation.Expectation, bool) error); ok {
+		r0 = rf(_a0, validateExpectationSchema)
 	} else {
 		r0 = ret.Error(0)
 	}
@@ -52,14 +51,13 @@ type ExpectationEngineMock_AddExpectation_Call struct {
 // AddExpectation is a helper method to define mock.On call
 //   - _a0 expectation.Expectation
 //   - validateExpectationSchema bool
-//   - expectationType expectation.ExpectationType
-func (_e *ExpectationEngineMock_Expecter) AddExpectation(_a0 interface{}, validateExpectationSchema interface{}, expectationType interface{}) *ExpectationEngineMock_AddExpectation_Call {
-	return &ExpectationEngineMock_AddExpectation_Call{Call: _e.mock.On("AddExpectation", _a0, validateExpectationSchema, expectationType)}
+func (_e *ExpectationEngineMock_Expecter) AddExpectation(_a0 interface{}, validateExpectationSchema interface{}) *ExpectationEngineMock_AddExpectation_Call {
+	return &ExpectationEngineMock_AddExpectation_Call{Call: _e.mock.On("AddExpectation", _a0, validateExpectationSchema)}
 }
 
-func (_c *ExpectationEngineMock_AddExpectation_Call) Run(run func(_a0 expectation.Expectation, validateExpectationSchema bool, expectationType expectation.ExpectationType)) *ExpectationEngineMock_AddExpectation_Call {
+func (_c *ExpectationEngineMock_AddExpectation_Call) Run(run func(_a0 expectation.Expectation, validateExpectationSchema bool)) *ExpectationEngineMock_AddExpectation_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(expectation.Expectation), args[1].(bool), args[2].(expectation.ExpectationType))
+		run(args[0].(expectation.Expectation), args[1].(bool))
 	})
 	return _c
 }
@@ -69,207 +67,22 @@ func (_c *ExpectationEngineMock_AddExpectation_Call) Return(_a0 error) *Expectat
 	return _c
 }
 
-func (_c *ExpectationEngineMock_AddExpectation_Call) RunAndReturn(run func(expectation.Expectation, bool, expectation.ExpectationType) error) *ExpectationEngineMock_AddExpectation_Call {
+func (_c *ExpectationEngineMock_AddExpectation_Call) RunAndReturn(run func(expectation.Expectation, bool) error) *ExpectationEngineMock_AddExpectation_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
-// AddResponseSchemaForRoute provides a mock function with given fields: route, responseSchema
-func (_m *ExpectationEngineMock) AddResponseSchemaForRoute(route schema.Route, responseSchema dstruct.DynamicStructModifier) error {
-	ret := _m.Called(route, responseSchema)
+// GetExpectations provides a mock function with given fields: expectationType, path, method
+func (_m *ExpectationEngineMock) GetExpectations(expectationType *expectation.ExpectationType, path *string, method *string) []expectation.Expectation {
+	ret := _m.Called(expectationType, path, method)
 
 	if len(ret) == 0 {
-		panic("no return value specified for AddResponseSchemaForRoute")
-	}
-
-	var r0 error
-	if rf, ok := ret.Get(0).(func(schema.Route, dstruct.DynamicStructModifier) error); ok {
-		r0 = rf(route, responseSchema)
-	} else {
-		r0 = ret.Error(0)
-	}
-
-	return r0
-}
-
-// ExpectationEngineMock_AddResponseSchemaForRoute_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'AddResponseSchemaForRoute'
-type ExpectationEngineMock_AddResponseSchemaForRoute_Call struct {
-	*mock.Call
-}
-
-// AddResponseSchemaForRoute is a helper method to define mock.On call
-//   - route schema.Route
-//   - responseSchema dstruct.DynamicStructModifier
-func (_e *ExpectationEngineMock_Expecter) AddResponseSchemaForRoute(route interface{}, responseSchema interface{}) *ExpectationEngineMock_AddResponseSchemaForRoute_Call {
-	return &ExpectationEngineMock_AddResponseSchemaForRoute_Call{Call: _e.mock.On("AddResponseSchemaForRoute", route, responseSchema)}
-}
-
-func (_c *ExpectationEngineMock_AddResponseSchemaForRoute_Call) Run(run func(route schema.Route, responseSchema dstruct.DynamicStructModifier)) *ExpectationEngineMock_AddResponseSchemaForRoute_Call {
-	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(schema.Route), args[1].(dstruct.DynamicStructModifier))
-	})
-	return _c
-}
-
-func (_c *ExpectationEngineMock_AddResponseSchemaForRoute_Call) Return(_a0 error) *ExpectationEngineMock_AddResponseSchemaForRoute_Call {
-	_c.Call.Return(_a0)
-	return _c
-}
-
-func (_c *ExpectationEngineMock_AddResponseSchemaForRoute_Call) RunAndReturn(run func(schema.Route, dstruct.DynamicStructModifier) error) *ExpectationEngineMock_AddResponseSchemaForRoute_Call {
-	_c.Call.Return(run)
-	return _c
-}
-
-// AddRoute provides a mock function with given fields: route
-func (_m *ExpectationEngineMock) AddRoute(route schema.Route) error {
-	ret := _m.Called(route)
-
-	if len(ret) == 0 {
-		panic("no return value specified for AddRoute")
-	}
-
-	var r0 error
-	if rf, ok := ret.Get(0).(func(schema.Route) error); ok {
-		r0 = rf(route)
-	} else {
-		r0 = ret.Error(0)
-	}
-
-	return r0
-}
-
-// ExpectationEngineMock_AddRoute_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'AddRoute'
-type ExpectationEngineMock_AddRoute_Call struct {
-	*mock.Call
-}
-
-// AddRoute is a helper method to define mock.On call
-//   - route schema.Route
-func (_e *ExpectationEngineMock_Expecter) AddRoute(route interface{}) *ExpectationEngineMock_AddRoute_Call {
-	return &ExpectationEngineMock_AddRoute_Call{Call: _e.mock.On("AddRoute", route)}
-}
-
-func (_c *ExpectationEngineMock_AddRoute_Call) Run(run func(route schema.Route)) *ExpectationEngineMock_AddRoute_Call {
-	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(schema.Route))
-	})
-	return _c
-}
-
-func (_c *ExpectationEngineMock_AddRoute_Call) Return(_a0 error) *ExpectationEngineMock_AddRoute_Call {
-	_c.Call.Return(_a0)
-	return _c
-}
-
-func (_c *ExpectationEngineMock_AddRoute_Call) RunAndReturn(run func(schema.Route) error) *ExpectationEngineMock_AddRoute_Call {
-	_c.Call.Return(run)
-	return _c
-}
-
-// GetAllExpectations provides a mock function with given fields:
-func (_m *ExpectationEngineMock) GetAllExpectations() map[schema.Route][]expectation.Expectation {
-	ret := _m.Called()
-
-	if len(ret) == 0 {
-		panic("no return value specified for GetAllExpectations")
-	}
-
-	var r0 map[schema.Route][]expectation.Expectation
-	if rf, ok := ret.Get(0).(func() map[schema.Route][]expectation.Expectation); ok {
-		r0 = rf()
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(map[schema.Route][]expectation.Expectation)
-		}
-	}
-
-	return r0
-}
-
-// ExpectationEngineMock_GetAllExpectations_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetAllExpectations'
-type ExpectationEngineMock_GetAllExpectations_Call struct {
-	*mock.Call
-}
-
-// GetAllExpectations is a helper method to define mock.On call
-func (_e *ExpectationEngineMock_Expecter) GetAllExpectations() *ExpectationEngineMock_GetAllExpectations_Call {
-	return &ExpectationEngineMock_GetAllExpectations_Call{Call: _e.mock.On("GetAllExpectations")}
-}
-
-func (_c *ExpectationEngineMock_GetAllExpectations_Call) Run(run func()) *ExpectationEngineMock_GetAllExpectations_Call {
-	_c.Call.Run(func(args mock.Arguments) {
-		run()
-	})
-	return _c
-}
-
-func (_c *ExpectationEngineMock_GetAllExpectations_Call) Return(_a0 map[schema.Route][]expectation.Expectation) *ExpectationEngineMock_GetAllExpectations_Call {
-	_c.Call.Return(_a0)
-	return _c
-}
-
-func (_c *ExpectationEngineMock_GetAllExpectations_Call) RunAndReturn(run func() map[schema.Route][]expectation.Expectation) *ExpectationEngineMock_GetAllExpectations_Call {
-	_c.Call.Return(run)
-	return _c
-}
-
-// GetCueExpectations provides a mock function with given fields:
-func (_m *ExpectationEngineMock) GetCueExpectations() expectation.Expectations {
-	ret := _m.Called()
-
-	if len(ret) == 0 {
-		panic("no return value specified for GetCueExpectations")
-	}
-
-	var r0 expectation.Expectations
-	if rf, ok := ret.Get(0).(func() expectation.Expectations); ok {
-		r0 = rf()
-	} else {
-		r0 = ret.Get(0).(expectation.Expectations)
-	}
-
-	return r0
-}
-
-// ExpectationEngineMock_GetCueExpectations_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetCueExpectations'
-type ExpectationEngineMock_GetCueExpectations_Call struct {
-	*mock.Call
-}
-
-// GetCueExpectations is a helper method to define mock.On call
-func (_e *ExpectationEngineMock_Expecter) GetCueExpectations() *ExpectationEngineMock_GetCueExpectations_Call {
-	return &ExpectationEngineMock_GetCueExpectations_Call{Call: _e.mock.On("GetCueExpectations")}
-}
-
-func (_c *ExpectationEngineMock_GetCueExpectations_Call) Run(run func()) *ExpectationEngineMock_GetCueExpectations_Call {
-	_c.Call.Run(func(args mock.Arguments) {
-		run()
-	})
-	return _c
-}
-
-func (_c *ExpectationEngineMock_GetCueExpectations_Call) Return(_a0 expectation.Expectations) *ExpectationEngineMock_GetCueExpectations_Call {
-	_c.Call.Return(_a0)
-	return _c
-}
-
-func (_c *ExpectationEngineMock_GetCueExpectations_Call) RunAndReturn(run func() expectation.Expectations) *ExpectationEngineMock_GetCueExpectations_Call {
-	_c.Call.Return(run)
-	return _c
-}
-
-// GetExpectation provides a mock function with given fields: route
-func (_m *ExpectationEngineMock) GetExpectation(route schema.Route) []expectation.Expectation {
-	ret := _m.Called(route)
-
-	if len(ret) == 0 {
-		panic("no return value specified for GetExpectation")
+		panic("no return value specified for GetExpectations")
 	}
 
 	var r0 []expectation.Expectation
-	if rf, ok := ret.Get(0).(func(schema.Route) []expectation.Expectation); ok {
-		r0 = rf(route)
+	if rf, ok := ret.Get(0).(func(*expectation.ExpectationType, *string, *string) []expectation.Expectation); ok {
+		r0 = rf(expectationType, path, method)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).([]expectation.Expectation)
@@ -279,84 +92,39 @@ func (_m *ExpectationEngineMock) GetExpectation(route schema.Route) []expectatio
 	return r0
 }
 
-// ExpectationEngineMock_GetExpectation_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetExpectation'
-type ExpectationEngineMock_GetExpectation_Call struct {
+// ExpectationEngineMock_GetExpectations_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetExpectations'
+type ExpectationEngineMock_GetExpectations_Call struct {
 	*mock.Call
 }
 
-// GetExpectation is a helper method to define mock.On call
-//   - route schema.Route
-func (_e *ExpectationEngineMock_Expecter) GetExpectation(route interface{}) *ExpectationEngineMock_GetExpectation_Call {
-	return &ExpectationEngineMock_GetExpectation_Call{Call: _e.mock.On("GetExpectation", route)}
+// GetExpectations is a helper method to define mock.On call
+//   - expectationType *expectation.ExpectationType
+//   - path *string
+//   - method *string
+func (_e *ExpectationEngineMock_Expecter) GetExpectations(expectationType interface{}, path interface{}, method interface{}) *ExpectationEngineMock_GetExpectations_Call {
+	return &ExpectationEngineMock_GetExpectations_Call{Call: _e.mock.On("GetExpectations", expectationType, path, method)}
 }
 
-func (_c *ExpectationEngineMock_GetExpectation_Call) Run(run func(route schema.Route)) *ExpectationEngineMock_GetExpectation_Call {
+func (_c *ExpectationEngineMock_GetExpectations_Call) Run(run func(expectationType *expectation.ExpectationType, path *string, method *string)) *ExpectationEngineMock_GetExpectations_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(schema.Route))
+		run(args[0].(*expectation.ExpectationType), args[1].(*string), args[2].(*string))
 	})
 	return _c
 }
 
-func (_c *ExpectationEngineMock_GetExpectation_Call) Return(_a0 []expectation.Expectation) *ExpectationEngineMock_GetExpectation_Call {
+func (_c *ExpectationEngineMock_GetExpectations_Call) Return(_a0 []expectation.Expectation) *ExpectationEngineMock_GetExpectations_Call {
 	_c.Call.Return(_a0)
 	return _c
 }
 
-func (_c *ExpectationEngineMock_GetExpectation_Call) RunAndReturn(run func(schema.Route) []expectation.Expectation) *ExpectationEngineMock_GetExpectation_Call {
+func (_c *ExpectationEngineMock_GetExpectations_Call) RunAndReturn(run func(*expectation.ExpectationType, *string, *string) []expectation.Expectation) *ExpectationEngineMock_GetExpectations_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
-// GetExpectationRoutes provides a mock function with given fields:
-func (_m *ExpectationEngineMock) GetExpectationRoutes() []schema.Route {
-	ret := _m.Called()
-
-	if len(ret) == 0 {
-		panic("no return value specified for GetExpectationRoutes")
-	}
-
-	var r0 []schema.Route
-	if rf, ok := ret.Get(0).(func() []schema.Route); ok {
-		r0 = rf()
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).([]schema.Route)
-		}
-	}
-
-	return r0
-}
-
-// ExpectationEngineMock_GetExpectationRoutes_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetExpectationRoutes'
-type ExpectationEngineMock_GetExpectationRoutes_Call struct {
-	*mock.Call
-}
-
-// GetExpectationRoutes is a helper method to define mock.On call
-func (_e *ExpectationEngineMock_Expecter) GetExpectationRoutes() *ExpectationEngineMock_GetExpectationRoutes_Call {
-	return &ExpectationEngineMock_GetExpectationRoutes_Call{Call: _e.mock.On("GetExpectationRoutes")}
-}
-
-func (_c *ExpectationEngineMock_GetExpectationRoutes_Call) Run(run func()) *ExpectationEngineMock_GetExpectationRoutes_Call {
-	_c.Call.Run(func(args mock.Arguments) {
-		run()
-	})
-	return _c
-}
-
-func (_c *ExpectationEngineMock_GetExpectationRoutes_Call) Return(_a0 []schema.Route) *ExpectationEngineMock_GetExpectationRoutes_Call {
-	_c.Call.Return(_a0)
-	return _c
-}
-
-func (_c *ExpectationEngineMock_GetExpectationRoutes_Call) RunAndReturn(run func() []schema.Route) *ExpectationEngineMock_GetExpectationRoutes_Call {
-	_c.Call.Return(run)
-	return _c
-}
-
-// GetResponseForRequest provides a mock function with given fields: request, reqParam, path
-func (_m *ExpectationEngineMock) GetResponseForRequest(request *http.Request, reqParam schema.RequestParameters, path string) (*expectation.Response, error) {
-	ret := _m.Called(request, reqParam, path)
+// GetResponseForRequest provides a mock function with given fields: request, reqParams, path
+func (_m *ExpectationEngineMock) GetResponseForRequest(request *http.Request, reqParams schema.RequestParameters, path string) (*expectation.Response, error) {
+	ret := _m.Called(request, reqParams, path)
 
 	if len(ret) == 0 {
 		panic("no return value specified for GetResponseForRequest")
@@ -365,10 +133,10 @@ func (_m *ExpectationEngineMock) GetResponseForRequest(request *http.Request, re
 	var r0 *expectation.Response
 	var r1 error
 	if rf, ok := ret.Get(0).(func(*http.Request, schema.RequestParameters, string) (*expectation.Response, error)); ok {
-		return rf(request, reqParam, path)
+		return rf(request, reqParams, path)
 	}
 	if rf, ok := ret.Get(0).(func(*http.Request, schema.RequestParameters, string) *expectation.Response); ok {
-		r0 = rf(request, reqParam, path)
+		r0 = rf(request, reqParams, path)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(*expectation.Response)
@@ -376,7 +144,7 @@ func (_m *ExpectationEngineMock) GetResponseForRequest(request *http.Request, re
 	}
 
 	if rf, ok := ret.Get(1).(func(*http.Request, schema.RequestParameters, string) error); ok {
-		r1 = rf(request, reqParam, path)
+		r1 = rf(request, reqParams, path)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -391,13 +159,13 @@ type ExpectationEngineMock_GetResponseForRequest_Call struct {
 
 // GetResponseForRequest is a helper method to define mock.On call
 //   - request *http.Request
-//   - reqParam schema.RequestParameters
+//   - reqParams schema.RequestParameters
 //   - path string
-func (_e *ExpectationEngineMock_Expecter) GetResponseForRequest(request interface{}, reqParam interface{}, path interface{}) *ExpectationEngineMock_GetResponseForRequest_Call {
-	return &ExpectationEngineMock_GetResponseForRequest_Call{Call: _e.mock.On("GetResponseForRequest", request, reqParam, path)}
+func (_e *ExpectationEngineMock_Expecter) GetResponseForRequest(request interface{}, reqParams interface{}, path interface{}) *ExpectationEngineMock_GetResponseForRequest_Call {
+	return &ExpectationEngineMock_GetResponseForRequest_Call{Call: _e.mock.On("GetResponseForRequest", request, reqParams, path)}
 }
 
-func (_c *ExpectationEngineMock_GetResponseForRequest_Call) Run(run func(request *http.Request, reqParam schema.RequestParameters, path string)) *ExpectationEngineMock_GetResponseForRequest_Call {
+func (_c *ExpectationEngineMock_GetResponseForRequest_Call) Run(run func(request *http.Request, reqParams schema.RequestParameters, path string)) *ExpectationEngineMock_GetResponseForRequest_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		run(args[0].(*http.Request), args[1].(schema.RequestParameters), args[2].(string))
 	})
@@ -414,82 +182,82 @@ func (_c *ExpectationEngineMock_GetResponseForRequest_Call) RunAndReturn(run fun
 	return _c
 }
 
-// GetRoutes provides a mock function with given fields:
-func (_m *ExpectationEngineMock) GetRoutes() []schema.Route {
+// GetRouteManager provides a mock function with given fields:
+func (_m *ExpectationEngineMock) GetRouteManager() RouteManager {
 	ret := _m.Called()
 
 	if len(ret) == 0 {
-		panic("no return value specified for GetRoutes")
+		panic("no return value specified for GetRouteManager")
 	}
 
-	var r0 []schema.Route
-	if rf, ok := ret.Get(0).(func() []schema.Route); ok {
+	var r0 RouteManager
+	if rf, ok := ret.Get(0).(func() RouteManager); ok {
 		r0 = rf()
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).([]schema.Route)
+			r0 = ret.Get(0).(RouteManager)
 		}
 	}
 
 	return r0
 }
 
-// ExpectationEngineMock_GetRoutes_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetRoutes'
-type ExpectationEngineMock_GetRoutes_Call struct {
+// ExpectationEngineMock_GetRouteManager_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetRouteManager'
+type ExpectationEngineMock_GetRouteManager_Call struct {
 	*mock.Call
 }
 
-// GetRoutes is a helper method to define mock.On call
-func (_e *ExpectationEngineMock_Expecter) GetRoutes() *ExpectationEngineMock_GetRoutes_Call {
-	return &ExpectationEngineMock_GetRoutes_Call{Call: _e.mock.On("GetRoutes")}
+// GetRouteManager is a helper method to define mock.On call
+func (_e *ExpectationEngineMock_Expecter) GetRouteManager() *ExpectationEngineMock_GetRouteManager_Call {
+	return &ExpectationEngineMock_GetRouteManager_Call{Call: _e.mock.On("GetRouteManager")}
 }
 
-func (_c *ExpectationEngineMock_GetRoutes_Call) Run(run func()) *ExpectationEngineMock_GetRoutes_Call {
+func (_c *ExpectationEngineMock_GetRouteManager_Call) Run(run func()) *ExpectationEngineMock_GetRouteManager_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		run()
 	})
 	return _c
 }
 
-func (_c *ExpectationEngineMock_GetRoutes_Call) Return(_a0 []schema.Route) *ExpectationEngineMock_GetRoutes_Call {
+func (_c *ExpectationEngineMock_GetRouteManager_Call) Return(_a0 RouteManager) *ExpectationEngineMock_GetRouteManager_Call {
 	_c.Call.Return(_a0)
 	return _c
 }
 
-func (_c *ExpectationEngineMock_GetRoutes_Call) RunAndReturn(run func() []schema.Route) *ExpectationEngineMock_GetRoutes_Call {
+func (_c *ExpectationEngineMock_GetRouteManager_Call) RunAndReturn(run func() RouteManager) *ExpectationEngineMock_GetRouteManager_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
-// SetRouteProperties provides a mock function with given fields: routeProperties
-func (_m *ExpectationEngineMock) SetRouteProperties(routeProperties schema.RouteProperties) {
-	_m.Called(routeProperties)
+// SetRouteManager provides a mock function with given fields: routeManager
+func (_m *ExpectationEngineMock) SetRouteManager(routeManager RouteManager) {
+	_m.Called(routeManager)
 }
 
-// ExpectationEngineMock_SetRouteProperties_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'SetRouteProperties'
-type ExpectationEngineMock_SetRouteProperties_Call struct {
+// ExpectationEngineMock_SetRouteManager_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'SetRouteManager'
+type ExpectationEngineMock_SetRouteManager_Call struct {
 	*mock.Call
 }
 
-// SetRouteProperties is a helper method to define mock.On call
-//   - routeProperties schema.RouteProperties
-func (_e *ExpectationEngineMock_Expecter) SetRouteProperties(routeProperties interface{}) *ExpectationEngineMock_SetRouteProperties_Call {
-	return &ExpectationEngineMock_SetRouteProperties_Call{Call: _e.mock.On("SetRouteProperties", routeProperties)}
+// SetRouteManager is a helper method to define mock.On call
+//   - routeManager RouteManager
+func (_e *ExpectationEngineMock_Expecter) SetRouteManager(routeManager interface{}) *ExpectationEngineMock_SetRouteManager_Call {
+	return &ExpectationEngineMock_SetRouteManager_Call{Call: _e.mock.On("SetRouteManager", routeManager)}
 }
 
-func (_c *ExpectationEngineMock_SetRouteProperties_Call) Run(run func(routeProperties schema.RouteProperties)) *ExpectationEngineMock_SetRouteProperties_Call {
+func (_c *ExpectationEngineMock_SetRouteManager_Call) Run(run func(routeManager RouteManager)) *ExpectationEngineMock_SetRouteManager_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(schema.RouteProperties))
+		run(args[0].(RouteManager))
 	})
 	return _c
 }
 
-func (_c *ExpectationEngineMock_SetRouteProperties_Call) Return() *ExpectationEngineMock_SetRouteProperties_Call {
+func (_c *ExpectationEngineMock_SetRouteManager_Call) Return() *ExpectationEngineMock_SetRouteManager_Call {
 	_c.Call.Return()
 	return _c
 }
 
-func (_c *ExpectationEngineMock_SetRouteProperties_Call) RunAndReturn(run func(schema.RouteProperties)) *ExpectationEngineMock_SetRouteProperties_Call {
+func (_c *ExpectationEngineMock_SetRouteManager_Call) RunAndReturn(run func(RouteManager)) *ExpectationEngineMock_SetRouteManager_Call {
 	_c.Call.Return(run)
 	return _c
 }

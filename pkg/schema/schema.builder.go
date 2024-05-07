@@ -138,8 +138,8 @@ func buildSchemaFromMap(_map any) (any, SchemaInfo) {
 	dsb := dstruct.NewBuilder()
 	m := _map.(map[string]interface{})
 	for k, v := range m {
-		if m["$dolus"] != nil {
-			task := m["$dolus"].(map[string]interface{})["task"].(string)
+		if m["$dolusTask"] != nil {
+			task := m["$dolusTask"].(string)
 			return buildSchemaFromDolusTask(generator.TaskName(task), m)
 		}
 

@@ -39,11 +39,15 @@ type ParameterProperty struct {
 
 type ParameterProperties map[string]*ParameterProperty
 
-type RouteProperty struct {
+type RequestParameterProperty struct {
 	PathParameterProperties  ParameterProperties
 	QueryParameterProperties ParameterProperties
-	RequestSchema            dstruct.DynamicStructModifier
-	ResponseSchema           dstruct.DynamicStructModifier
 }
 
-type RouteProperties map[Route]RouteProperty
+type RouteProperty struct {
+	RequestParameterProperty
+	RequestSchema  dstruct.DynamicStructModifier
+	ResponseSchema dstruct.DynamicStructModifier
+}
+
+// type RouteProperties map[Route]RouteProperty

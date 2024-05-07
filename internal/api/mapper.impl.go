@@ -85,11 +85,11 @@ func getRequestAndResponseBody(
 ) (*map[string]any, *map[string]any, error) {
 	requestBody, err := anyToMapOfKeyStringValueAny(expectation.Request.Body)
 	if err != nil {
-		return nil, nil, err
+		return nil, nil, fmt.Errorf("failed to convert request body to map[string]interface{}: %w", err)
 	}
 	responseBody, err := anyToMapOfKeyStringValueAny(expectation.Response.Body)
 	if err != nil {
-		return nil, nil, err
+		return nil, nil, fmt.Errorf("failed to convert response body to map[string]interface{}: %w", err)
 	}
 	return requestBody, responseBody, nil
 }
@@ -110,7 +110,7 @@ func apiCallbackToCallback(apiCallback *Callback) (*expectation.Callback, error)
 	if apiCallback != nil {
 		callbackRequestBody, err := anyToMapOfKeyStringValueAny(apiCallback.RequestBody)
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("failed to convert callback request body to map[string]interface{}: %w", err)
 		}
 		return &expectation.Callback{
 			Method:  apiCallback.HttpMethod,
@@ -126,7 +126,7 @@ func callbackToApiCallback(callback *expectation.Callback) (*Callback, error) {
 	if callback != nil {
 		callbackRequestBody, err := anyToMapOfKeyStringValueAny(callback.Request)
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("failed to convert callback request body to map[string]interface{}: %w", err)
 		}
 		return &Callback{
 			HttpMethod:  string(callback.Method),

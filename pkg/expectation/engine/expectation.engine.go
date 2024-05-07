@@ -3,8 +3,6 @@ package engine
 import (
 	"net/http"
 
-	"github.com/MartinSimango/dstruct"
-
 	"github.com/DolusMockServer/dolus/pkg/expectation"
 	"github.com/DolusMockServer/dolus/pkg/schema"
 )
@@ -12,26 +10,21 @@ import (
 type ExpectationEngine interface {
 	// AddExpectation adds an expectation to the engine
 	AddExpectation(expectation expectation.Expectation,
-		validateExpectationSchema bool,
-		expectationType expectation.ExpectationType) error
+		validateExpectationSchema bool) error
 
-	// AddRoute registers a new route with the engine. If the route already exists, it will be overwritten.
-	AddRoute(route schema.Route) error
+	// GetExpectations returns the expectations for the given expectation type. Expectations can be filtered by path, method and expectation type.
+	GetExpectations(expectationType *expectation.ExpectationType, path *string, method *string) []expectation.Expectation
 
-	// AddResponseSchemaForRoute adds a schema for a route's response body. If the route has not been registered, it will return an error.
-	AddResponseSchema(
-		route schema.Route,
-		responseSchema dstruct.DynamicStructModifier,
-	) error
-	GetAllExpectations() map[schema.Route][]expectation.Expectation
-	GetExpectation(route schema.Route) []expectation.Expectation
+	// GetResponseForRequest returns the response for the given request
 	GetResponseForRequest(
 		request *http.Request,
-		reqParam schema.RequestParameters,
+		reqParams schema.RequestParameters,
 		path string,
 	) (*expectation.Response, error)
-	GetCueExpectations() expectation.Expectations
-	GetExpectationRoutes() []schema.Route
-	SetRouteProperties(routeProperties schema.RouteProperties)
-	GetRoutes() []schema.Route
+
+	// SetRouteManager sets the route manager for the engine
+	SetRouteManager(routeManager RouteManager)
+
+	// GetRouteManager returns the route manager for the engine
+	GetRouteManager() RouteManager
 }

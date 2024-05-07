@@ -99,33 +99,32 @@ func (d *Server) initHttpServer() {
 	api.RegisterHandlers(d.EchoServer, d.dolusApi)
 }
 
-func (d *Server) addRoutes(route schema.Route) {
-	if err := d.expectationEngine.AddRoute(route); err != nil {
-		fmt.Printf("error adding route: %s\n", err.Error())
+func (d *Server) addHandlersForRoutes(routes []schema.Route) {
+	for _, route := range routes {
+		d.EchoServer.Router().Add(route.Method, route.Path, func(ctx echo.Context) error {
+			logger.Log.Infof(
+				"Received request for path %s and method %s",
+				ctx.Request().URL.RequestURI(),
+				route.Method,
+			)
+
+			response, err := d.expectationEngine.GetResponseForRequest(
+				ctx.Request(),
+				d.schemaMapper.MapToRequestParameters(ctx),
+				route.Path,
+			)
+			if err != nil {
+				return ctx.JSON(500, api.GeneralError{
+					Path:     ctx.Request().URL.Path,
+					Method:   route.Method,
+					ErrorMsg: err.Error(),
+				})
+			}
+
+			response.GeneratedBody.GenerateAndUpdate()
+			return ctx.JSON(response.Status, response.GeneratedBody.Instance())
+		})
 	}
-	d.EchoServer.Router().Add(route.Method, route.Path, func(ctx echo.Context) error {
-		logger.Log.Infof(
-			"Received request for path %s and method %s",
-			ctx.Request().URL.RequestURI(),
-			route.Method,
-		)
-
-		response, err := d.expectationEngine.GetResponseForRequest(
-			ctx.Request(),
-			d.schemaMapper.MapToRequestParameters(ctx),
-			route.Path,
-		)
-		if err != nil {
-			return ctx.JSON(500, api.GeneralError{
-				Path:     ctx.Request().URL.Path,
-				Method:   route.Method,
-				ErrorMsg: err.Error(),
-			})
-		}
-
-		response.GeneratedBody.GenerateAndUpdate()
-		return ctx.JSON(response.Status, response.GeneratedBody.Instance())
-	})
 }
 
 func (d *Server) loadOpenAPISpecExpectations() error {
@@ -133,19 +132,15 @@ func (d *Server) loadOpenAPISpecExpectations() error {
 	if err != nil {
 		return err
 	}
-	d.expectationEngine.SetRouteProperties(output.RouteProperties)
+
+	d.expectationEngine.SetRouteManager(output.RouteManager)
+	d.addHandlersForRoutes(output.RouteManager.GetRoutes())
+
 	for _, e := range output.Expectations {
-		d.addRoutes(e.Request.Route())
-
-		d.expectationEngine.AddResponseSchema(
-			e.Request.Route(),
-			e.Response.GeneratedBody,
-		)
-
-		if err := d.expectationEngine.AddExpectation(e, false, expectation.Default); err != nil {
+		e.ExpectationType = expectation.Default
+		if err := d.expectationEngine.AddExpectation(e, false); err != nil {
 			fmt.Printf("Error adding expectation:\n%s\n", err)
 		}
-
 	}
 
 	return nil
@@ -157,7 +152,8 @@ func (d *Server) loadCueExpectations() error {
 		return err
 	}
 	for _, e := range output.Expectations {
-		if err := d.expectationEngine.AddExpectation(e, true, expectation.Custom); err != nil {
+		e.ExpectationType = expectation.Custom
+		if err := d.expectationEngine.AddExpectation(e, true); err != nil {
 			fmt.Printf("Error adding expectation:\n%s\n", err)
 		}
 	}

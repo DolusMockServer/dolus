@@ -30,14 +30,40 @@ func NewDolusApi(expectationEngine engine.ExpectationEngine,
 // GetV1DolusExpectations implements server.ServerInterface.
 func (d *DolusApiImpl) GetExpectations(ctx echo.Context, params GetExpectationsParams) error {
 
-	d.ExpectationEngine.GetExpectations()
+	var expectationType *expectation.ExpectationType
+	var method *string
+	var ok bool
+
+	expectationType = new(expectation.ExpectationType)
+
+	*expectationType = expectation.Custom
+
+	// if params.ExpectationType != nil {
+	// 	expectationType = new(expectation.ExpectationType)
+	// 	// *expectationType, ok = any(*params.ExpectationType).(expectation.ExpectationType)
+	// 	// if !ok {
+	// 	// 	return ctx.JSON(http.StatusBadRequest, BadRequest{
+	// 	// 		Message: fmt.Sprintf("invalid expectation type: %s", *params.ExpectationType),
+	// 	// 	})
+	// 	// }
+	// 	*expectationType = expectation.Custom
+	// }
+	if params.Method != nil {
+		method = new(string)
+		*method, ok = any(*params.Method).(string)
+		if !ok {
+			return ctx.JSON(http.StatusBadRequest, BadRequest{
+				Message: fmt.Sprintf("invalid method: %s", *params.Method),
+			})
+		}
+	}
 
 	apiExpectations, err := d.Mapper.MapToApiExpectations(
-		d.ExpectationEngine.
-			GetCueExpectations().
-			Expectations)
+		d.ExpectationEngine.GetExpectations(expectationType, params.Path, method))
 	if err != nil {
-		return ctx.JSON(http.StatusInternalServerError, "Internal Server Error")
+		return ctx.JSON(http.StatusInternalServerError, InternalServerError{
+			Message: err.Error(),
+		})
 	}
 	return ctx.JSON(http.StatusOK,
 		apiExpectations)
@@ -46,7 +72,7 @@ func (d *DolusApiImpl) GetExpectations(ctx echo.Context, params GetExpectationsP
 // GetV1DolusRoutes implements server.ServerInterface.
 func (d *DolusApiImpl) GetRoutes(ctx echo.Context) error {
 	var serverRoutes []Route
-	for _, r := range d.ExpectationEngine.GetRoutes() {
+	for _, r := range d.ExpectationEngine.GetRouteManager().GetRoutes() {
 		serverRoutes = append(serverRoutes, Route{
 			Path:      r.Path,
 			Operation: r.Method,
@@ -61,16 +87,16 @@ func (d *DolusApiImpl) CreateExpectation(ctx echo.Context) error {
 	defer ctx.Request().Body.Close()
 	var apiExpectation Expectation
 	if err := ctx.Bind(&apiExpectation); err != nil {
-		fmt.Printf("ERROR: %s", err.Error())
 		return ctx.JSON(http.StatusBadRequest, fmt.Errorf("bad request: %s", err.Error()))
 	}
 
 	expct, err := d.Mapper.MapToExpectation(apiExpectation)
+	expct.ExpectationType = expectation.Custom
 	if err != nil {
 		return ctx.JSON(http.StatusBadRequest, fmt.Errorf("bad request: %s", err.Error()))
 	}
 
-	if err := d.ExpectationEngine.AddExpectation(*expct, true, expectation.Custom); err != nil {
+	if err := d.ExpectationEngine.AddExpectation(*expct, true); err != nil {
 		// TODO: depending on the error, return a different status code
 		return ctx.JSON(http.StatusInternalServerError, BadRequest{
 			Message: err.Error(),

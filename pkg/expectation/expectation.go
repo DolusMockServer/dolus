@@ -1,10 +1,10 @@
 package expectation
 
-type ExpectationType int
+type ExpectationType string
 
 const (
-	Default ExpectationType = iota
-	Custom
+	Default ExpectationType = "DEFAULT"
+	Custom  ExpectationType = "CUSTOM"
 )
 
 // // request matcher - used to match which requests this expectation should be applied to
@@ -28,6 +28,7 @@ type Expectation struct {
 	Response Response  `json:"response"`
 	Callback *Callback `json:"callback"`
 	// MatchRules MatchRules `json:"-"`
+	ExpectationType ExpectationType `json:"-"`
 }
 
 // type Rule[T any] struct {

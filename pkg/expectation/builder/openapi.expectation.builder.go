@@ -8,6 +8,7 @@ import (
 	"github.com/getkin/kin-openapi/openapi3"
 
 	"github.com/DolusMockServer/dolus/pkg/expectation"
+	"github.com/DolusMockServer/dolus/pkg/expectation/engine"
 	"github.com/DolusMockServer/dolus/pkg/expectation/loader"
 	"github.com/DolusMockServer/dolus/pkg/logger"
 	"github.com/DolusMockServer/dolus/pkg/schema"
@@ -66,15 +67,10 @@ func (oeb *OpenApiExpectationBuilder) buildExpectationsFromOpenApiSpec(
 	spec *loader.OpenAPISpecLoadType,
 ) *Output {
 	var expectations []expectation.Expectation
-	routeProperties := make(schema.RouteProperties)
+	routeManager := engine.NewRouteManager()
 	for path := range spec.Paths.Map() {
 		refinedPath := schema.PathFromOpenApiPath(path)
 		for method, operation := range spec.Paths.Map()[path].Operations() {
-
-			routeProperties[schema.Route{
-				Path:   refinedPath,
-				Method: method,
-			}] = getRequestParameterProperty(operation)
 
 			for code, ref := range operation.Responses.Map() {
 				if path != "/store/order/{orderId}/p" || code != "200" {
@@ -98,6 +94,15 @@ func (oeb *OpenApiExpectationBuilder) buildExpectationsFromOpenApiSpec(
 					&oeb.fieldGenerator,
 				)
 
+				routeManager.AddRoute(schema.Route{
+					Path:   refinedPath,
+					Method: method,
+				}, &schema.RouteProperty{
+					RequestParameterProperty: getRequestParameterProperty(operation),
+					RequestSchema:            nil,
+					ResponseSchema:           body,
+				})
+
 				expectations = append(expectations, expectation.Expectation{
 					Priority: 0,
 					Request: expectation.Request{
@@ -105,6 +110,7 @@ func (oeb *OpenApiExpectationBuilder) buildExpectationsFromOpenApiSpec(
 						Path:   refinedPath,
 						Method: method,
 					},
+
 					Response: expectation.Response{
 						Body:          body,
 						GeneratedBody: body,
@@ -116,7 +122,7 @@ func (oeb *OpenApiExpectationBuilder) buildExpectationsFromOpenApiSpec(
 		}
 	}
 	return &Output{
-		Expectations:    expectations,
-		RouteProperties: routeProperties,
+		Expectations: expectations,
+		RouteManager: routeManager,
 	}
 }

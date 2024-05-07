@@ -1,12 +1,12 @@
 package task 
 
 #GenRegex: {
-    $dolus: task: "GenRegex"
+    $dolusTask: "GenRegex"
     pattern: string
 }
 
 
 #GenUUID: {
-    $dolus: task: "GenUUID"
+    $dolusTask: "GenUUID"
 }
 

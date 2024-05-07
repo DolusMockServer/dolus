@@ -16,6 +16,8 @@ type RouteManager interface {
 	// GetRoutes returns all the routes registered with the manager.
 	GetRoutes() []schema.Route
 
+	GetRouteProperties() map[schema.Route]*schema.RouteProperty
+
 	// GetRouteProperty returns the route property for the given route.
 	GetRouteProperty(route schema.Route) *schema.RouteProperty
 
