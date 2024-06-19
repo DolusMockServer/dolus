@@ -3,12 +3,16 @@ package api
 import (
 	"fmt"
 	"net/http"
+	"net/url"
 
+	"github.com/MartinSimango/dstruct"
 	"github.com/labstack/echo/v4"
 
 	"github.com/DolusMockServer/dolus/pkg/expectation"
 	"github.com/DolusMockServer/dolus/pkg/expectation/engine"
+	"github.com/DolusMockServer/dolus/pkg/expectation/matcher"
 	"github.com/DolusMockServer/dolus/pkg/logger"
+	"github.com/DolusMockServer/dolus/pkg/schema"
 )
 
 type DolusApiImpl struct {
@@ -27,27 +31,22 @@ func NewDolusApi(expectationEngine engine.ExpectationEngine,
 	}
 }
 
-// GetV1DolusExpectations implements server.ServerInterface.
+// GetExpectations implements server.ServerInterface.
 func (d *DolusApiImpl) GetExpectations(ctx echo.Context, params GetExpectationsParams) error {
 
 	var expectationType *expectation.ExpectationType
 	var method *string
 	var ok bool
 
-	expectationType = new(expectation.ExpectationType)
-
-	*expectationType = expectation.Custom
-
-	// if params.ExpectationType != nil {
-	// 	expectationType = new(expectation.ExpectationType)
-	// 	// *expectationType, ok = any(*params.ExpectationType).(expectation.ExpectationType)
-	// 	// if !ok {
-	// 	// 	return ctx.JSON(http.StatusBadRequest, BadRequest{
-	// 	// 		Message: fmt.Sprintf("invalid expectation type: %s", *params.ExpectationType),
-	// 	// 	})
-	// 	// }
-	// 	*expectationType = expectation.Custom
-	// }
+	if params.ExpectationType != nil {
+		expectationType = new(expectation.ExpectationType)
+		*expectationType, ok = any(*params.ExpectationType).(expectation.ExpectationType)
+		if !ok {
+			return ctx.JSON(http.StatusBadRequest, BadRequest{
+				Message: fmt.Sprintf("invalid expectation type: %s", *params.ExpectationType),
+			})
+		}
+	}
 	if params.Method != nil {
 		method = new(string)
 		*method, ok = any(*params.Method).(string)
@@ -84,24 +83,39 @@ func (d *DolusApiImpl) GetRoutes(ctx echo.Context) error {
 
 // PostV1DolusExpectations implements server.ServerInterface.
 func (d *DolusApiImpl) CreateExpectation(ctx echo.Context) error {
+
 	defer ctx.Request().Body.Close()
 	var apiExpectation Expectation
+
 	if err := ctx.Bind(&apiExpectation); err != nil {
-		return ctx.JSON(http.StatusBadRequest, fmt.Errorf("bad request: %s", err.Error()))
+		echoError := err.(*echo.HTTPError)
+		return ctx.JSON(echoError.Code, BadRequest{
+			Message: echoError.Internal.Error(),
+		})
 	}
 
 	expct, err := d.Mapper.MapToExpectation(apiExpectation)
-	expct.ExpectationType = expectation.Custom
 	if err != nil {
-		return ctx.JSON(http.StatusBadRequest, fmt.Errorf("bad request: %s", err.Error()))
+		return ctx.JSON(http.StatusBadRequest, BadRequest{
+			Message: err.Error(),
+		})
 	}
 
+	expct.ExpectationType = expectation.Custom
+	if expct.Response.Body != (*map[string]interface{})(nil) {
+		expct.Response.GeneratedBody = dstruct.NewGeneratedStruct(schema.SchemaFromAny(expct.Response.Body))
+	}
+
+	// respsonse :=
+	// oeb.fieldGenerator.GenerationConfig.SetValueGenerationType(generator.UseDefaults)
+
+	// TODO: add this to function to a sharable place as it is duplicated
+	addQueryParameters(expct)
 	if err := d.ExpectationEngine.AddExpectation(*expct, true); err != nil {
 		// TODO: depending on the error, return a different status code
 		return ctx.JSON(http.StatusInternalServerError, BadRequest{
 			Message: err.Error(),
-		},
-		)
+		})
 	}
 	return ctx.JSON(http.StatusCreated, expct)
 }
@@ -119,4 +133,24 @@ func (*DolusApiImpl) GetLogs(ctx echo.Context, params GetLogsParams) error {
 	} else {
 		return ctx.String(http.StatusOK, logs)
 	}
+}
+
+func addQueryParameters(e *expectation.Expectation) error {
+	parsedURL, err := url.Parse(e.Request.Path)
+	if err != nil {
+		return fmt.Errorf("failed to add query parameters for expectation with path '%s': %w", e.Request.Path, err)
+
+	}
+	queryParams := parsedURL.Query()
+	if e.Request.Parameters == nil {
+		e.Request.Parameters = &expectation.RequestParameters{}
+	}
+	if e.Request.Parameters.Query == nil {
+		e.Request.Parameters.Query = make(map[string]any)
+	}
+	for k, v := range queryParams {
+		value := v
+		e.Request.Parameters.Query[k] = matcher.NewStringArrayMatcher(&value, "eq")
+	}
+	return nil
 }

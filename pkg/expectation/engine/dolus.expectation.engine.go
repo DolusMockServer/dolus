@@ -17,29 +17,11 @@ import (
 	"github.com/DolusMockServer/dolus/pkg/schema"
 )
 
-// /v1/order/2/p
-// /v1/order/2/p?a=2
-// /v1/order//
-
-// if multiple matches then check
-
 type DolusExpectationEngine struct {
-	cueExpectationsFiles  []string
 	expectationMatcherMap map[schema.Route][]expectation.Expectation // should be a priority queue and not just a list
 	expectations          []expectation.Expectation
 	GenerationConfig      generator.GenerationConfig
-	schemaMapper          schema.Mapper
 	routeManager          RouteManager
-}
-
-// SetRouteManager implements ExpectationEngine.
-func (e *DolusExpectationEngine) SetRouteManager(routeManager RouteManager) {
-	e.routeManager = routeManager
-}
-
-// GetRouteManager implements ExpectationEngine.
-func (e *DolusExpectationEngine) GetRouteManager() RouteManager {
-	return e.routeManager
 }
 
 var _ ExpectationEngine = &DolusExpectationEngine{}
@@ -145,6 +127,16 @@ func (e *DolusExpectationEngine) GetExpectations(expectationType *expectation.Ex
 
 }
 
+// SetRouteManager implements ExpectationEngine.
+func (e *DolusExpectationEngine) SetRouteManager(routeManager RouteManager) {
+	e.routeManager = routeManager
+}
+
+// GetRouteManager implements ExpectationEngine.
+func (e *DolusExpectationEngine) GetRouteManager() RouteManager {
+	return e.routeManager
+}
+
 // getMatchingResponseSchemaForRoute returns the response schema for the given route
 // get the response schema for the expectation if it has one
 func (e *DolusExpectationEngine) getResponseSchemaForExpectation(exp *expectation.Expectation) (dstruct.DynamicStructModifier, error) {
@@ -165,7 +157,7 @@ func (e *DolusExpectationEngine) getResponseSchemaForExpectation(exp *expectatio
 
 				}
 				// found the matching right path and operation now validate the request parameter
-
+				// TODO: only validate query parameters if not generic path
 				if err := validateRequestParameters(exp, routeProperty.RequestParameterProperty); err != nil {
 					return nil, err
 				}
@@ -316,7 +308,12 @@ func validateExpectationResponseSchema(
 	expect dstruct.DynamicStructModifier,
 	schema dstruct.DynamicStructModifier,
 ) (expectationFieldErrors []expectation.ExpectationFieldError) {
-	expectationFields := expect.GetFields()
+	var expectationFields dstruct.FieldData
+	if expect == nil {
+		expectationFields = make(dstruct.FieldData)
+	} else {
+		expectationFields = expect.GetFields()
+	}
 	for field, value := range schema.GetFields() {
 		schemaFieldType := value.GetType()
 		expectationFieldType := expectationFields[field].GetType()
@@ -363,7 +360,7 @@ func validateExpectationResponseSchema(
 
 	// check for extra fields
 	schemaFields := schema.GetFields()
-	for field := range expect.GetFields() {
+	for field := range expectationFields {
 		if schemaFields[field].GetFieldName() == "" {
 			// dstruct.ExtendStruct(expectation).RemoveField(field)
 			expectationFieldErrors = addFieldDoesNotExistError(field, expectationFieldErrors)
@@ -384,6 +381,7 @@ func (e *DolusExpectationEngine) getExpectationsForRequest(
 	return e.findExpectationMatches(pathTemplate, request, requestParameters)
 }
 
+// returns expectations for a specific route
 func (e *DolusExpectationEngine) findExpectationMatches(
 	requestPath string,
 	request *http.Request,

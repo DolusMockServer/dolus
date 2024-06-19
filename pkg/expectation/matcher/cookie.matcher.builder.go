@@ -23,6 +23,7 @@ func (b CookieMatcherBuilder) Create(field map[string]any) (Matcher[expectation.
 	return NewCookieMatcher(v, matchExpr), nil
 
 }
+
 func (b CookieMatcherBuilder) CreateFromArrayValue(value []any, matchExpr string) (Matcher[expectation.Cookie, http.Cookie], error) {
 	panic("Cannot create a CookieMatcher from an array value")
 }

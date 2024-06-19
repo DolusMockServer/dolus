@@ -1,6 +1,6 @@
 module github.com/DolusMockServer/dolus
 
-go 1.21.3
+go 1.22.1
 
 // replace
 

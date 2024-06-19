@@ -1,7 +1,9 @@
 package builder
 
 import (
+	"reflect"
 	"strconv"
+	"strings"
 
 	"github.com/MartinSimango/dstruct"
 	"github.com/MartinSimango/dstruct/generator"
@@ -110,9 +112,8 @@ func (oeb *OpenApiExpectationBuilder) buildExpectationsFromOpenApiSpec(
 						Path:   refinedPath,
 						Method: method,
 					},
-
 					Response: expectation.Response{
-						Body:          body,
+						Body:          structToMap(body),
 						GeneratedBody: body,
 						Status:        status,
 					},
@@ -125,4 +126,28 @@ func (oeb *OpenApiExpectationBuilder) buildExpectationsFromOpenApiSpec(
 		Expectations: expectations,
 		RouteManager: routeManager,
 	}
+}
+
+func structToMap(obj *dstruct.GeneratedStructImpl) map[string]interface{} {
+	result := make(map[string]interface{})
+
+	for k, v := range obj.GetFields() {
+		if strings.Contains(k, ".") {
+			continue
+		}
+		fieldValueKind := v.GetType().Kind()
+		var fieldValue interface{}
+
+		if fieldValueKind == reflect.Struct {
+			fieldValue = structToMap(dstruct.NewGeneratedStruct(v.GetValue()))
+		} else {
+			fieldValue = v.GetValue()
+
+		}
+
+		result[v.GetJsonName()] = fieldValue
+
+	}
+
+	return result
 }

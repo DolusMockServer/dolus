@@ -47,14 +47,16 @@ func (suite *DolusApiImplTestSuite) SetupTest() {
 	suite.api = NewDolusApi(suite.expectationEngine, suite.mapper)
 }
 
-func (suite *DolusApiImplTestSuite) TestGetV1DolusExpectations() {
+func (suite *DolusApiImplTestSuite) TestGetExpectations() {
 	suite.T().Run("should return 200 OK with expectations", func(t *testing.T) {
 		// Given
 		suite.SetupTest()
 		expectations := expectation.Expectations{
 			Expectations: []expectation.Expectation{},
 		}
-		suite.expectationEngine.EXPECT().GetExpectations(nil, nil, nil).Return(expectations.Expectations)
+		requestParams := GetExpectationsParams{}
+		suite.expectationEngine.EXPECT().GetExpectations((*expectation.ExpectationType)(nil),
+			(*string)(nil), (*string)(nil)).Return(expectations.Expectations)
 		suite.mapper.EXPECT().
 			MapToApiExpectations(expectations.Expectations).
 			Return([]Expectation{}, nil)
@@ -62,7 +64,7 @@ func (suite *DolusApiImplTestSuite) TestGetV1DolusExpectations() {
 		rec := httptest.NewRecorder()
 
 		// When
-		err := suite.api.GetExpectations(echo.New().NewContext(req, rec), GetExpectationsParams{})
+		err := suite.api.GetExpectations(echo.New().NewContext(req, rec), requestParams)
 
 		// Then
 		assert.NoError(t, err)
@@ -73,7 +75,8 @@ func (suite *DolusApiImplTestSuite) TestGetV1DolusExpectations() {
 		// Given
 		suite.SetupTest()
 		expectations := expectation.Expectations{}
-		suite.expectationEngine.EXPECT().GetExpectations(nil, nil, nil).Return(expectations.Expectations)
+		suite.expectationEngine.EXPECT().GetExpectations((*expectation.ExpectationType)(nil),
+			(*string)(nil), (*string)(nil)).Return(expectations.Expectations)
 		suite.mapper.EXPECT().MapToApiExpectations(expectations.Expectations).Return(nil,
 			fmt.Errorf("error"))
 		req := httptest.NewRequest(http.MethodGet, "/v1/dolus/expectations", nil)
