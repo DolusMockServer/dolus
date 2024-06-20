@@ -85,7 +85,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/Expectation'
               examples:
-                CreateExpectatationResponse:
+                CreateExpectationResponse:
                   value:
                     priority: 0
                     request:
