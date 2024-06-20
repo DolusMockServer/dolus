@@ -2,13 +2,30 @@ openapi: 3.1.0
 info:
   title: dolus
   version: '1.0'
+  description: This API allows you to manage expectations, routes, and logs for a mock server.
+  contact:
+    name: API Support
+    url: https://github.com/DolusMockServer/dolus
+    email: dolus254@gmail.com
+  license:
+    name: MIT License
+    url: https://opensource.org/licenses/MIT
 servers:
   - url: 'http://localhost:1080'
+tags:
+  - name: expectations
+    description: Operations related to managing expectations in the mock server
+  - name: logs
+    description: Operations related to accessing and managing mock server logs
+  - name: routes
+    description: Operations related to retrieving and managing mock server routes
 paths:
   /v1/dolus/expectations:
     get:
-      summary: Get expectations
-      tags: []
+      summary: Retrieve all expectations
+      description: 'Fetches a list of all current expectations set in the mock server, optionally filtered by type, path, and method.'
+      tags:
+        - expectations
       responses:
         '200':
           description: OK
@@ -29,18 +46,35 @@ paths:
               schema:
                 $ref: '#/components/schemas/InternalServerError'
       operationId: getExpectations
-      description: Endpoint is for fetching expectations
       parameters:
         - $ref: '#/components/parameters/ExpectationTypeParameter'
         - $ref: '#/components/parameters/PathParameter'
         - $ref: '#/components/parameters/MethodParameter'
     post:
-      summary: Create an expectation
+      summary: Create a new expectation
+      description: 'Adds a new expectation to the mock server, defining how the server should respond to specific requests.'
+      tags:
+        - expectations
       operationId: createExpectation
       responses:
         '201':
           description: Created
-      description: ''
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Expectation'
+        '400':
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BadRequest'
+        '500':
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InternalServerError'
       requestBody:
         content:
           application/json:
@@ -67,8 +101,10 @@ paths:
                   callback: null
   /v1/dolus/routes:
     get:
-      summary: Get all the mock server routes
-      tags: []
+      summary: Retrieve all mock server routes
+      description: 'Fetches a list of all routes currently defined in the mock server, providing information about the paths and operations supported.'
+      tags:
+        - routes
       responses:
         '200':
           description: OK
@@ -78,12 +114,39 @@ paths:
                 type: array
                 items:
                   $ref: '#/components/schemas/Route'
+        '500':
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InternalServerError'
       operationId: getRoutes
   /v1/dolus/logs:
     get:
-      summary: Get the mock server logs
-      tags: []
-      responses: {}
+      summary: Retrieve the mock server logs
+      description: 'Fetches the logs from the mock server, optionally limited to a specified number of log lines, to help in debugging and monitoring.'
+      tags:
+        - logs
+      responses:
+        '200':
+          description: OK
+          content:
+            text/plain:
+              schema:
+                type: object
+                properties: {}
+        '400':
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BadRequest'
+        '500':
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InternalServerError'
       operationId: getLogs
       parameters:
         - schema:
@@ -91,7 +154,6 @@ paths:
           in: query
           name: lines
           description: number of log lines to return
-    parameters: []
 components:
   schemas:
     Expectation:
@@ -115,83 +177,108 @@ components:
               status: good day
             status: 200
           callback: null
-      properties:
-        priority:
-          type: integer
-        request:
-          $ref: '#/components/schemas/Request'
-        response:
-          $ref: '#/components/schemas/Response'
-        callback:
-          $ref: '#/components/schemas/Callback'
+      description: 'Represents an expectation set in the mock server, including the priority, request details, response details, and optional callback configuration.'
       required:
         - priority
         - request
         - response
+      properties:
+        priority:
+          type: integer
+          description: The priority level of the expectation. Higher values indicate higher priority.
+        request:
+          $ref: '#/components/schemas/Request'
+          description: The request that the mock server should match.
+        response:
+          $ref: '#/components/schemas/Response'
+          description: The response that the mock server should return.
+        callback:
+          $ref: '#/components/schemas/Callback'
+          description: Optional configuration for a callback triggered by the mock server.
     Callback:
       title: Callback
       type: object
-      properties:
-        httpMethod:
-          type: string
-        requestBody:
-          type: object
-        url:
-          type: string
-        timeout:
-          type: integer
+      description: 'Defines a callback that will be triggered by the mock server, specifying the HTTP method, request body, URL, and timeout.'
       required:
         - httpMethod
         - url
         - timeout
+      properties:
+        httpMethod:
+          type: string
+          description: 'The HTTP method used for the callback request (e.g., POST, GET).'
+        requestBody:
+          type: object
+          description: The body of the callback request.
+        url:
+          type: string
+          description: The URL to which the callback request will be sent.
+        timeout:
+          type: integer
+          description: Wait time in milliseconds before the callback request is invoked.
     Request:
       title: Request
       type: object
-      properties:
-        path:
-          type: string
-        method:
-          type: string
-        body:
-          type: object
+      description: 'Details of the request that the mock server should match, including the path, HTTP method, and optional request body.'
       required:
         - path
         - method
-    Response:
-      title: Response
-      type: object
-      properties:
-        status:
-          type: integer
-        body:
-          type: object
-      required:
-        - status
-    Expectations:
-      title: Expectations
-      type: object
-      properties:
-        expectations:
-          type: array
-          items:
-            $ref: '#/components/schemas/Expectation'
-      required:
-        - expectations
-    Route:
-      title: Route
-      type: object
       properties:
         path:
           type: string
-        operation:
+          description: The path of the request to match.
+        method:
           type: string
+          description: 'The HTTP method of the request (e.g., GET, POST).'
+        body:
+          type: object
+          description: Optional body of the request.
+    Response:
+      title: Response
+      type: object
+      description: 'Details of the response that the mock server should return, including the status code and optional response body.'
+      required:
+        - status
+      properties:
+        status:
+          type: integer
+          description: The HTTP status code of the response.
+        body:
+          type: object
+          description: |
+            Optional body of the response.
+    Expectations:
+      title: Expectations
+      type: object
+      description: 'A collection of expectations, each defining a request-response pair or callback configuration for the mock server.'
+      required:
+        - expectations
+      properties:
+        expectations:
+          type: array
+          description: A list of expectation objects.
+          items:
+            $ref: '#/components/schemas/Expectation'
+    Route:
+      title: Route
+      type: object
+      description: 'Represents a route defined in the mock server, including the path and the operation (HTTP method).'
       required:
         - path
         - operation
+      properties:
+        path:
+          type: string
+          description: The path of the route.
+        operation:
+          type: string
+          description: 'The HTTP method of the route (e.g., GET, POST).'
     BadRequest:
       $ref: '#/components/schemas/ErrorResponseBody'
+      description: 'Error response body for a bad request, typically including an error message.'
     InternalServerError:
       $ref: '#/components/schemas/ErrorResponseBody'
+      description: 'Error response body for an internal server error, typically including an error message.'
     ErrorResponseBody:
       title: ErrorResponseBody
       type: object
@@ -200,6 +287,7 @@ components:
       properties:
         message:
           type: string
+          description: message describing error that has occured
   parameters:
     ExpectationTypeParameter:
       name: expectationType
@@ -209,14 +297,14 @@ components:
         enum:
           - DEFAULT
           - CUSTOM
-      description: The type of expectation to return
+      description: 'Parameter specifying the type of expectation to return, can be either DEFAULT or CUSTOM.'
     PathParameter:
       name: path
       in: query
       required: false
       schema:
         type: string
-      description: The path of the expectation
+      description: Path of the expectation to filter by.
     MethodParameter:
       name: method
       in: query
@@ -232,4 +320,4 @@ components:
           - CONNECT
           - OPTIONS
           - DELETE
-      description: The http method of the expectation
+      description: HTTP method of the expectation to filter by.
