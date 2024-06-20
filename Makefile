@@ -55,7 +55,8 @@ test:
 test-verbose:
 	go test -v ./...
 
-
+test-nice:
+	go test ./...  -json | tparse -all
 
 
 ### TOOLS ###

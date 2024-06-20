@@ -60,7 +60,9 @@ func (suite *DolusApiImplTestSuite) TestGetExpectations() {
 		suite.mapper.EXPECT().
 			MapToApiExpectations(expectations.Expectations).
 			Return([]Expectation{}, nil)
+
 		req := httptest.NewRequest(http.MethodGet, "/v1/dolus/expectations", nil)
+
 		rec := httptest.NewRecorder()
 
 		// When
@@ -80,6 +82,7 @@ func (suite *DolusApiImplTestSuite) TestGetExpectations() {
 		suite.mapper.EXPECT().MapToApiExpectations(expectations.Expectations).Return(nil,
 			fmt.Errorf("error"))
 		req := httptest.NewRequest(http.MethodGet, "/v1/dolus/expectations", nil)
+
 		rec := httptest.NewRecorder()
 
 		// When
@@ -97,11 +100,14 @@ func (suite *DolusApiImplTestSuite) TestCreateDolusExpectations() {
 		suite.SetupTest()
 
 		var request Expectation
-		var mappedRequest *expectation.Expectation = &expectation.Expectation{
+		var mappedExpectation *expectation.Expectation = &expectation.Expectation{
 			Priority: 1,
 		}
-		suite.mapper.EXPECT().MapToExpectation(request).Return(mappedRequest, nil)
-		suite.expectationEngine.EXPECT().AddExpectation(mappedRequest, true).Return(nil)
+		mappedExpectationWithExpectationType := *mappedExpectation
+		mappedExpectationWithExpectationType.ExpectationType = expectation.Custom
+		suite.mapper.EXPECT().MapToExpectation(request).Return(mappedExpectation, nil)
+
+		suite.expectationEngine.EXPECT().AddExpectation(mappedExpectationWithExpectationType, true).Return(nil)
 
 		requestBody, err := json.Marshal(request)
 		if err != nil {
@@ -112,6 +118,7 @@ func (suite *DolusApiImplTestSuite) TestCreateDolusExpectations() {
 			"/v1/dolus/expectations",
 			bytes.NewBuffer(requestBody),
 		)
+		req.Header.Set("Content-Type", "application/json")
 		rec := httptest.NewRecorder()
 
 		// When

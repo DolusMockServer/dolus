@@ -11,7 +11,6 @@ import (
 	"github.com/sirupsen/logrus"
 
 	"github.com/DolusMockServer/dolus/internal/api"
-	"github.com/DolusMockServer/dolus/pkg/expectation"
 	"github.com/DolusMockServer/dolus/pkg/expectation/builder"
 	"github.com/DolusMockServer/dolus/pkg/expectation/engine"
 	"github.com/DolusMockServer/dolus/pkg/logger"
@@ -137,7 +136,6 @@ func (d *Server) loadOpenAPISpecExpectations() error {
 	d.addHandlersForRoutes(output.RouteManager.GetRoutes())
 
 	for _, e := range output.Expectations {
-		e.ExpectationType = expectation.Default
 		if err := d.expectationEngine.AddExpectation(e, false); err != nil {
 			fmt.Printf("Error adding expectation:\n%s\n", err)
 		}
@@ -152,7 +150,6 @@ func (d *Server) loadCueExpectations() error {
 		return err
 	}
 	for _, e := range output.Expectations {
-		e.ExpectationType = expectation.Custom
 		if err := d.expectationEngine.AddExpectation(e, true); err != nil {
 			fmt.Printf("Error adding expectation:\n%s\n", err)
 		}

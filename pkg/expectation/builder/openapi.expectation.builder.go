@@ -106,7 +106,8 @@ func (oeb *OpenApiExpectationBuilder) buildExpectationsFromOpenApiSpec(
 				})
 
 				expectations = append(expectations, expectation.Expectation{
-					Priority: 0,
+					Priority:        0,
+					ExpectationType: expectation.Default,
 					Request: expectation.Request{
 						Body:   nil,
 						Path:   refinedPath,

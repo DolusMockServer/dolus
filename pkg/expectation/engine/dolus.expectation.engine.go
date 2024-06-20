@@ -43,6 +43,9 @@ func (e *DolusExpectationEngine) AddExpectation(
 	validateExpectationSchema bool) error {
 	// TODO: check if exception overrides another one i.e has same request matcher
 
+	// use the request path to add query parameters to the expectation and override existing query parameters
+	addQueryParameterMatcher(&expect)
+
 	if validateExpectationSchema {
 		if err := e.validateExpectationSchema(&expect); err != nil {
 			return err
@@ -58,6 +61,27 @@ func (e *DolusExpectationEngine) AddExpectation(
 
 	e.expectations = append(e.expectations, expect)
 
+	return nil
+}
+
+// addQueryParameterMatcher adds query parameter matchers from the expectation's request path to the expectation. If the expectation already has query parameters, they will be overwritten.
+func addQueryParameterMatcher(e *expectation.Expectation) error {
+	parsedURL, err := url.Parse(e.Request.Path)
+	if err != nil {
+		return fmt.Errorf("failed to add query parameters for expectation with path '%s': %w", e.Request.Path, err)
+
+	}
+	queryParams := parsedURL.Query()
+	if e.Request.Parameters == nil {
+		e.Request.Parameters = &expectation.RequestParameters{}
+	}
+	if e.Request.Parameters.Query == nil {
+		e.Request.Parameters.Query = make(map[string]any)
+	}
+	for k, v := range queryParams {
+		value := v
+		e.Request.Parameters.Query[k] = matcher.NewStringArrayMatcher(&value, "eq")
+	}
 	return nil
 }
 

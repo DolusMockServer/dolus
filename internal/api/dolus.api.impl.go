@@ -3,14 +3,12 @@ package api
 import (
 	"fmt"
 	"net/http"
-	"net/url"
 
 	"github.com/MartinSimango/dstruct"
 	"github.com/labstack/echo/v4"
 
 	"github.com/DolusMockServer/dolus/pkg/expectation"
 	"github.com/DolusMockServer/dolus/pkg/expectation/engine"
-	"github.com/DolusMockServer/dolus/pkg/expectation/matcher"
 	"github.com/DolusMockServer/dolus/pkg/logger"
 	"github.com/DolusMockServer/dolus/pkg/schema"
 )
@@ -102,18 +100,17 @@ func (d *DolusApiImpl) CreateExpectation(ctx echo.Context) error {
 	}
 
 	expct.ExpectationType = expectation.Custom
-	if expct.Response.Body != (*map[string]interface{})(nil) {
+
+	if expct.Response.Body != nil {
 		expct.Response.GeneratedBody = dstruct.NewGeneratedStruct(schema.SchemaFromAny(expct.Response.Body))
 	}
 
 	// respsonse :=
 	// oeb.fieldGenerator.GenerationConfig.SetValueGenerationType(generator.UseDefaults)
 
-	// TODO: add this to function to a sharable place as it is duplicated
-	addQueryParameters(expct)
 	if err := d.ExpectationEngine.AddExpectation(*expct, true); err != nil {
 		// TODO: depending on the error, return a different status code
-		return ctx.JSON(http.StatusInternalServerError, BadRequest{
+		return ctx.JSON(http.StatusInternalServerError, InternalServerError{
 			Message: err.Error(),
 		})
 	}
@@ -133,24 +130,4 @@ func (*DolusApiImpl) GetLogs(ctx echo.Context, params GetLogsParams) error {
 	} else {
 		return ctx.String(http.StatusOK, logs)
 	}
-}
-
-func addQueryParameters(e *expectation.Expectation) error {
-	parsedURL, err := url.Parse(e.Request.Path)
-	if err != nil {
-		return fmt.Errorf("failed to add query parameters for expectation with path '%s': %w", e.Request.Path, err)
-
-	}
-	queryParams := parsedURL.Query()
-	if e.Request.Parameters == nil {
-		e.Request.Parameters = &expectation.RequestParameters{}
-	}
-	if e.Request.Parameters.Query == nil {
-		e.Request.Parameters.Query = make(map[string]any)
-	}
-	for k, v := range queryParams {
-		value := v
-		e.Request.Parameters.Query[k] = matcher.NewStringArrayMatcher(&value, "eq")
-	}
-	return nil
 }

@@ -3,7 +3,6 @@ package builder
 import (
 	"fmt"
 	"net/http"
-	"net/url"
 	"sync"
 	"time"
 
@@ -90,13 +89,12 @@ func (ceb *CueExpectationBuilder) buildExpectationFromCueInstance(
 				// continue
 				return
 			}
-			// add query parameters from path to expectation and overrides anys query parameters from cue file
-			addQueryParameters(&cueExpectation)
 
 			cueExpectation.Response.GeneratedBody = dstruct.NewGeneratedStructWithConfig(
 				schema.SchemaFromAny(cueExpectation.Response.Body),
 				&ceb.fieldGenerator,
 			)
+			cueExpectation.ExpectationType = expectation.Custom
 			expectations = append(expectations, cueExpectation)
 		}(e.Value())
 
@@ -120,26 +118,6 @@ func (ceb *CueExpectationBuilder) decodeMatcherFields(cueExpectation *expectatio
 	}
 	if err = matcher.ConvertArrayFieldsToMatchers(ceb.cookieMatcherBuilder, cueExpectation.Request.Cookies); err != nil {
 		return
-	}
-	return nil
-}
-
-func addQueryParameters(e *expectation.Expectation) error {
-	parsedURL, err := url.Parse(e.Request.Path)
-	if err != nil {
-		return fmt.Errorf("failed to add query parameters for expectation with path '%s': %w", e.Request.Path, err)
-
-	}
-	queryParams := parsedURL.Query()
-	if e.Request.Parameters == nil {
-		e.Request.Parameters = &expectation.RequestParameters{}
-	}
-	if e.Request.Parameters.Query == nil {
-		e.Request.Parameters.Query = make(map[string]any)
-	}
-	for k, v := range queryParams {
-		value := v
-		e.Request.Parameters.Query[k] = matcher.NewStringArrayMatcher(&value, "eq")
 	}
 	return nil
 }
