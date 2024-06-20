@@ -66,8 +66,10 @@ $(GOPATH)/bin/oapi-codegen:
 	go install github.com/deepmap/oapi-codegen/cmd/oapi-codegen@latest    
 
 
-
 update-dolus-expectations:
 	./install-local.sh
+
+lint-api-spec:
+	spectral lint dolus.yaml
 
 .PHONY: build

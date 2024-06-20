@@ -62,52 +62,79 @@ const (
 // BadRequest defines model for BadRequest.
 type BadRequest = ErrorResponseBody
 
-// Callback defines model for Callback.
+// Callback Defines a callback that will be triggered by the mock server, specifying the HTTP method, request body, URL, and timeout.
 type Callback struct {
-	HttpMethod  string                  `json:"httpMethod"`
+	// HttpMethod The HTTP method used for the callback request (e.g., POST, GET).
+	HttpMethod string `json:"httpMethod"`
+
+	// RequestBody The body of the callback request.
 	RequestBody *map[string]interface{} `json:"requestBody,omitempty"`
-	Timeout     int                     `json:"timeout"`
-	Url         string                  `json:"url"`
+
+	// Timeout Wait time in milliseconds before the callback request is invoked.
+	Timeout int `json:"timeout"`
+
+	// Url The URL to which the callback request will be sent.
+	Url string `json:"url"`
 }
 
 // ErrorResponseBody defines model for ErrorResponseBody.
 type ErrorResponseBody struct {
+	// Message message describing error that has occured
 	Message string `json:"message"`
 }
 
-// Expectation defines model for Expectation.
+// Expectation Represents an expectation set in the mock server, including the priority, request details, response details, and optional callback configuration.
 type Expectation struct {
+	// Callback Defines a callback that will be triggered by the mock server, specifying the HTTP method, request body, URL, and timeout.
 	Callback *Callback `json:"callback,omitempty"`
-	Priority int       `json:"priority"`
-	Request  Request   `json:"request"`
-	Response Response  `json:"response"`
+
+	// Priority The priority level of the expectation. Higher values indicate higher priority.
+	Priority int `json:"priority"`
+
+	// Request Details of the request that the mock server should match, including the path, HTTP method, and optional request body.
+	Request Request `json:"request"`
+
+	// Response Details of the response that the mock server should return, including the status code and optional response body.
+	Response Response `json:"response"`
 }
 
-// Expectations defines model for Expectations.
+// Expectations A collection of expectations, each defining a request-response pair or callback configuration for the mock server.
 type Expectations struct {
+	// Expectations A list of expectation objects.
 	Expectations []Expectation `json:"expectations"`
 }
 
 // InternalServerError defines model for InternalServerError.
 type InternalServerError = ErrorResponseBody
 
-// Request defines model for Request.
+// Request Details of the request that the mock server should match, including the path, HTTP method, and optional request body.
 type Request struct {
-	Body   *map[string]interface{} `json:"body,omitempty"`
-	Method string                  `json:"method"`
-	Path   string                  `json:"path"`
+	// Body Optional body of the request.
+	Body *map[string]interface{} `json:"body,omitempty"`
+
+	// Method The HTTP method of the request (e.g., GET, POST).
+	Method string `json:"method"`
+
+	// Path The path of the request to match.
+	Path string `json:"path"`
 }
 
-// Response defines model for Response.
+// Response Details of the response that the mock server should return, including the status code and optional response body.
 type Response struct {
-	Body   *map[string]interface{} `json:"body,omitempty"`
-	Status int                     `json:"status"`
+	// Body Optional body of the response.
+	Body *map[string]interface{} `json:"body,omitempty"`
+
+	// Status The HTTP status code of the response.
+	Status int `json:"status"`
 }
 
-// Route defines model for Route.
+// Route Represents a route defined in the mock server, including the path and the operation (HTTP method).
 type Route struct {
+	// Operation The HTTP method of the route (e.g., GET, POST).
 	Operation string `json:"operation"`
-	Path      string `json:"path"`
+
+	// Path The path of the route.
+	Path string `json:"path"`
 }
 
 // ExpectationTypeParameter defines model for ExpectationTypeParameter.
@@ -121,13 +148,13 @@ type PathParameter = string
 
 // GetExpectationsParams defines parameters for GetExpectations.
 type GetExpectationsParams struct {
-	// ExpectationType The type of expectation to return
+	// ExpectationType Parameter specifying the type of expectation to return, can be either DEFAULT or CUSTOM.
 	ExpectationType *GetExpectationsParamsExpectationType `form:"expectationType,omitempty" json:"expectationType,omitempty"`
 
-	// Path The path of the expectation
+	// Path Path of the expectation to filter by.
 	Path *PathParameter `form:"path,omitempty" json:"path,omitempty"`
 
-	// Method The http method of the expectation
+	// Method HTTP method of the expectation to filter by.
 	Method *GetExpectationsParamsMethod `form:"method,omitempty" json:"method,omitempty"`
 }
 
@@ -576,6 +603,9 @@ func (r GetExpectationsResponse) StatusCode() int {
 type CreateExpectationResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
+	JSON201      *Expectation
+	JSON400      *BadRequest
+	JSON500      *InternalServerError
 }
 
 // Status returns HTTPResponse.Status
@@ -597,6 +627,8 @@ func (r CreateExpectationResponse) StatusCode() int {
 type GetLogsResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
+	JSON400      *BadRequest
+	JSON500      *InternalServerError
 }
 
 // Status returns HTTPResponse.Status
@@ -619,6 +651,7 @@ type GetRoutesResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
 	JSON200      *[]Route
+	JSON500      *InternalServerError
 }
 
 // Status returns HTTPResponse.Status
@@ -734,6 +767,30 @@ func ParseCreateExpectationResponse(rsp *http.Response) (*CreateExpectationRespo
 		HTTPResponse: rsp,
 	}
 
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 201:
+		var dest Expectation
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON201 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
+		var dest BadRequest
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON400 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 500:
+		var dest InternalServerError
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON500 = &dest
+
+	}
+
 	return response, nil
 }
 
@@ -748,6 +805,23 @@ func ParseGetLogsResponse(rsp *http.Response) (*GetLogsResponse, error) {
 	response := &GetLogsResponse{
 		Body:         bodyBytes,
 		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
+		var dest BadRequest
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON400 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 500:
+		var dest InternalServerError
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON500 = &dest
+
 	}
 
 	return response, nil
@@ -774,6 +848,13 @@ func ParseGetRoutesResponse(rsp *http.Response) (*GetRoutesResponse, error) {
 		}
 		response.JSON200 = &dest
 
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 500:
+		var dest InternalServerError
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON500 = &dest
+
 	}
 
 	return response, nil
@@ -781,16 +862,16 @@ func ParseGetRoutesResponse(rsp *http.Response) (*GetRoutesResponse, error) {
 
 // ServerInterface represents all server handlers.
 type ServerInterface interface {
-	// Get expectations
+	// Retrieve all expectations
 	// (GET /v1/dolus/expectations)
 	GetExpectations(ctx echo.Context, params GetExpectationsParams) error
-	// Create an expectation
+	// Create a new expectation
 	// (POST /v1/dolus/expectations)
 	CreateExpectation(ctx echo.Context) error
-	// Get the mock server logs
+	// Retrieve the mock server logs
 	// (GET /v1/dolus/logs)
 	GetLogs(ctx echo.Context, params GetLogsParams) error
-	// Get all the mock server routes
+	// Retrieve all mock server routes
 	// (GET /v1/dolus/routes)
 	GetRoutes(ctx echo.Context) error
 }
@@ -906,24 +987,38 @@ func RegisterHandlersWithBaseURL(router EchoRouter, si ServerInterface, baseURL 
 // Base64 encoded, gzipped, json marshaled Swagger object
 var swaggerSpec = []string{
 
-	"H4sIAAAAAAAC/8RX32/bOAz+VwzeHn2z090BB7+1qe9WXNcUbfo09EGx2USrLbkSXTQY/L8fJDmx/CNL",
-	"gBW3lzaxKPL7yI808x0yWVZSoCANyXeomGIlEir7LX2rMCNGXIrltsLb3aE5y1FnilfmDBJYbjCgbYWB",
-	"fAqwuxWQDBRSrQSEwI3hS41qCyEIViIkgP0IEILONlgyEwFFXULyFS7Tv88frpcQwvzhfrn4Ao8hmFiQ",
-	"gCbFxRqaJoQvSBuZH4G4IaqC0loapLRBH+0BjM5+Eto/qYF1u7g3/z6n55fm24N9dr6cf4YQlnfn89RA",
-	"X9zcpHNzsrhdXi1u7iGEy/Q6XabTdG4ZbY6QqRhtTmdhrHschjGb3aEt/QXL7/ClRk1WFkpWqIijPStR",
-	"a7bGKSchKHypucLcpGdnaBhyKoxlqpRUd6grKTReyNwgbJ3I1TfMCJoQ5qwoVix7Hoc2BXSVnojugqMm",
-	"67c77xwTL1HW5J1xQbhGZQ5rVRyn5AFwNzqnHss9gQly4wz8/wn2GnscPfOy/0HhEyTwW9SNiahVSbQn",
-	"2YRQKS4Vp+10ZlWnpB853AnO3nAEjl9p7YaZ2QPqonteH4c5CeHtd3xjZVVgO/ns52DWT4ioi8InG/e4",
-	"rWwxnU07NJJ2RNjuSyDSJBVGUuWoorMh0VUrBsOzQEJISNUYQoV0ZfXO7d8PuSxqi5KYfjYhUFwJ+mT9",
-	"lewNklkcQmmGQGy7mhgZe1hLmQc524L38CyOG9v7niT0WBM4OOWEpT5WHF9lzT7jTCkDYVCvXgBfzv7z",
-	"CSVfCUIlWHGP6hWVFf8v6KeDo3J1aBKVh4eY08oxqO08b/14gO/2cp+A2YntRJw7nYzbeoCnNewBaaNN",
-	"IZE1TcAwn/dT6ecS07nyIdmwIzzGBRdP0jpvTV2ThfCKSrt37uxjbFDICgWrOCTw6aN55HBZ+NHrLLL3",
-	"omG/rJHGL/FU5JXkggKugyepgiekbMPFOsC+6PdUruxAQRo0hb+0fZ1uyc4kOrjUNeHRu/2t5IQLw62s",
-	"eexGnk3MWRy7kScIhc0Rq6qCZxZf9E07KXRby4nzRrui9vO9+NfU7493jOhtSRPxLlgeeO+0P98x8NTY",
-	"m0CwMwucXbAzDEHXZcnU1umpLzjTadINs77y5goZYdpbNQcb13vXEdzLaSCZ2biXHLZ8wM09DZjoLcjG",
-	"pmvVQq79Fh0127U5HzVZP7qoyxUqs4wXch0UXKA++tPHWk1t5N2EHTTLqGxm8y9l9hxoV15Lpc9OmYn3",
-	"Q353zuIn+/KkhcCN3/EqMNmpI7asKEaMW3ru14t95Mpjd3m7rCdRVMiMFRupKZnFf8XQPDb/BQAA//8y",
-	"TPCY9w4AAA==",
+	"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",
 }
 
 // GetSwagger returns the content of the embedded swagger specification file

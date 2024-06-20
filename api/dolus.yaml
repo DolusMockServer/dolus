@@ -2,14 +2,14 @@ openapi: 3.1.0
 info:
   title: dolus
   version: '1.0'
-  description: This API allows you to manage expectations, routes, and logs for a mock server.
+  description: 'This API allows you to manage expectations, routes, and logs for a mock server.'
   contact:
     name: API Support
-    url: https://github.com/DolusMockServer/dolus
+    url: 'https://github.com/DolusMockServer/dolus'
     email: dolus254@gmail.com
   license:
     name: MIT License
-    url: https://opensource.org/licenses/MIT
+    url: 'https://opensource.org/licenses/MIT'
 servers:
   - url: 'http://localhost:1080'
 tags:
@@ -33,6 +33,27 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Expectations'
+              examples:
+                AllExpectations:
+                  value:
+                    expectations:
+                      - priority: 0
+                        request:
+                          path: /store/order/2
+                          method: GET
+                        response:
+                          status: 200
+                          body:
+                            complete: true
+                            status: good day
+                      - priority: 1
+                        request:
+                          path: /store/order/3
+                          method: POST
+                        response:
+                          status: 201
+                          body:
+                            order: created
         '400':
           description: Bad Request
           content:
@@ -63,6 +84,17 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Expectation'
+              examples:
+                CreateExpectatationResponse:
+                  value:
+                    priority: 0
+                    request:
+                      path: /store/order/count
+                      method: GET
+                    response:
+                      status: 200
+                      body:
+                        orderCount: 2
         '400':
           description: Bad Request
           content:
@@ -99,6 +131,17 @@ paths:
                       status: good day
                     status: 200
                   callback: null
+            examples:
+              CreateExpectatationRequest:
+                value:
+                  priority: 0
+                  request:
+                    path: /store/order/count
+                    method: GET
+                  response:
+                    status: 200
+                    body:
+                      orderCount: 2
   /v1/dolus/routes:
     get:
       summary: Retrieve all mock server routes
@@ -114,6 +157,13 @@ paths:
                 type: array
                 items:
                   $ref: '#/components/schemas/Route'
+              examples:
+                AllRoutes:
+                  value:
+                    - path: '/store/order/{orderId}'
+                      operation: GET
+                    - path: /store/order/count
+                      operation: GET
         '500':
           description: Internal Server Error
           content:
@@ -132,9 +182,9 @@ paths:
           description: OK
           content:
             text/plain:
-              schema:
-                type: object
-                properties: {}
+              examples:
+                Logs:
+                  value: 'time=2024-06-20T11:10:55Z level=info msg=Received request for path /store/order/2/p and method GET'
         '400':
           description: Bad Request
           content:
@@ -195,6 +245,15 @@ components:
         callback:
           $ref: '#/components/schemas/Callback'
           description: Optional configuration for a callback triggered by the mock server.
+      examples:
+        - priority: 0
+          request:
+            path: /store/order/count
+            method: GET
+          response:
+            status: 200
+            body:
+              orderCount: 2
     Callback:
       title: Callback
       type: object
@@ -216,6 +275,12 @@ components:
         timeout:
           type: integer
           description: Wait time in milliseconds before the callback request is invoked.
+      examples:
+        - httpMethod: POST
+          requestBody:
+            orderCount: '2'
+          url: 'https://store.com/count'
+          timeout: 250
     Request:
       title: Request
       type: object
@@ -233,6 +298,9 @@ components:
         body:
           type: object
           description: Optional body of the request.
+      examples:
+        - path: /store/order/count
+          method: GET
     Response:
       title: Response
       type: object
@@ -247,6 +315,10 @@ components:
           type: object
           description: |
             Optional body of the response.
+      examples:
+        - status: 200
+          body:
+            orderCount: 2
     Expectations:
       title: Expectations
       type: object
@@ -259,6 +331,21 @@ components:
           description: A list of expectation objects.
           items:
             $ref: '#/components/schemas/Expectation'
+      examples:
+        - expectations:
+            - priority: 0
+              request:
+                path: string
+                method: string
+                body: {}
+              response:
+                status: 0
+                body: {}
+              callback:
+                httpMethod: string
+                requestBody: {}
+                url: string
+                timeout: 0
     Route:
       title: Route
       type: object
@@ -273,12 +360,19 @@ components:
         operation:
           type: string
           description: 'The HTTP method of the route (e.g., GET, POST).'
+      examples:
+        - path: /store/order
+          operation: GET
     BadRequest:
       $ref: '#/components/schemas/ErrorResponseBody'
       description: 'Error response body for a bad request, typically including an error message.'
+      examples:
+        - message: bad request
     InternalServerError:
       $ref: '#/components/schemas/ErrorResponseBody'
       description: 'Error response body for an internal server error, typically including an error message.'
+      examples:
+        - message: internal server error
     ErrorResponseBody:
       title: ErrorResponseBody
       type: object
@@ -287,7 +381,9 @@ components:
       properties:
         message:
           type: string
-          description: message describing error that has occured
+          description: message describing error that has occurred
+      examples:
+        - message: error occurred
   parameters:
     ExpectationTypeParameter:
       name: expectationType

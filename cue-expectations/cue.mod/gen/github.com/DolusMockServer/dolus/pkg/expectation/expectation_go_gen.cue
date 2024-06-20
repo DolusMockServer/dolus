@@ -4,19 +4,14 @@
 
 package expectation
 
-#ExpectationType: int // #enumExpectationType
+#ExpectationType: string // #enumExpectationType
 
 #enumExpectationType:
-	#OpenAPI |
-	#Cue
+	#Default |
+	#Custom
 
-#values_ExpectationType: {
-	OpenAPI: #OpenAPI
-	Cue:     #Cue
-}
-
-#OpenAPI: #ExpectationType & 0
-#Cue:     #ExpectationType & 1
+#Default: #ExpectationType & "DEFAULT"
+#Custom:  #ExpectationType & "CUSTOM"
 
 #Expectations: {
 	expectations: [...#Expectation] @go(Expectations,[]Expectation)
