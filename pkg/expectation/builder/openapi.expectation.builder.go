@@ -99,7 +99,7 @@ func (oeb *OpenApiExpectationBuilder) buildExpectationsFromOpenApiSpec(
 				routeManager.AddRoute(schema.Route{
 					Path:   refinedPath,
 					Method: method,
-				}, &schema.RouteProperty{
+				}, schema.RouteProperty{
 					RequestParameterProperty: getRequestParameterProperty(operation),
 					RequestSchema:            nil,
 					ResponseSchema:           body,

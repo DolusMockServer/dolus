@@ -1,6 +1,6 @@
 package api
 
-// integration tests for the dolus api
+// Integration tests for the dolus api
 
 import (
 	"bytes"
@@ -17,22 +17,6 @@ import (
 	"github.com/DolusMockServer/dolus/pkg/expectation"
 	"github.com/DolusMockServer/dolus/pkg/expectation/engine"
 )
-
-/*
-
-   // (POST /v1/dolus/expectations)
-   PostV1DolusExpectations(ctx echo.Context) error
-   // Your GET endpoint
-   // (GET /v1/dolus/logs)
-   GetV1DolusLogs(ctx echo.Context, params GetV1DolusLogsParams) error
-   // Your GET endpoint
-   // (GET /v1/dolus/logs/ws)
-   GetV1DolusLogsWs(ctx echo.Context, params GetV1DolusLogsWsParams) error
-   // Your GET endpoint
-   // (GET /v1/dolus/routes)
-   GetV1DolusRoutes(ctx echo.Context) error
-
-*/
 
 type DolusApiImplTestSuite struct {
 	suite.Suite
@@ -82,7 +66,6 @@ func (suite *DolusApiImplTestSuite) TestGetExpectations() {
 		suite.mapper.EXPECT().MapToApiExpectations(expectations.Expectations).Return(nil,
 			fmt.Errorf("error"))
 		req := httptest.NewRequest(http.MethodGet, "/v1/dolus/expectations", nil)
-
 		rec := httptest.NewRecorder()
 
 		// When

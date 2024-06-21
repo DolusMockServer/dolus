@@ -26,7 +26,7 @@ size-optimized:
 	@du -h $(GOPATH)/bin/dolus-optimized
 
 
-# --- DOCKER ---
+### DOCKER ###
 
 docker-build:
 	docker build -t dolus -t dolusmockserver/dolus:latest -f build/package/Dockerfile .
@@ -49,6 +49,9 @@ gen-cue-expectations:
 gen-mocks:
 	mockery
 
+
+### TESTING ###
+
 test:
 	go test ./...
 
@@ -58,6 +61,12 @@ test-verbose:
 test-nice:
 	go test ./...  -json | tparse -all
 
+cover:
+	go test -cover ./...
+
+coverage-report:
+	go test -coverprofile=coverage.out ./...
+	go tool cover -html=coverage.out	
 
 ### TOOLS ###
 $(GOPATH)/bin/dlv:
