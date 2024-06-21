@@ -1,6 +1,7 @@
-package engine
+//go:build unit
+// +build unit
 
-// Unit tests for DolusRouteManager
+package engine
 
 import (
 	"testing"

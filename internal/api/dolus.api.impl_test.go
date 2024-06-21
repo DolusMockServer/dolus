@@ -1,6 +1,7 @@
-package api
+//go:build integration
+// +build integration
 
-// Integration tests for the dolus api
+package api
 
 import (
 	"bytes"

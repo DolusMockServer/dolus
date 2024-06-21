@@ -52,6 +52,12 @@ gen-mocks:
 
 ### TESTING ###
 
+test-unit:
+	go test -tags=unit ./...
+
+test-integration:
+	go test -tags=integration ./...
+
 test:
 	go test ./...
 
