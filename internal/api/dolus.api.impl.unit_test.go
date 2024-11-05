@@ -1,5 +1,5 @@
-//go:build integration
-// +build integration
+//go:build unit
+// +build unit
 
 package api
 
@@ -91,7 +91,9 @@ func (suite *DolusApiImplTestSuite) TestCreateDolusExpectations() {
 		mappedExpectationWithExpectationType.ExpectationType = expectation.Custom
 		suite.mapper.EXPECT().MapToExpectation(request).Return(mappedExpectation, nil)
 
-		suite.expectationEngine.EXPECT().AddExpectation(mappedExpectationWithExpectationType, true).Return(nil)
+		suite.expectationEngine.EXPECT().
+			AddExpectation(mappedExpectationWithExpectationType).
+			Return(nil)
 
 		requestBody, err := json.Marshal(request)
 		if err != nil {

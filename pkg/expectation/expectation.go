@@ -31,6 +31,13 @@ type Expectation struct {
 	ExpectationType ExpectationType `json:"-"`
 }
 
+// func (e *Expectation) Equals(e2 Expectation) bool {
+// 	return e.Request.Equals(e2.Request) &&
+// 		e.Response.Equals(e2.Response) &&
+// 		e.Callback.Equals(e2.Callback) &&
+// 		e.ExpectationType == e2.ExpectationType
+// }
+
 // type Rule[T any] struct {
 // 	MatchType string `json:"matchType"`
 // 	Value     T      `json:"value"`

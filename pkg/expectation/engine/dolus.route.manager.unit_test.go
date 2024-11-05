@@ -23,7 +23,7 @@ func (suite *DolusRouteManagerTestSuite) SetupTest() {
 }
 
 func (suite *DolusRouteManagerTestSuite) TestAddRoute() {
-	suite.T().Run("can add route", func(t *testing.T) {
+	suite.T().Run("Can add route", func(t *testing.T) {
 		// Given
 		suite.SetupTest()
 		route := schema.Route{
@@ -44,7 +44,7 @@ func (suite *DolusRouteManagerTestSuite) TestAddRoute() {
 }
 
 func (suite *DolusRouteManagerTestSuite) TestRemoveRoute() {
-	suite.T().Run("can remove route", func(t *testing.T) {
+	suite.T().Run("Can remove route", func(t *testing.T) {
 		// Given
 		suite.SetupTest()
 		route := schema.Route{
@@ -63,7 +63,7 @@ func (suite *DolusRouteManagerTestSuite) TestRemoveRoute() {
 }
 
 func (suite *DolusRouteManagerTestSuite) TestGetRoutes() {
-	suite.T().Run("can get routes", func(t *testing.T) {
+	suite.T().Run("Can get routes", func(t *testing.T) {
 		// Given
 		suite.SetupTest()
 		routes := []schema.Route{
@@ -80,14 +80,11 @@ func (suite *DolusRouteManagerTestSuite) TestGetRoutes() {
 
 		// Then
 		assert.ElementsMatch(t, routes, returnedRoutes)
-
 	})
-
 }
 
 func (suite *DolusRouteManagerTestSuite) TestGetRouteProperty() {
-
-	suite.T().Run("can get route property", func(t *testing.T) {
+	suite.T().Run("Can get route property", func(t *testing.T) {
 		// Given
 		suite.SetupTest()
 		route := schema.Route{
@@ -105,7 +102,7 @@ func (suite *DolusRouteManagerTestSuite) TestGetRouteProperty() {
 		assert.Equal(t, routeProperty, returnedRouteProperty)
 	})
 
-	suite.T().Run("cannot get route property", func(t *testing.T) {
+	suite.T().Run("Cannot get route property", func(t *testing.T) {
 		// Given
 		suite.SetupTest()
 		route := schema.Route{
@@ -118,14 +115,11 @@ func (suite *DolusRouteManagerTestSuite) TestGetRouteProperty() {
 
 		// Then
 		assert.Error(t, err)
-
 	})
-
 }
 
 func (suite *DolusRouteManagerTestSuite) TestGetRouteProperties() {
-
-	suite.T().Run("can get route properties", func(t *testing.T) {
+	suite.T().Run("Can get route properties", func(t *testing.T) {
 		// Given
 		suite.SetupTest()
 		routes := []schema.Route{
@@ -153,7 +147,6 @@ func (suite *DolusRouteManagerTestSuite) TestGetRouteProperties() {
 			assert.True(t, ok)
 			assert.Equal(t, routeProperty, rp)
 		}
-
 	})
 }
 

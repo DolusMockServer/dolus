@@ -11,6 +11,7 @@ import (
 	"github.com/sirupsen/logrus"
 
 	"github.com/DolusMockServer/dolus/internal/api"
+	"github.com/DolusMockServer/dolus/pkg/expectation"
 	"github.com/DolusMockServer/dolus/pkg/expectation/builder"
 	"github.com/DolusMockServer/dolus/pkg/expectation/engine"
 	"github.com/DolusMockServer/dolus/pkg/logger"
@@ -126,50 +127,46 @@ func (d *Server) addHandlersForRoutes(routes []schema.Route) {
 	}
 }
 
-func (d *Server) loadOpenAPISpecExpectations() error {
-	output, err := d.openApiExpectationBuilder.BuildExpectations()
+func (d *Server) Start(address string) error {
+	if !d.HideBanner {
+		printBanner()
+	}
+	// TODO: switch over to slog
+	logger.Log.SetLevel(logrus.DebugLevel)
+
+	routeManager, expectations, err := d.loadExpectations()
+
 	if err != nil {
 		return err
 	}
 
-	d.expectationEngine.SetRouteManager(output.RouteManager)
-	d.addHandlersForRoutes(output.RouteManager.GetRoutes())
+	d.expectationEngine = engine.NewDolusExpectationEngine(*d.GenerationConfig.SetNonRequiredFields(true),
+		routeManager,
+		expectations)
 
-	for _, e := range output.Expectations {
-		if err := d.expectationEngine.AddExpectation(e, false); err != nil {
-			fmt.Printf("Error adding expectation:\n%s\n", err)
-		}
-	}
-
-	return nil
+	// add handlers for all routes in the route manager and then start the server
+	d.addHandlersForRoutes(routeManager.GetRoutes())
+	return d.startHttpServer(address)
 }
 
-func (d *Server) loadCueExpectations() error {
-	output, err := d.cueExpectationBuilder.BuildExpectations()
-	if err != nil {
-		return err
-	}
-	for _, e := range output.Expectations {
-		if err := d.expectationEngine.AddExpectation(e, true); err != nil {
-			fmt.Printf("Error adding expectation:\n%s\n", err)
-		}
-	}
-
-	return nil
-}
-
-func (d *Server) loadExpectations() error {
+func (d *Server) loadExpectations() (engine.RouteManager, []expectation.Expectation, error) {
 	s := time.Now()
-	if err := d.loadOpenAPISpecExpectations(); err != nil {
-		return err
+
+	oapiOutput, err := d.openApiExpectationBuilder.BuildExpectations()
+	if err != nil {
+		return nil, nil, fmt.Errorf("Error loading openapi expectations: %s", err)
 	}
 	fmt.Println("Time to load openapi expectations: ", time.Since(s))
+
 	s2 := time.Now()
-	if err := d.loadCueExpectations(); err != nil {
-		return err
+
+	cueOutput, err := d.cueExpectationBuilder.BuildExpectations()
+	if err != nil {
+		return nil, nil, fmt.Errorf("Error loading cue expectations: %s", err)
 	}
+
 	fmt.Println("Time to load cue expectations: ", time.Since(s2))
-	return nil
+	return oapiOutput.RouteManager, append(oapiOutput.Expectations, cueOutput.Expectations...), nil
 }
 
 func (d *Server) startHttpServer(address string) error {
@@ -177,28 +174,10 @@ func (d *Server) startHttpServer(address string) error {
 	go task.RegisterDolusTasks()
 	now := time.Now()
 
-	if err := d.loadExpectations(); err != nil {
-		return err
-	}
 	logger.Log.Infof("Server started in %s", time.Since(now))
 
 	d.EchoServer.Logger.SetOutput(logger.Log.Out)
 	return d.EchoServer.Start(address)
-}
-
-func (d *Server) Start(address string) error {
-	if !d.HideBanner {
-		printBanner()
-	}
-	logger.Log.SetLevel(logrus.DebugLevel)
-
-	if d.expectationEngine == nil {
-		generationConfig := d.GenerationConfig
-		generationConfig.SetNonRequiredFields(true)
-		d.expectationEngine = engine.NewDolusExpectationEngine(generationConfig)
-	}
-
-	return d.startHttpServer(address)
 }
 
 func (d *Server) AddExpectations(files ...string) {

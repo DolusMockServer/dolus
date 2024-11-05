@@ -8,12 +8,19 @@ import (
 )
 
 type ExpectationEngine interface {
+
 	// AddExpectation adds an expectation to the engine
-	AddExpectation(expectation expectation.Expectation,
-		validateExpectationSchema bool) error
+	AddExpectation(expectation expectation.Expectation) error
+
+	//AddExpectations adds a list of expectations to the engine
+	AddExpectations(expectations []expectation.Expectation)
 
 	// GetExpectations returns the expectations for the given expectation type. Expectations can be filtered by path, method and expectation type.
-	GetExpectations(expectationType *expectation.ExpectationType, path *string, method *string) []expectation.Expectation
+	GetExpectations(
+		expectationType *expectation.ExpectationType,
+		path *string,
+		method *string,
+	) []expectation.Expectation
 
 	// GetResponseForRequest returns the response for the given request
 	GetResponseForRequest(
@@ -22,9 +29,6 @@ type ExpectationEngine interface {
 		path string,
 	) (*expectation.Response, error)
 
-	// SetRouteManager sets the route manager for the engine
-	SetRouteManager(routeManager RouteManager)
-
-	// GetRouteManager returns the route manager for the engine
-	GetRouteManager() RouteManager
+	// GetRoutes returns all registered routes that are used by the engine
+	GetRoutes() []schema.Route
 }

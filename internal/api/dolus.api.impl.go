@@ -69,7 +69,7 @@ func (d *DolusApiImpl) GetExpectations(ctx echo.Context, params GetExpectationsP
 // GetV1DolusRoutes implements server.ServerInterface.
 func (d *DolusApiImpl) GetRoutes(ctx echo.Context) error {
 	var serverRoutes []Route
-	for _, r := range d.ExpectationEngine.GetRouteManager().GetRoutes() {
+	for _, r := range d.ExpectationEngine.GetRoutes() {
 		serverRoutes = append(serverRoutes, Route{
 			Path:      r.Path,
 			Operation: r.Method,
@@ -108,7 +108,7 @@ func (d *DolusApiImpl) CreateExpectation(ctx echo.Context) error {
 	// respsonse :=
 	// oeb.fieldGenerator.GenerationConfig.SetValueGenerationType(generator.UseDefaults)
 
-	if err := d.ExpectationEngine.AddExpectation(*expct, true); err != nil {
+	if err := d.ExpectationEngine.AddExpectation(*expct); err != nil {
 		// TODO: depending on the error, return a different status code
 		return ctx.JSON(http.StatusInternalServerError, InternalServerError{
 			Message: err.Error(),
