@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/MartinSimango/dstruct/generator"
+	"github.com/MartinSimango/dstruct/generator/config"
 	"github.com/fatih/color"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
@@ -40,12 +40,12 @@ type Server struct {
 	HideBanner                bool
 	HidePort                  bool
 	EchoServer                *echo.Echo
-	GenerationConfig          generator.GenerationConfig
+	GenerationConfig          config.Config
+	GenerationSettings        config.GenerationSettings
 	expectationEngine         engine.ExpectationEngine
 	expectationFiles          []string
 	cueExpectationBuilder     builder.ExpectationBuilder
 	openApiExpectationBuilder builder.ExpectationBuilder
-	fieldGenerator            *generator.Generator
 	dolusApi                  api.DolusApi
 	schemaMapper              schema.Mapper
 }
@@ -53,13 +53,16 @@ type Server struct {
 func New() *Server {
 	logger.Log = logger.NewLogger("logfile.log")
 
-	generationConfig := generator.NewGenerationConfig()
+	generationSettings := config.DefaultGenerationSettings()
+	generationSettings.WithNonRequiredFields(true)
+
 	return &Server{
-		HideBanner:       false,
-		HidePort:         false,
-		OpenAPIspec:      "openapi.yaml",
-		GenerationConfig: *generationConfig,
-		schemaMapper:     schema.NewMapper(),
+		HideBanner:         false,
+		HidePort:           false,
+		OpenAPIspec:        "openapi.yaml",
+		GenerationConfig:   config.NewDstructConfig(),
+		GenerationSettings: generationSettings,
+		schemaMapper:       schema.NewMapper(),
 	}
 }
 
@@ -82,14 +85,15 @@ func (d *Server) initHttpServer() {
 	d.EchoServer = echo.New()
 	d.EchoServer.HideBanner = true
 	d.EchoServer.HidePort = d.HidePort
-	d.fieldGenerator = generator.NewGenerator(&d.GenerationConfig)
 	d.cueExpectationBuilder = builder.NewCueExpectationBuilder(
 		d.expectationFiles,
-		*d.fieldGenerator,
+		d.GenerationConfig,
+		d.GenerationSettings,
 	)
 	d.openApiExpectationBuilder = builder.NewOpenApiExpectationBuilder(
 		d.OpenAPIspec,
-		*d.fieldGenerator,
+		d.GenerationConfig,
+		d.GenerationSettings,
 	)
 	d.dolusApi = api.NewDolusApi(d.expectationEngine, api.NewMapper())
 
@@ -120,7 +124,7 @@ func (d *Server) addHandlersForRoutes(routes []schema.Route) {
 				})
 			}
 
-			response.GeneratedBody.GenerateAndUpdate()
+			response.GeneratedBody.Generate()
 			return ctx.JSON(response.Status, response.GeneratedBody.Instance())
 		})
 	}
@@ -137,7 +141,8 @@ func (d *Server) loadOpenAPISpecExpectations() error {
 
 	for _, e := range output.Expectations {
 		if err := d.expectationEngine.AddExpectation(e, false); err != nil {
-			fmt.Printf("Error adding expectation:\n%s\n", err)
+			logger.Log.Errorf("Error adding expectation: %s", err)
+			// fmt.Printf("Error adding expectation:\n%s\n", err)
 		}
 	}
 
@@ -193,9 +198,7 @@ func (d *Server) Start(address string) error {
 	logger.Log.SetLevel(logrus.DebugLevel)
 
 	if d.expectationEngine == nil {
-		generationConfig := d.GenerationConfig
-		generationConfig.SetNonRequiredFields(true)
-		d.expectationEngine = engine.NewDolusExpectationEngine(generationConfig)
+		d.expectationEngine = engine.NewDolusExpectationEngine()
 	}
 
 	return d.startHttpServer(address)
