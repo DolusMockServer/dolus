@@ -1,3 +1,10 @@
+
+GO_VERSION:=1.23
+
+
+.PHONY: build
+	
+
 build: 
 	@go build ./... 
 
@@ -73,4 +80,18 @@ update-dolus-expectations:
 lint-api-spec:
 	spectral lint dolus.yaml
 
-.PHONY: build
+
+### DAGGER ###
+
+dagger-test:
+	dagger call -m golang test --source . --go-version=$GO_VERSION stdout
+
+
+
+### ACT ###
+act:
+	act -P ubuntu-latest=catthehacker/ubuntu:act-latest
+
+
+
+

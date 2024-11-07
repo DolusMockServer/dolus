@@ -121,12 +121,15 @@ func getStructFromAny(config any) any {
 	return schema
 }
 
-func buildSchemaFromDolusTask(t generator.TaskName, _map map[string]interface{}) (any, SchemaInfo) {
+func buildSchemaFromDolusTask(t string, _map map[string]interface{}) (any, SchemaInfo) {
 	switch t {
 	case task.GenInt32:
 		return int32(0), SchemaInfo{
-			Kind:   reflect.Int32,
-			Tags:   string(generator.GetTagForTask(t, _map["min"], _map["max"])),
+			Kind: reflect.Int32,
+			Tags: string(
+				generator.GetTask(t).
+					GetTags(fmt.Sprintf("%v", _map["min"]), fmt.Sprintf("%v", _map["max"])),
+			), // string(generator.GetTagForTask(t, _map["min"], _map["max"])),
 			Format: "int32",
 		}
 	}
@@ -140,7 +143,7 @@ func buildSchemaFromMap(_map any) (any, SchemaInfo) {
 	for k, v := range m {
 		if m["$dolusTask"] != nil {
 			task := m["$dolusTask"].(string)
-			return buildSchemaFromDolusTask(generator.TaskName(task), m)
+			return buildSchemaFromDolusTask(task, m)
 		}
 
 		exportName := getExportName(k)

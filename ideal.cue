@@ -55,7 +55,7 @@ expectation.#Expectations & {
 				method: "GET"
 				headers: {
 					"Content-Type": ["application/json"]
-					"T": ["3", "4"]
+					"T": ["3"]
 				}
 				params: {
 					query: {
@@ -63,7 +63,7 @@ expectation.#Expectations & {
 						age: ["5"]
 					}
 					path: {
-						orderId: "3"
+						orderIad: "3"
 					}
 				}
 

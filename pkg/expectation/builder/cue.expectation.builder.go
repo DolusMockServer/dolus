@@ -8,7 +8,7 @@ import (
 
 	"cuelang.org/go/cue"
 	"github.com/MartinSimango/dstruct"
-	"github.com/MartinSimango/dstruct/generator"
+	"github.com/MartinSimango/dstruct/generator/config"
 
 	"github.com/DolusMockServer/dolus/pkg/expectation"
 	"github.com/DolusMockServer/dolus/pkg/expectation/loader"
@@ -19,7 +19,8 @@ import (
 
 type CueExpectationBuilder struct {
 	loader                    loader.Loader[loader.CueExpectationLoadType]
-	fieldGenerator            generator.Generator
+	generationConfig          config.Config
+	generationSettings        config.GenerationSettings
 	cookieMatcherBuilder      matcher.MatcherBuilder[expectation.Cookie, http.Cookie]
 	stringArrayMatcherBuilder matcher.MatcherBuilder[[]string, []string]
 	stringMatcherBuilder      matcher.MatcherBuilder[string, string]
@@ -30,11 +31,13 @@ var _ ExpectationBuilder = &CueExpectationBuilder{}
 
 func NewCueExpectationBuilder(
 	cueExpectationFiles []string,
-	fieldGenerator generator.Generator,
+	generationConfig config.Config,
+	generationSettings config.GenerationSettings,
 ) *CueExpectationBuilder {
 	return &CueExpectationBuilder{
 		loader:                    loader.NewCueExpectationLoader(cueExpectationFiles),
-		fieldGenerator:            fieldGenerator,
+		generationConfig:          generationConfig,
+		generationSettings:        generationSettings,
 		cookieMatcherBuilder:      matcher.CookieMatcherBuilder{},
 		stringArrayMatcherBuilder: matcher.StringArrayMatcherBuilder{},
 		stringMatcherBuilder:      matcher.StringMatcherBuilder{},
@@ -92,7 +95,8 @@ func (ceb *CueExpectationBuilder) buildExpectationFromCueInstance(
 
 			cueExpectation.Response.GeneratedBody = dstruct.NewGeneratedStructWithConfig(
 				schema.SchemaFromAny(cueExpectation.Response.Body),
-				&ceb.fieldGenerator,
+				ceb.generationConfig,
+				ceb.generationSettings,
 			)
 			cueExpectation.ExpectationType = expectation.Custom
 			expectations = append(expectations, cueExpectation)
@@ -103,8 +107,9 @@ func (ceb *CueExpectationBuilder) buildExpectationFromCueInstance(
 	return
 }
 
-func (ceb *CueExpectationBuilder) decodeMatcherFields(cueExpectation *expectation.Expectation) (err error) {
-
+func (ceb *CueExpectationBuilder) decodeMatcherFields(
+	cueExpectation *expectation.Expectation,
+) (err error) {
 	if err = matcher.ConvertMapKeysToMatchers(ceb.stringArrayMatcherBuilder, cueExpectation.Request.Headers); err != nil {
 		return
 	}

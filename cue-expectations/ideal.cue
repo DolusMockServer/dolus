@@ -15,7 +15,7 @@ expectation.#Expectations & {
 				method: "GET"
 				headers: {
 					"Content-Type": "application/json"
-					"T": ["3", "4"]
+					"T": ["3"]
 				}
 				params: {
 					query: {
@@ -53,7 +53,7 @@ expectation.#Expectations & {
 				method: "GET"
 				headers: {
 					"Content-Type": ["application/json"]
-					"T": ["3", "4"]
+					"T": ["3"]
 				}
 				params: {
 					query: {

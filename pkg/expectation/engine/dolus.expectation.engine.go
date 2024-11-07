@@ -10,7 +10,6 @@ import (
 
 	"github.com/MartinSimango/dstruct"
 	"github.com/MartinSimango/dstruct/dreflect"
-	"github.com/MartinSimango/dstruct/generator"
 
 	"github.com/DolusMockServer/dolus/pkg/expectation"
 	"github.com/DolusMockServer/dolus/pkg/expectation/matcher"
@@ -20,27 +19,24 @@ import (
 type DolusExpectationEngine struct {
 	expectationMatcherMap map[schema.Route][]expectation.Expectation // should be a priority queue and not just a list
 	expectations          []expectation.Expectation
-	GenerationConfig      generator.GenerationConfig
 	routeManager          RouteManager
 }
 
 var _ ExpectationEngine = &DolusExpectationEngine{}
 
-func NewDolusExpectationEngine(
-	generationConfig generator.GenerationConfig,
-) (dolusExpectationEngine *DolusExpectationEngine) {
+func NewDolusExpectationEngine() (dolusExpectationEngine *DolusExpectationEngine) {
 	dolusExpectationEngine = &DolusExpectationEngine{}
 	dolusExpectationEngine.expectationMatcherMap = make(
 		map[schema.Route][]expectation.Expectation,
 	)
-	dolusExpectationEngine.GenerationConfig = generationConfig
 
 	return
 }
 
 func (e *DolusExpectationEngine) AddExpectation(
 	expect expectation.Expectation,
-	validateExpectationSchema bool) error {
+	validateExpectationSchema bool,
+) error {
 	// TODO: check if exception overrides another one i.e has same request matcher
 
 	// use the request path to add query parameters to the expectation and override existing query parameters
@@ -68,8 +64,11 @@ func (e *DolusExpectationEngine) AddExpectation(
 func addQueryParameterMatcher(e *expectation.Expectation) error {
 	parsedURL, err := url.Parse(e.Request.Path)
 	if err != nil {
-		return fmt.Errorf("failed to add query parameters for expectation with path '%s': %w", e.Request.Path, err)
-
+		return fmt.Errorf(
+			"failed to add query parameters for expectation with path '%s': %w",
+			e.Request.Path,
+			err,
+		)
 	}
 	queryParams := parsedURL.Query()
 	if e.Request.Parameters == nil {
@@ -130,8 +129,11 @@ func (e *DolusExpectationEngine) GetResponseForRequest(
 	return &currentExpectation.Response, nil
 }
 
-func (e *DolusExpectationEngine) GetExpectations(expectationType *expectation.ExpectationType, path *string, method *string) []expectation.Expectation {
-
+func (e *DolusExpectationEngine) GetExpectations(
+	expectationType *expectation.ExpectationType,
+	path *string,
+	method *string,
+) []expectation.Expectation {
 	var filteredExpectations []expectation.Expectation
 
 	for _, exp := range e.expectations {
@@ -148,7 +150,6 @@ func (e *DolusExpectationEngine) GetExpectations(expectationType *expectation.Ex
 	}
 
 	return filteredExpectations
-
 }
 
 // SetRouteManager implements ExpectationEngine.
@@ -163,7 +164,9 @@ func (e *DolusExpectationEngine) GetRouteManager() RouteManager {
 
 // getMatchingResponseSchemaForRoute returns the response schema for the given route
 // get the response schema for the expectation if it has one
-func (e *DolusExpectationEngine) getResponseSchemaForExpectation(exp *expectation.Expectation) (dstruct.DynamicStructModifier, error) {
+func (e *DolusExpectationEngine) getResponseSchemaForExpectation(
+	exp *expectation.Expectation,
+) (dstruct.DynamicStructModifier, error) {
 	expectationRoute := exp.Request.Route()
 	parsedURL, err := url.Parse(expectationRoute.Path)
 	if err != nil {
@@ -177,8 +180,11 @@ func (e *DolusExpectationEngine) getResponseSchemaForExpectation(exp *expectatio
 				// we can add the path parameters here as we can only figure out what the path parameters are
 				// once know what the route is
 				if err := addPathParametersFromRequestPath(exp, pathParams); err != nil {
-					return nil, fmt.Errorf("failed to add path parameters for expectation with path %s: %w", exp.Request.Path, err)
-
+					return nil, fmt.Errorf(
+						"failed to add path parameters for expectation with path %s: %w",
+						exp.Request.Path,
+						err,
+					)
 				}
 				// found the matching right path and operation now validate the request parameter
 				// TODO: only validate query parameters if not generic path
@@ -198,14 +204,15 @@ func (e *DolusExpectationEngine) getResponseSchemaForExpectation(exp *expectatio
 }
 
 // TODO  refractor add and validate code
-func addPathParametersFromRequestPath(e *expectation.Expectation, pathParams map[string]string) error {
-
+func addPathParametersFromRequestPath(
+	e *expectation.Expectation,
+	pathParams map[string]string,
+) error {
 	if e.Request.Parameters == nil {
 		e.Request.Parameters = &expectation.RequestParameters{}
 	}
 
 	return addPathParameters(pathParams, e)
-
 }
 
 func addPathParameters(pathParams map[string]string, e *expectation.Expectation) error {
@@ -226,8 +233,10 @@ func addPathParameters(pathParams map[string]string, e *expectation.Expectation)
 	return nil
 }
 
-func validateRequestParameters(expectation *expectation.Expectation, routeProperty schema.RequestParameterProperty) error {
-
+func validateRequestParameters(
+	expectation *expectation.Expectation,
+	routeProperty schema.RequestParameterProperty,
+) error {
 	// Validate Path and Query Parameters
 	if err := checkParametersExistence("Path", routeProperty.PathParameterProperties, expectation.Request.Parameters.Path); err != nil {
 		return err
@@ -248,7 +257,11 @@ func validateRequestParameters(expectation *expectation.Expectation, routeProper
 }
 
 // checkParametersExistence checks for extra parameters not defined in the schema
-func checkParametersExistence(paramType string, properties schema.ParameterProperties, parameters map[string]any) error {
+func checkParametersExistence(
+	paramType string,
+	properties schema.ParameterProperties,
+	parameters map[string]any,
+) error {
 	for name := range parameters {
 		if properties[name] == nil {
 			return fmt.Errorf("%s parameter '%s' does not exist", paramType, name)
@@ -257,20 +270,26 @@ func checkParametersExistence(paramType string, properties schema.ParameterPrope
 	return nil
 }
 
-func checkRequiredQueryParameters(properties schema.ParameterProperties, parameters map[string]any) error {
+func checkRequiredQueryParameters(
+	properties schema.ParameterProperties,
+	parameters map[string]any,
+) error {
 	for name, param := range properties {
-
-		if param.Required && (parameters[name] == nil || len(*parameters[name].(*matcher.StringArrayMatcher).GetValue()) == 0) {
+		if param.Required &&
+			(parameters[name] == nil || len(*parameters[name].(*matcher.StringArrayMatcher).GetValue()) == 0) {
 			return fmt.Errorf("required query parameter '%s' is missing", name)
 		}
 	}
 	return nil
 }
 
-func checkRequiredPathParameters(properties schema.ParameterProperties, parameters map[string]any) error {
+func checkRequiredPathParameters(
+	properties schema.ParameterProperties,
+	parameters map[string]any,
+) error {
 	for name, param := range properties {
-
-		if param.Required && (parameters[name] == nil || *parameters[name].(*matcher.StringMatcher).GetValue() == "") {
+		if param.Required &&
+			(parameters[name] == nil || *parameters[name].(*matcher.StringMatcher).GetValue() == "") {
 			return fmt.Errorf("required path parameter '%s' is missing", name)
 		}
 	}
@@ -278,7 +297,8 @@ func checkRequiredPathParameters(properties schema.ParameterProperties, paramete
 }
 
 func (e *DolusExpectationEngine) getMatchingRequestSchemaForRoute(
-	exp *expectation.Expectation) (dstruct.DynamicStructModifier, error) {
+	exp *expectation.Expectation,
+) (dstruct.DynamicStructModifier, error) {
 	// TODO: implement
 
 	// for schemaRoute, requestSchema := range e.RequestSchemas {
@@ -339,8 +359,8 @@ func validateExpectationResponseSchema(
 		expectationFields = expect.GetFields()
 	}
 	for field, value := range schema.GetFields() {
-		schemaFieldType := value.GetType()
-		expectationFieldType := expectationFields[field].GetType()
+		schemaFieldType := value.GetDstructType()
+		expectationFieldType := expectationFields[field].GetDstructType()
 
 		if expectationFields[field].GetFieldName() == "" && value.GetTag("required") == "true" {
 			expectationFieldErrors = addFieldMissingError(field, expectationFieldErrors)
@@ -398,7 +418,9 @@ func (e *DolusExpectationEngine) getExpectationsForRequest(
 	request *http.Request,
 	requestParameters schema.RequestParameters,
 ) []expectation.Expectation {
-	if expectations := e.findExpectationMatches(request.URL.Path, request, requestParameters); len(expectations) > 0 {
+	if expectations := e.findExpectationMatches(request.URL.Path, request, requestParameters); len(
+		expectations,
+	) > 0 {
 		return expectations
 	}
 
@@ -411,7 +433,6 @@ func (e *DolusExpectationEngine) findExpectationMatches(
 	request *http.Request,
 	requestParameters schema.RequestParameters,
 ) (filtered []expectation.Expectation) {
-
 	expectations := e.expectationMatcherMap[schema.Route{
 		Path:   requestPath,
 		Method: request.Method,
@@ -424,5 +445,4 @@ func (e *DolusExpectationEngine) findExpectationMatches(
 		}
 	}
 	return
-
 }

@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 
-	"github.com/MartinSimango/dstruct/generator"
+	"github.com/MartinSimango/dstruct/generator/config"
 
 	"github.com/DolusMockServer/dolus"
 )
@@ -59,9 +59,11 @@ func Print(strct any) string {
 func main() {
 	d := dolus.New()
 	d.AddExpectations("ideal.cue")
-	d.GenerationConfig.
-		SetValueGenerationType(generator.UseDefaults).
-		SetNonRequiredFields(true)
+	// d.GenerationSettings.WithNonRequiredFields(true)
+	d.GenerationSettings.ValueGenerationType = config.Generate
+
+	// .SetValueGenerationType(generator.UseDefaults).
+	// 	SetNonRequiredFields(true)
 
 	d.OpenAPIspec = "openapi-pet.yaml"
 	if err := d.Start(fmt.Sprintf(":%d", 1080)); err != nil {
@@ -70,5 +72,4 @@ func main() {
 }
 
 func testSdk() {
-
 }

@@ -6,7 +6,7 @@ import (
 	"strings"
 
 	"github.com/MartinSimango/dstruct"
-	"github.com/MartinSimango/dstruct/generator"
+	"github.com/MartinSimango/dstruct/generator/config"
 	"github.com/getkin/kin-openapi/openapi3"
 
 	"github.com/DolusMockServer/dolus/pkg/expectation"
@@ -17,19 +17,22 @@ import (
 )
 
 type OpenApiExpectationBuilder struct {
-	loader         loader.Loader[loader.OpenAPISpecLoadType]
-	fieldGenerator generator.Generator
+	loader             loader.Loader[loader.OpenAPISpecLoadType]
+	generationConfig   config.Config
+	generationSettings config.GenerationSettings
 }
 
 var _ ExpectationBuilder = &OpenApiExpectationBuilder{}
 
 func NewOpenApiExpectationBuilder(
 	file string,
-	fieldGenerator generator.Generator,
+	generationConfig config.Config,
+	generationSettings config.GenerationSettings,
 ) *OpenApiExpectationBuilder {
 	return &OpenApiExpectationBuilder{
-		loader:         loader.NewOpenApiSpecLoader(file),
-		fieldGenerator: fieldGenerator,
+		loader:             loader.NewOpenApiSpecLoader(file),
+		generationConfig:   generationConfig,
+		generationSettings: generationSettings,
 	}
 }
 
@@ -41,7 +44,9 @@ func (oeb *OpenApiExpectationBuilder) BuildExpectations() (*Output, error) {
 	}
 }
 
-func getRequestParameterProperty(operation *openapi3.Operation) (requestParameterProperty schema.RequestParameterProperty) {
+func getRequestParameterProperty(
+	operation *openapi3.Operation,
+) (requestParameterProperty schema.RequestParameterProperty) {
 	requestParameterProperty.PathParameterProperties = make(schema.ParameterProperties)
 	requestParameterProperty.QueryParameterProperties = make(schema.ParameterProperties)
 
@@ -73,7 +78,6 @@ func (oeb *OpenApiExpectationBuilder) buildExpectationsFromOpenApiSpec(
 	for path := range spec.Paths.Map() {
 		refinedPath := schema.PathFromOpenApiPath(path)
 		for method, operation := range spec.Paths.Map()[path].Operations() {
-
 			for code, ref := range operation.Responses.Map() {
 				if path != "/store/order/{orderId}/p" || code != "200" {
 					continue
@@ -93,7 +97,8 @@ func (oeb *OpenApiExpectationBuilder) buildExpectationsFromOpenApiSpec(
 						ref,
 						"application/json",
 					),
-					&oeb.fieldGenerator,
+					oeb.generationConfig,
+					oeb.generationSettings,
 				)
 
 				routeManager.AddRoute(schema.Route{
@@ -129,21 +134,20 @@ func (oeb *OpenApiExpectationBuilder) buildExpectationsFromOpenApiSpec(
 	}
 }
 
-func structToMap(obj *dstruct.GeneratedStructImpl) map[string]interface{} {
+func structToMap(obj dstruct.DynamicStructModifier) map[string]interface{} {
 	result := make(map[string]interface{})
 
 	for k, v := range obj.GetFields() {
 		if strings.Contains(k, ".") {
 			continue
 		}
-		fieldValueKind := v.GetType().Kind()
+		fieldValueKind := v.GetDstructType().Kind()
 		var fieldValue interface{}
 
 		if fieldValueKind == reflect.Struct {
 			fieldValue = structToMap(dstruct.NewGeneratedStruct(v.GetValue()))
 		} else {
 			fieldValue = v.GetValue()
-
 		}
 
 		result[v.GetJsonName()] = fieldValue
