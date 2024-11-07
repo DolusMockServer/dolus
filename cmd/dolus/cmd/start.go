@@ -7,7 +7,6 @@ import (
 	"fmt"
 
 	"github.com/DolusMockServer/dolus"
-	"github.com/MartinSimango/dstruct/generator"
 	"github.com/spf13/cobra"
 )
 
@@ -24,9 +23,6 @@ var startCmd = &cobra.Command{
 		d := dolus.New()
 
 		d.AddExpectations(cueExpectationsFiles...)
-		d.GenerationConfig.
-			SetValueGenerationType(generator.UseDefaults).
-			SetNonRequiredFields(true)
 
 		d.OpenAPIspec = spec
 		if err := d.Start(fmt.Sprintf(":%d", port)); err != nil {

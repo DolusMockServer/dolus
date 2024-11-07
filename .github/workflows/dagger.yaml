@@ -8,12 +8,14 @@ jobs:
     name: test
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
-      -
-        name: Run Dagger Function for Go tests
-        uses: dagger/dagger-for-github@v5
+      - name: Checkout
+        uses: actions/checkout@v3
+      
+      - name: Run tests
+        uses: dagger/dagger-for-github@v6
         with:
-          version: "0.11.1"
+          version: "latest"
           verb: call
-          module: github.com/kpenfound/dagger-modules/golang@v0.1.10
-          args: test --source=. --args=./...
+          module: github.com/felipecruz91/daggerverse/go 
+          args: test --source=. --go-version=1.23 stdout 
+
